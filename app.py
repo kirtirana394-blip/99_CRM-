@@ -84,14 +84,40 @@ def create_app():
         except Exception:
             db.session.rollback()
 
-        # Auto-heal misaligned imported leads
+        # Auto-heal misaligned imported leads & restore exact Google Sheet dates
         try:
-            import re
+            import re, urllib.request, urllib.parse, csv, io
             from models import Lead
+
+            # Fetch Sep tab CSV to build exact date map
+            sheet_id = '1VfFPHNkZ3ljCx_iT-GIRMZpxqgAVP4kdZptXlR6u7qc'
+            url_sep = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet=Sep'
+            data_sep = urllib.request.urlopen(url_sep, timeout=15).read().decode('utf-8')
+            reader_sep = csv.reader(io.StringIO(data_sep))
+            rows_sep = list(reader_sep)
+
+            sep_dates = {}
+            for r in rows_sep[1:]:
+                if len(r) > 3:
+                    d_str = r[1].strip()
+                    phone = r[3].strip()
+                    name = r[2].strip()
+                    if d_str:
+                        for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y']:
+                            try:
+                                dt = datetime.strptime(d_str, fmt)
+                                if phone: sep_dates[phone.replace('-', '').strip()] = dt
+                                if name: sep_dates[name.lower().strip()] = dt
+                                break
+                            except ValueError:
+                                pass
+
             misaligned_leads = Lead.query.all()
             for l in misaligned_leads:
                 if not l.name:
                     continue
+
+                # Realign misaligned fields
                 clean_num = re.sub(r'[^\d]', '', l.name)
                 if len(clean_num) >= 10 and (l.name.isdigit() or l.name.startswith('91-') or clean_num in l.name.replace('-', '')):
                     real_phone = l.name.strip()
@@ -102,6 +128,18 @@ def create_app():
                     if l.budget and 'Himmat' in l.budget:
                         l.source = 'Himmat Data'
                         l.budget = ''
+
+                # Restore exact date
+                phone_key = (l.phone or '').replace('-', '').strip()
+                name_key = (l.name or '').lower().strip()
+                if phone_key in sep_dates:
+                    l.created_at = sep_dates[phone_key]
+                elif name_key in sep_dates:
+                    l.created_at = sep_dates[name_key]
+                elif l.is_imported and l.created_at.date() == datetime.utcnow().date():
+                    # Default July/August leads to July 2026
+                    l.created_at = datetime(2026, 7, 20)
+
             db.session.commit()
         except Exception as e:
             print("Auto-heal error:", e)

@@ -229,14 +229,20 @@ def sync_google_sheet_web():
                 telecaller_col = r[11].strip() if len(r) > 11 else ''
 
                 # Parse date
-                created_at = datetime.utcnow()
+                created_at = None
                 if date_str:
-                    for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y']:
+                    for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%m/%d/%Y']:
                         try:
                             created_at = datetime.strptime(date_str, fmt)
                             break
                         except ValueError:
                             pass
+
+                if not created_at:
+                    if 'Sep' in tab_name:
+                        created_at = datetime(2026, 9, 1)
+                    else:
+                        created_at = datetime(2026, 7, 20)
 
                 # Email fallback
                 clean_name = name.lower().replace(' ', '.').replace('/', '')
@@ -250,7 +256,8 @@ def sync_google_sheet_web():
                     existing = Lead.query.filter(Lead.name == name).first()
 
                 if existing:
-                    # Update existing lead
+                    # Update existing lead fields and exact date
+                    if created_at: existing.created_at = created_at
                     if location: existing.location = location
                     if budget: existing.budget = budget
                     if property_type: existing.property_type = property_type
