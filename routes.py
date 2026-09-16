@@ -607,20 +607,29 @@ def add_user():
         return redirect(url_for('web.dashboard'))
 
     if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        user_id_name = request.form.get('user_id_name', '').strip()
+        name = request.form['name'].strip()
+        user_id_name = request.form.get('user_id_name', '').strip().lower().replace(' ', '')
+        if not user_id_name:
+            user_id_name = name.lower().replace(' ', '')
+
+        email = request.form.get('email', '').strip()
+        if not email:
+            email = f"{user_id_name}@yayathspaces.com"
+
         password = request.form.get('password', 'Password@123').strip()
         role = request.form.get('role', 'Editor')
         
-        if User.query.filter_by(email=email).first():
-            flash('User with this email already exists.', 'danger')
+        existing_user = User.query.filter(
+            (User.user_id_name == user_id_name) | (User.email == email)
+        ).first()
+        if existing_user:
+            flash(f'User ID "{user_id_name}" or email already exists.', 'danger')
             return redirect(url_for('web.add_user'))
             
-        user = User(name=name, email=email, user_id_name=user_id_name or f"USR-{email.split('@')[0]}", password=password, role=role)
+        user = User(name=name, email=email, user_id_name=user_id_name, password=password, role=role)
         db.session.add(user)
         db.session.commit()
-        flash(f'User {name} ({role}) created successfully!', 'success')
+        flash(f'User {name} (ID: {user_id_name}) created successfully!', 'success')
         return redirect(url_for('web.users_list'))
     return render_template('user_form.html', user=None, action='Add')
 
@@ -632,16 +641,22 @@ def edit_user(uid):
 
     user = User.query.get_or_404(uid)
     if request.method == 'POST':
-        user.name = request.form['name']
-        user.email = request.form['email']
-        user.user_id_name = request.form.get('user_id_name', user.user_id_name).strip()
+        user.name = request.form['name'].strip()
+        new_id = request.form.get('user_id_name', '').strip().lower().replace(' ', '')
+        if new_id:
+            user.user_id_name = new_id
+
+        email = request.form.get('email', '').strip()
+        if email:
+            user.email = email
+            
         new_password = request.form.get('password', '').strip()
         if new_password:
             user.password = new_password
         user.role = request.form.get('role', 'Editor')
         user.status = request.form.get('status', 'Active')
         db.session.commit()
-        flash(f'User {user.name} details & password updated successfully!', 'success')
+        flash(f'User {user.name} (ID: {user.user_id_name}) updated successfully!', 'success')
         return redirect(url_for('web.users_list'))
     return render_template('user_form.html', user=user, action='Edit')
 

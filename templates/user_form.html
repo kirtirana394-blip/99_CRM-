@@ -10,16 +10,17 @@
 <div class="card card-custom p-4 col-md-8">
     <form method="POST">
         <div class="mb-3">
-            <label class="form-label fw-bold small">User ID / Username</label>
-            <input type="text" name="user_id_name" class="form-control form-control-sm" value="{{ user.user_id_name if user and user.user_id_name else '' }}" placeholder="e.g. EDITOR-001">
+            <label class="form-label fw-bold small">User ID / Username <span class="text-danger">*</span></label>
+            <input type="text" name="user_id_name" class="form-control form-control-sm" value="{{ user.user_id_name if user and user.user_id_name else '' }}" placeholder="e.g. kiriti, admin, ravi" required>
+            <small class="text-muted" style="font-size:0.72rem;">User will use this simple User ID to sign in to CRM.</small>
         </div>
         <div class="mb-3">
             <label class="form-label fw-bold small">Full Name <span class="text-danger">*</span></label>
-            <input type="text" name="name" class="form-control form-control-sm" value="{{ user.name if user else '' }}" placeholder="e.g. Neha Sharma" required>
+            <input type="text" name="name" class="form-control form-control-sm" value="{{ user.name if user else '' }}" placeholder="e.g. Kiriti Rana" required>
         </div>
         <div class="mb-3">
-            <label class="form-label fw-bold small">Email Address <span class="text-danger">*</span></label>
-            <input type="email" name="email" class="form-control form-control-sm" value="{{ user.email if user else '' }}" placeholder="neha@yayathspaces.com" required>
+            <label class="form-label fw-bold small">Email Address <span class="text-muted">(Optional)</span></label>
+            <input type="email" name="email" class="form-control form-control-sm" value="{{ user.email if user else '' }}" placeholder="kiriti@yayathspaces.com">
         </div>
         <div class="mb-3">
             <label class="form-label fw-bold small">User Password {{ '(Leave blank to keep current)' if user else '<span class="text-danger">*</span>' }}</label>
