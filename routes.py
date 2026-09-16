@@ -37,7 +37,7 @@ def api_list_leads():
 
 @api_bp.route('/google-sheet-sync', methods=['POST'])
 def api_google_sheet_sync():
-    """Flexible API endpoint for Google Sheets sync (accepts single object or array of objects)."""
+    """Flexible API endpoint customized for 99Acres Response Sheet structure."""
     data = request.get_json(silent=True) or request.form.to_dict()
     if not data:
         return jsonify({'error': 'No data provided'}), 400
@@ -47,39 +47,83 @@ def api_google_sheet_sync():
 
     for item in items:
         name = item.get('name') or item.get('Name') or item.get('Full Name')
-        email = item.get('email') or item.get('Email') or f"lead_{int(datetime.utcnow().timestamp())}@yayath.com"
-        phone = item.get('phone') or item.get('Phone') or item.get('Mobile') or item.get('Contact') or ''
-        source = item.get('source') or item.get('Source') or '99acres'
-        property_type = item.get('property_type') or item.get('Property Type') or item.get('Property') or ''
-        budget = item.get('budget') or item.get('Budget') or ''
-        location = item.get('location') or item.get('Location') or item.get('City') or ''
-        status = item.get('status') or item.get('Status') or 'New'
-        priority = item.get('priority') or item.get('Priority') or 'Medium'
-        assigned_to = item.get('assigned_to') or item.get('Assigned To') or 'Admin Kiriti'
-
-        if not name:
+        if not name or str(name).strip() == '' or str(name).strip().startswith('-'):
             continue
+
+        # Extract Phone No.
+        phone = item.get('Phone No.') or item.get('Phone No') or item.get('phone') or item.get('Phone') or item.get('Mobile') or ''
+        
+        # Extract Budget / Price
+        budget = item.get('Price of Property') or item.get('Price') or item.get('budget') or item.get('Budget') or ''
+        
+        # Extract Location / Locality + Project
+        locality = item.get('Locality') or item.get('locality') or ''
+        project = item.get('Project') or item.get('project') or ''
+        if project and project != '-':
+            location = f"{locality} ({project})" if locality else project
+        else:
+            location = locality or item.get('location') or item.get('Location') or ''
+
+        # Extract Property Type & Listing ID
+        property_type = item.get('Property Type') or item.get('property_type') or ''
+        listing_id = item.get('Listing ID') or item.get('Listing Id') or ''
+
+        # Extract Date
+        date_str = item.get('Date') or item.get('date') or item.get('created_date')
+        created_at = datetime.utcnow()
+        if date_str:
+            for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%m/%d/%Y']:
+                try:
+                    created_at = datetime.strptime(str(date_str).strip(), fmt)
+                    break
+                except ValueError:
+                    pass
+
+        # Email fallback
+        clean_name = str(name).strip().lower().replace(' ', '.')
+        email = item.get('email') or item.get('Email') or f"{clean_name}@lead99.com"
+
+        # Remarks / Telecaller Note
+        remarks = item.get('Sunil Remarks') or item.get('Remarks') or item.get('remarks') or ''
+        telecaller = item.get('Telecaller') or item.get('telecaller') or ''
+        response_from = item.get('Response From') or item.get('response_from') or ''
 
         lead = Lead(
             name=str(name).strip(),
             email=str(email).strip(),
             phone=str(phone).strip(),
-            source=str(source).strip() if str(source).strip() in ['99acres', 'Direct'] else '99acres',
+            source='99acres',
             property_type=str(property_type).strip(),
             budget=str(budget).strip(),
             location=str(location).strip(),
-            status=str(status).strip() or 'New',
-            priority=str(priority).strip() or 'Medium',
-            assigned_to=str(assigned_to).strip() or 'Admin Kiriti',
-            is_imported=True
+            status='New',
+            priority='Medium',
+            assigned_to=telecaller if telecaller and telecaller != 'NA' else 'Admin Kiriti',
+            is_imported=True,
+            created_at=created_at
         )
         db.session.add(lead)
+        db.session.flush() # get lead.id
+
+        # Attach Note if remarks or listing ID present
+        note_parts = []
+        if listing_id:
+            note_parts.append(f"Listing ID: {listing_id}")
+        if response_from:
+            note_parts.append(f"Response From: {response_from}")
+        if remarks and remarks != 'NA':
+            note_parts.append(f"Remarks: {remarks}")
+            
+        if note_parts:
+            note = Note(lead_id=lead.id, content=" | ".join(note_parts), author=telecaller if telecaller and telecaller != 'NA' else 'Google Sheet Sync')
+            db.session.add(note)
+
         added_leads.append(lead)
 
     db.session.commit()
     return jsonify({
         'success': True,
-        'message': f'Successfully synced {len(added_leads)} leads from Google Sheets.',
+        'message': f'Successfully synced {len(added_leads)} leads from 99Acres Sheet.',
         'count': len(added_leads)
     }), 201
 
