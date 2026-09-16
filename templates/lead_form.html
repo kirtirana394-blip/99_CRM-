@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}{{ action }} Lead - Yayath 99Acres CRM{% endblock %}
+{% block title %}{{ action }} Lead - Yayath Spaces CRM{% endblock %}
 {% block content %}
 
 <div class="mb-4">
-    <h3 class="fw-bold mb-1"><i class="bi bi-person-gear text-primary me-2"></i>{{ action }} Lead</h3>
+    <h3 class="fw-bold fs-5 mb-1"><i class="bi bi-person-gear text-primary me-2"></i>{{ action }} Lead</h3>
     <small class="text-muted">Fill out property requirement details and assign team members.</small>
 </div>
 
@@ -11,28 +11,30 @@
     <form method="POST">
         <div class="row g-3">
             <div class="col-md-6">
-                <label class="form-label fw-bold">Full Name <span class="text-danger">*</span></label>
-                <input type="text" name="name" class="form-control" value="{{ lead.name if lead else '' }}" placeholder="e.g. Ankit Verma" required>
+                <label class="form-label fw-bold small">Full Name <span class="text-danger">*</span></label>
+                <input type="text" name="name" class="form-control form-control-sm" value="{{ lead.name if lead else '' }}" placeholder="e.g. Ankit Verma" required>
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-bold">Email Address <span class="text-danger">*</span></label>
-                <input type="email" name="email" class="form-control" value="{{ lead.email if lead else '' }}" placeholder="ankit@example.com" required>
+                <label class="form-label fw-bold small">Email Address <span class="text-danger">*</span></label>
+                <input type="email" name="email" class="form-control form-control-sm" value="{{ lead.email if lead else '' }}" placeholder="ankit@example.com" required>
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-bold">Phone Number</label>
-                <input type="text" name="phone" class="form-control" value="{{ lead.phone if lead else '' }}" placeholder="e.g. 9876543210">
+                <label class="form-label fw-bold small">Phone Number</label>
+                <input type="text" name="phone" class="form-control form-control-sm" value="{{ lead.phone if lead else '' }}" placeholder="e.g. 9876543210">
             </div>
+            
+            <!-- Source dropdown restricted strictly to 99acres and Direct -->
             <div class="col-md-4">
-                <label class="form-label fw-bold">Source</label>
-                <select name="source" class="form-select">
-                    {% for s in ['99acres','MagicBricks','Housing.com','Walk-in','Referral','Website','Other'] %}
-                    <option value="{{ s }}" {{ 'selected' if lead and lead.source == s }}>{{ s }}</option>
-                    {% endfor %}
+                <label class="form-label fw-bold small">Source</label>
+                <select name="source" class="form-select form-select-sm">
+                    <option value="99acres" {{ 'selected' if not lead or lead.source == '99acres' }}>99acres</option>
+                    <option value="Direct" {{ 'selected' if lead and lead.source == 'Direct' }}>Direct</option>
                 </select>
             </div>
+
             <div class="col-md-4">
-                <label class="form-label fw-bold">Property Type</label>
-                <select name="property_type" class="form-select">
+                <label class="form-label fw-bold small">Property Type</label>
+                <select name="property_type" class="form-select form-select-sm">
                     <option value="">-- Select --</option>
                     {% for p in ['Flat/Apartment','House/Villa','Plot/Land','Office Space','Shop/Showroom','Commercial Land','Warehouse','Other'] %}
                     <option value="{{ p }}" {{ 'selected' if lead and lead.property_type == p }}>{{ p }}</option>
@@ -40,16 +42,16 @@
                 </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-bold">Budget</label>
-                <input type="text" name="budget" class="form-control" placeholder="e.g. 50L - 1Cr" value="{{ lead.budget if lead else '' }}">
+                <label class="form-label fw-bold small">Budget</label>
+                <input type="text" name="budget" class="form-control form-control-sm" placeholder="e.g. 50L - 1Cr" value="{{ lead.budget if lead else '' }}">
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-bold">Location / Sector</label>
-                <input type="text" name="location" class="form-control" placeholder="e.g. Sector 62, Noida" value="{{ lead.location if lead else '' }}">
+                <label class="form-label fw-bold small">Location / Sector</label>
+                <input type="text" name="location" class="form-control form-control-sm" placeholder="e.g. Sector 62, Noida" value="{{ lead.location if lead else '' }}">
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-bold">Assign To Team Member</label>
-                <select name="assigned_to" class="form-select">
+                <label class="form-label fw-bold small">Assign To Team Member</label>
+                <select name="assigned_to" class="form-select form-select-sm">
                     <option value="">-- Unassigned --</option>
                     {% for u in users %}
                     <option value="{{ u.name }}" {{ 'selected' if lead and lead.assigned_to == u.name }}>{{ u.name }} ({{ u.role }})</option>
@@ -57,28 +59,28 @@
                 </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-bold">Pipeline Status</label>
-                <select name="status" class="form-select">
+                <label class="form-label fw-bold small">Pipeline Status</label>
+                <select name="status" class="form-select form-select-sm">
                     {% for s in ['New','Contacted','Qualified','Meeting Done','Proposal Sent','Active Pipeline','Deal Close','Lost'] %}
                     <option value="{{ s }}" {{ 'selected' if lead and lead.status == s }}>{{ s }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-bold">Priority Level</label>
-                <select name="priority" class="form-select">
+                <label class="form-label fw-bold small">Priority Level</label>
+                <select name="priority" class="form-select form-select-sm">
                     {% for p in ['High','Medium','Low'] %}
                     <option value="{{ p }}" {{ 'selected' if lead and lead.priority == p }}>{{ p }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-bold">Created Date (Editable)</label>
-                <input type="date" name="created_date" class="form-control" value="{{ lead.created_at.strftime('%Y-%m-%d') if lead and lead.created_at else '' }}">
+                <label class="form-label fw-bold small">Created Date (Editable)</label>
+                <input type="date" name="created_date" class="form-control form-control-sm" value="{{ lead.created_at.strftime('%Y-%m-%d') if lead and lead.created_at else '' }}">
             </div>
         </div>
         <hr class="my-4">
-        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check-circle me-1"></i>{{ action }} Lead</button>
+        <button type="submit" class="btn btn-primary px-4 fw-semibold"><i class="bi bi-check-circle me-1"></i>{{ action }} Lead</button>
         <a href="/leads" class="btn btn-outline-secondary px-4 ms-2">Cancel</a>
     </form>
 </div>
