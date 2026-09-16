@@ -221,8 +221,16 @@ def sync_google_sheet_web():
                 if not existing and name:
                     existing = Lead.query.filter(Lead.name == str(name).strip()).first()
 
-                remarks = row_dict.get('Sunil Remarks ') or row_dict.get('Remarks') or row_dict.get('Simmy remarks') or ''
+                remarks = row_dict.get('Sunil Remarks') or row_dict.get('Sunil Remarks ') or row_dict.get('Remarks') or ''
+                simmy_remarks = row_dict.get('Simmy remarks') or row_dict.get('Simmy Remarks') or ''
+                telecaller = row_dict.get('Telecaller') or row_dict.get('Telecaller ') or ''
                 listing_id = row_dict.get('Listing ID') or ''
+                response_from = row_dict.get('Response From') or ''
+
+                # Build combined telecaller_remarks
+                telecaller_text = telecaller if telecaller and telecaller not in ('NA', '') else ''
+                if simmy_remarks and simmy_remarks not in ('NA', ''):
+                    telecaller_text = (telecaller_text + ' | Simmy: ' + simmy_remarks).strip(' | ')
 
                 if existing:
                     # Update existing lead fields if provided
@@ -230,14 +238,8 @@ def sync_google_sheet_web():
                     if budget: existing.budget = str(budget).strip()
                     if property_type: existing.property_type = str(property_type).strip()
                     if phone and phone != '-': existing.phone = str(phone).strip()
-
-                    # Add new note if remarks exist
-                    if remarks and remarks != 'NA':
-                        existing_notes = [n.content for n in existing.notes]
-                        note_text = f"Remarks: {remarks}"
-                        if listing_id: note_text = f"Listing ID: {listing_id} | " + note_text
-                        if not any(remarks in n for n in existing_notes):
-                            db.session.add(Note(lead_id=existing.id, content=note_text))
+                    if remarks and remarks not in ('NA', ''): existing.sunil_remarks = str(remarks).strip()
+                    if telecaller_text: existing.telecaller_remarks = str(telecaller_text).strip()
                     updated_count += 1
                 else:
                     lead = Lead(
@@ -252,6 +254,8 @@ def sync_google_sheet_web():
                         priority='Medium',
                         assigned_to='Admin Kiriti',
                         is_imported=True,
+                        sunil_remarks=str(remarks).strip() if remarks and remarks not in ('NA', '') else '',
+                        telecaller_remarks=str(telecaller_text).strip() if telecaller_text else '',
                         created_at=created_at
                     )
                     db.session.add(lead)
@@ -260,7 +264,9 @@ def sync_google_sheet_web():
                     note_parts = []
                     if listing_id:
                         note_parts.append(f"Listing ID: {listing_id}")
-                    if remarks and remarks != 'NA':
+                    if response_from:
+                        note_parts.append(f"Response From: {response_from}")
+                    if remarks and remarks not in ('NA', ''):
                         note_parts.append(f"Remarks: {remarks}")
 
                     if note_parts:

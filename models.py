@@ -44,6 +44,8 @@ class Lead(db.Model):
     priority = db.Column(db.String(20), nullable=False, default='Medium')
     assigned_to = db.Column(db.String(255), nullable=True)
     is_imported = db.Column(db.Boolean, default=False)
+    sunil_remarks = db.Column(db.Text, nullable=True)
+    telecaller_remarks = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -72,6 +74,8 @@ class Lead(db.Model):
             'assigned_to': self.assigned_to,
             'latest_note': self.latest_note,
             'is_imported': self.is_imported,
+            'sunil_remarks': self.sunil_remarks or '',
+            'telecaller_remarks': self.telecaller_remarks or '',
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M') if self.created_at else '',
             'created_date': self.created_at.strftime('%Y-%m-%d') if self.created_at else '',
             'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M') if self.updated_at else '',
