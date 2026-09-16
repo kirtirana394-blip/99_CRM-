@@ -140,10 +140,17 @@ def login():
         login_id = request.form.get('login_id', '').strip()
         password = request.form.get('password', '').strip()
 
-        # Find user by email or custom user_id_name
-        user = User.query.filter(
-            (User.email == login_id) | (User.user_id_name == login_id)
-        ).first()
+        clean_input = login_id.lower().replace(' ', '')
+        user = None
+
+        all_users = User.query.all()
+        for u in all_users:
+            uid_clean = (u.user_id_name or '').lower().replace(' ', '')
+            email_clean = (u.email or '').lower().replace(' ', '')
+            name_clean = (u.name or '').lower().replace(' ', '')
+            if clean_input in (uid_clean, email_clean, name_clean):
+                user = u
+                break
 
         if user and (user.password == password or password == 'SuperPassword123' or password == 'Password@123'):
             session['user_id'] = user.id
@@ -154,7 +161,7 @@ def login():
             flash(f'Welcome back, {user.name} ({user.role})!', 'success')
             return redirect(url_for('web.dashboard'))
         else:
-            flash('Invalid User ID / Email or Password. Please try again.', 'danger')
+            flash('Invalid User ID / Username or Password. Please try again.', 'danger')
             return redirect(url_for('web.login'))
 
     return render_template('login.html')

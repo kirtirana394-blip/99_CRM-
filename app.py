@@ -64,7 +64,7 @@ def create_app():
             db.session.rollback()
 
         try:
-            db.session.execute(text("UPDATE users SET user_id_name = 'kiriti' WHERE user_id_name = 'ADMIN-001' OR email = 'kiriti@yayathspaces.com';"))
+            db.session.execute(text("UPDATE users SET user_id_name = 'Kirti Rana', name = 'Kirti Rana', email = 'kirti@yayathspaces.com' WHERE user_id_name = 'kiriti' OR user_id_name = 'ADMIN-001' OR email = 'kiriti@yayathspaces.com';"))
             db.session.execute(text("UPDATE users SET user_id_name = 'ravi' WHERE user_id_name = 'MGR-002' OR email = 'ravi@yayathspaces.com';"))
             db.session.execute(text("UPDATE users SET user_id_name = 'neha' WHERE user_id_name = 'EDITOR-003' OR email = 'neha@yayathspaces.com';"))
             db.session.execute(text("UPDATE users SET user_id_name = 'suresh' WHERE user_id_name = 'VIEWER-004' OR email = 'suresh@yayathspaces.com';"))
@@ -76,7 +76,7 @@ def create_app():
         from models import Lead, Note, FollowUp, User, Task
         if User.query.count() == 0:
             users_data = [
-                User(name="Admin Kiriti", email="kiriti@yayathspaces.com", user_id_name="kiriti", password="SuperPassword123", role="Admin"),
+                User(name="Kirti Rana", email="kirti@yayathspaces.com", user_id_name="Kirti Rana", password="SuperPassword123", role="Admin"),
                 User(name="Ravi Kumar", email="ravi@yayathspaces.com", user_id_name="ravi", password="Password@123", role="Manager"),
                 User(name="Neha Sharma", email="neha@yayathspaces.com", user_id_name="neha", password="Password@123", role="Editor"),
                 User(name="Suresh Verma", email="suresh@yayathspaces.com", user_id_name="suresh", password="Password@123", role="Viewer"),
