@@ -108,7 +108,7 @@ def api_google_sheet_sync():
             note_parts.append(f"Remarks: {remarks}")
             
         if note_parts:
-            note = Note(lead_id=lead.id, content=" | ".join(note_parts), author='Google Sheet Sync')
+            note = Note(lead_id=lead.id, content=" | ".join(note_parts))
             db.session.add(note)
 
         added_leads.append(lead)
