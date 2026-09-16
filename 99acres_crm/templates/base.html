@@ -9,7 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Google Fonts (Medium Clean Typography) -->
+    <!-- Google Fonts (Clean Compact Typography) -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,19 +17,19 @@
     <style>
         :root {
             --primary-bg: #f8fafc;
-            --sidebar-width: 255px;
+            --sidebar-width: 250px;
             --sidebar-bg: #0f172a;        /* Rich Dark Slate Sidebar Color */
             --active-nav-bg: #3b82f6;     /* Vibrant Blue Active Pill */
             --brand-purple: #818cf8;
             --text-dark: #1e293b;
-            --card-radius: 14px;
+            --card-radius: 12px;
         }
 
         body {
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--primary-bg);
             color: var(--text-dark);
-            font-size: 0.88rem;
+            font-size: 0.82rem; /* Compact Small/Medium Base Font */
             margin: 0;
             padding: 0;
         }
@@ -50,13 +50,13 @@
         }
 
         .sidebar-brand {
-            padding: 20px 18px 16px 18px;
+            padding: 16px 16px 14px 16px;
             text-align: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .brand-title {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 800;
             line-height: 1.1;
             margin: 0;
@@ -64,7 +64,7 @@
         .brand-title .brand-black { color: #ffffff; }
         .brand-title .brand-purple { color: #818cf8; }
         .brand-subtitle {
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             font-weight: 600;
             color: #94a3b8;
             letter-spacing: 0.2px;
@@ -72,7 +72,7 @@
         }
 
         .sidebar-menu {
-            padding: 12px 12px;
+            padding: 10px 10px;
             flex-grow: 1;
             overflow-y: auto;
             -ms-overflow-style: none;
@@ -83,30 +83,30 @@
         }
 
         .menu-header {
-            font-size: 0.68rem;
+            font-size: 0.65rem;
             font-weight: 800;
             color: #64748b;
             letter-spacing: 1.2px;
             text-transform: uppercase;
-            padding: 10px 12px 4px 12px;
+            padding: 8px 10px 4px 10px;
         }
 
         .sidebar-nav-item {
             display: flex;
             align-items: center;
-            padding: 9px 13px;
-            border-radius: 10px;
+            padding: 8px 12px;
+            border-radius: 9px;
             color: #94a3b8;
             text-decoration: none;
             font-weight: 600;
-            font-size: 0.86rem;
-            margin-bottom: 4px;
+            font-size: 0.82rem;
+            margin-bottom: 3px;
             transition: all 0.2s ease;
         }
 
         .sidebar-nav-item i {
-            font-size: 1.1rem;
-            margin-right: 12px;
+            font-size: 1rem;
+            margin-right: 10px;
             color: #64748b;
             transition: all 0.2s ease;
         }
@@ -122,7 +122,7 @@
         .sidebar-nav-item.active {
             background-color: var(--active-nav-bg);
             color: #ffffff;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+            box-shadow: 0 3px 10px rgba(59, 130, 246, 0.25);
         }
         .sidebar-nav-item.active i {
             color: #ffffff;
@@ -130,7 +130,7 @@
 
         /* Sidebar Footer User Profile */
         .sidebar-user-footer {
-            padding: 14px 16px;
+            padding: 12px 14px;
             border-top: 1px solid rgba(255, 255, 255, 0.08);
             background: #0f172a;
             display: flex;
@@ -139,31 +139,31 @@
         }
 
         .user-avatar {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             background-color: #6366f1;
             color: #ffffff;
             font-weight: 800;
-            font-size: 1rem;
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 10px;
+            margin-right: 8px;
         }
 
         .user-info {
             flex-grow: 1;
         }
         .user-name {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 800;
             color: #ffffff;
             line-height: 1.2;
             margin: 0;
         }
         .user-role {
-            font-size: 0.72rem;
+            font-size: 0.68rem;
             color: #94a3b8;
             font-weight: 500;
             margin: 0;
@@ -175,7 +175,7 @@
             background-color: #22c55e;
             border-radius: 50%;
             display: inline-block;
-            margin-right: 4px;
+            margin-right: 3px;
         }
 
         /* Main Content Layout & Top Header */
@@ -187,7 +187,7 @@
         .top-header-bar {
             background: #ffffff;
             border-bottom: 1px solid #e2e8f0;
-            padding: 12px 24px;
+            padding: 10px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -197,10 +197,10 @@
         }
 
         .content-body {
-            padding: 20px 24px;
+            padding: 18px 20px;
         }
 
-        /* CLICKABLE Metric Cards with Pointer Cursor & Hover Effect */
+        /* CLICKABLE Metric Cards with Small/Medium Font Sizes */
         .metric-card-link {
             text-decoration: none;
             color: inherit;
@@ -210,24 +210,24 @@
 
         .metric-card {
             border: none;
-            border-radius: 12px;
-            padding: 14px 16px;
+            border-radius: 10px;
+            padding: 12px 14px;
             height: 100%;
-            cursor: pointer; /* Clickable Pointer Cursor */
+            cursor: pointer;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .metric-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
         }
         .metric-card .card-title {
-            font-size: 0.76rem;
+            font-size: 0.72rem;
             font-weight: 700;
             color: #475569;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
         .metric-card .card-value {
-            font-size: 1.35rem; /* Balanced Medium Font Size */
+            font-size: 1.25rem; /* Smaller Balanced Medium Font Size */
             font-weight: 800;
             margin: 0;
             line-height: 1;
@@ -265,7 +265,7 @@
         .card-custom {
             border: none;
             border-radius: var(--card-radius);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 6px 12px -2px rgba(0,0,0,0.02);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 8px -2px rgba(0,0,0,0.02);
             background: #ffffff;
         }
 
@@ -273,15 +273,15 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 13px;
-            border-radius: 10px;
+            padding: 9px 12px;
+            border-radius: 9px;
             border: 1px solid #e2e8f0;
             background: #ffffff;
             color: #334155;
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-decoration: none;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             transition: all 0.2s;
         }
         .quick-action-btn:hover {
@@ -291,21 +291,21 @@
             transform: translateX(2px);
         }
         .quick-action-btn .icon-box {
-            width: 30px;
-            height: 30px;
-            border-radius: 7px;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.9rem;
-            margin-right: 10px;
+            font-size: 0.85rem;
+            margin-right: 8px;
         }
 
         .badge-status {
             font-weight: 700;
-            font-size: 0.72rem;
-            padding: 4px 10px;
-            border-radius: 20px;
+            font-size: 0.7rem;
+            padding: 3px 9px;
+            border-radius: 16px;
         }
         .status-new { background-color: #e0f2fe; color: #0369a1; }
         .status-contacted { background-color: #fef3c7; color: #92400e; }
@@ -315,6 +315,18 @@
         .status-active { background-color: #ccfbf1; color: #115e59; }
         .status-converted { background-color: #dcfce7; color: #15803d; }
         .status-lost { background-color: #fee2e2; color: #b91c1c; }
+
+        /* Compact Top Header Controls */
+        .header-date-input {
+            font-size: 0.75rem !important;
+            padding: 3px 8px !important;
+            border-radius: 6px !important;
+        }
+        .header-select {
+            font-size: 0.78rem !important;
+            padding: 4px 8px !important;
+            border-radius: 6px !important;
+        }
     </style>
 </head>
 <body>
@@ -369,10 +381,10 @@
             <div class="user-info">
                 <div class="user-name">Kiriti</div>
                 <div class="user-role">Super Admin</div>
-                <div class="mt-1 small">
+                <div class="mt-0.5 small">
                     <span class="status-dot-live"></span>
-                    <span class="text-secondary me-2">Live</span>
-                    <a href="/" class="text-danger text-decoration-none fw-semibold">Logout</a>
+                    <span class="text-secondary me-2" style="font-size:0.7rem;">Live</span>
+                    <a href="/" class="text-danger text-decoration-none fw-semibold" style="font-size:0.7rem;">Logout</a>
                 </div>
             </div>
         </div>
@@ -381,7 +393,7 @@
 
 <!-- Main Content Area -->
 <div class="main-content">
-    <!-- Top Header Bar with Date & Filter Options -->
+    <!-- Top Header Bar with Date Range Pickers & Filter Controls -->
     <div class="top-header-bar">
         <div class="d-flex align-items-center">
             <span class="fw-bold fs-6 text-dark">
@@ -389,17 +401,29 @@
             </span>
         </div>
 
-        <!-- Date & Quick Filter Controls in Header -->
-        <form method="GET" action="/" class="d-flex align-items-center gap-2">
-            <span class="small fw-bold text-muted d-none d-md-inline"><i class="bi bi-calendar3 me-1"></i>Period:</span>
-            <select name="time_filter" class="form-select form-select-sm border-secondary-subtle fw-semibold rounded-3" style="width: auto;" onchange="this.form.submit()">
+        <!-- Date Range Pickers & Quick Filter Controls directly in Top Header -->
+        <form method="GET" action="/" class="d-flex align-items-center gap-1.5">
+            <span class="small fw-semibold text-muted d-none d-md-inline" style="font-size:0.75rem;"><i class="bi bi-calendar3 me-1"></i>Date Filter:</span>
+            
+            <!-- Quick Period Select -->
+            <select name="time_filter" class="form-select header-select border-secondary-subtle fw-semibold" style="width: auto;" onchange="this.form.submit()">
                 <option value="this_week" {{ 'selected' if request.args.get('time_filter', 'this_week') == 'this_week' }}>This Week</option>
                 <option value="today" {{ 'selected' if request.args.get('time_filter') == 'today' }}>Today</option>
                 <option value="this_month" {{ 'selected' if request.args.get('time_filter') == 'this_month' }}>This Month</option>
                 <option value="this_quarter" {{ 'selected' if request.args.get('time_filter') == 'this_quarter' }}>This Quarter</option>
                 <option value="all_time" {{ 'selected' if request.args.get('time_filter') == 'all_time' }}>All Time</option>
             </select>
-            <a href="/leads/add" class="btn btn-sm btn-primary fw-semibold rounded-3 px-3"><i class="bi bi-plus-lg me-1"></i>Add Lead</a>
+
+            <!-- Explicit Date Pickers directly in Top Header -->
+            <input type="date" name="start_date" class="form-control header-date-input" value="{{ request.args.get('start_date', '') }}" title="Start Date">
+            <span class="small text-muted" style="font-size:0.7rem;">to</span>
+            <input type="date" name="end_date" class="form-control header-date-input" value="{{ request.args.get('end_date', '') }}" title="End Date">
+            
+            <button type="submit" class="btn btn-xs btn-primary fw-semibold rounded-2 px-2 py-1" style="font-size:0.75rem;" title="Apply Filter">
+                <i class="bi bi-filter"></i>
+            </button>
+
+            <a href="/leads/add" class="btn btn-sm btn-primary fw-semibold rounded-2 px-2.5 py-1 ms-1" style="font-size:0.78rem;"><i class="bi bi-plus-lg me-1"></i>Add Lead</a>
         </form>
     </div>
 
@@ -408,9 +432,9 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for cat, msg in messages %}
-                    <div class="alert alert-{{ cat }} alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
+                    <div class="alert alert-{{ cat }} alert-dismissible fade show rounded-3 mb-3 shadow-sm py-2 px-3 small" role="alert">
                         {{ msg }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
                     </div>
                 {% endfor %}
             {% endif %}
