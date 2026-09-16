@@ -1,29 +1,33 @@
 {% extends "base.html" %}
-{% block title %}{{ lead.name }} - Yayath 99Acres CRM{% endblock %}
+{% block title %}{{ lead.name }} - Yayath Spaces CRM{% endblock %}
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h3 class="fw-bold mb-1"><i class="bi bi-person-fill text-primary me-2"></i>{{ lead.name }}</h3>
-        <small class="text-muted">Lead ID #{{ lead.id }} &bull; Source: {{ lead.source or '99acres' }}</small>
+        <h3 class="fw-bold mb-1 fs-5"><i class="bi bi-person-fill text-primary me-2"></i>{{ lead.name }}</h3>
+        <small class="text-muted">Lead ID #{{ lead.id }} &bull; Source: <span class="badge bg-primary">{{ lead.source or '99acres' }}</span></small>
     </div>
     <div>
-        <a href="/leads/{{ lead.id }}/edit" class="btn btn-outline-primary rounded-3 me-2"><i class="bi bi-pencil me-1"></i>Edit Lead</a>
+        {% if session.get('user_role') != 'Viewer' %}
+        <a href="/leads/{{ lead.id }}/edit" class="btn btn-sm btn-outline-primary rounded-3 me-1 fw-semibold"><i class="bi bi-pencil me-1"></i>Edit Lead</a>
+        {% endif %}
+        {% if session.get('user_role') in ('Admin', 'Manager') %}
         <form method="POST" action="/leads/{{ lead.id }}/delete" class="d-inline" onsubmit="return confirm('Delete this lead?')">
-            <button class="btn btn-outline-danger rounded-3"><i class="bi bi-trash me-1"></i>Delete</button>
+            <button class="btn btn-sm btn-outline-danger rounded-3 fw-semibold"><i class="bi bi-trash me-1"></i>Delete</button>
         </form>
+        {% endif %}
     </div>
 </div>
 
-<div class="row g-4">
-    <!-- Left Column: Lead Info & Follow-up Scheduler -->
+<div class="row g-3">
+    <!-- Left Column: Lead Information & Follow-up Scheduler -->
     <div class="col-lg-5">
-        <div class="card card-custom p-4 mb-4">
-            <h5 class="fw-bold mb-3 border-bottom pb-2">Lead Information</h5>
-            <table class="table table-borderless align-middle mb-0">
-                <tr><td class="text-muted" width="40%">Email</td><td><a href="mailto:{{ lead.email }}" class="fw-bold text-decoration-none">{{ lead.email }}</a></td></tr>
+        <div class="card card-custom p-3.5 mb-3">
+            <h6 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-info-circle-fill text-primary me-2"></i>Lead Details</h6>
+            <table class="table table-borderless align-middle mb-0 small">
+                <tr><td class="text-muted" width="38%">Email</td><td><a href="mailto:{{ lead.email }}" class="fw-bold text-decoration-none">{{ lead.email }}</a></td></tr>
                 <tr><td class="text-muted">Phone</td><td><a href="tel:{{ lead.phone }}" class="fw-bold text-decoration-none text-dark">{{ lead.phone or '-' }}</a></td></tr>
-                <tr><td class="text-muted">Property Type</td><td>{{ lead.property_type or '-' }}</td></tr>
+                <tr><td class="text-muted">Property Type</td><td><span class="badge bg-light text-dark border"><i class="bi bi-building me-1 text-primary"></i>{{ lead.property_type or '-' }}</span></td></tr>
                 <tr><td class="text-muted">Budget</td><td><span class="badge bg-light text-dark border">{{ lead.budget or '-' }}</span></td></tr>
                 <tr><td class="text-muted">Location</td><td>{{ lead.location or '-' }}</td></tr>
                 <tr><td class="text-muted">Status</td><td>
@@ -39,24 +43,26 @@
                     <span class="fw-bold {{ 'text-danger' if lead.priority == 'High' else ('text-warning' if lead.priority == 'Medium' else 'text-success') }}">{{ lead.priority }}</span>
                 </td></tr>
                 <tr><td class="text-muted">Assigned To</td><td><strong>{{ lead.assigned_to or 'Unassigned' }}</strong></td></tr>
-                <tr><td class="text-muted">Created Date</td><td><small>{{ lead.created_at.strftime('%Y-%m-%d %H:%M') if lead.created_at else '-' }}</small></td></tr>
+                <tr><td class="text-muted">Created Date</td><td><small class="text-muted">{{ lead.created_at.strftime('%Y-%m-%d %H:%M') if lead.created_at else '-' }}</small></td></tr>
             </table>
         </div>
 
         <!-- Schedule Follow-up Card -->
-        <div class="card card-custom p-4">
-            <h5 class="fw-bold mb-3"><i class="bi bi-bell-fill text-warning me-2"></i>Schedule Follow-up</h5>
+        <div class="card card-custom p-3.5">
+            <h6 class="fw-bold mb-3 text-dark"><i class="bi bi-bell-fill text-warning me-2"></i>Schedule Follow-up</h6>
+            {% if session.get('user_role') != 'Viewer' %}
             <form method="POST" action="/leads/{{ lead.id }}/followup" class="mb-3">
                 <div class="mb-2">
-                    <label class="form-label small fw-bold">Date & Time</label>
+                    <label class="form-label small fw-semibold text-muted">Date & Time</label>
                     <input type="datetime-local" name="scheduled_at" class="form-control form-control-sm" required>
                 </div>
                 <div class="mb-2">
-                    <label class="form-label small fw-bold">Notes / Agenda</label>
-                    <input type="text" name="description" class="form-control form-control-sm" placeholder="e.g. Discuss site visit and price negotiation">
+                    <label class="form-label small fw-semibold text-muted">Notes / Agenda</label>
+                    <input type="text" name="description" class="form-control form-control-sm" placeholder="e.g. Discuss site visit and pricing">
                 </div>
                 <button class="btn btn-sm btn-warning w-100 fw-bold mt-2"><i class="bi bi-plus-lg me-1"></i>Add Follow-up</button>
             </form>
+            {% endif %}
 
             {% if lead.followups %}
             <h6 class="fw-bold mt-3 mb-2 small text-muted">Follow-up History</h6>
@@ -68,11 +74,11 @@
                     </small>
                     <br><small class="text-muted">{{ fu.description or '' }}</small>
                 </div>
-                {% if not fu.completed %}
+                {% if not fu.completed and session.get('user_role') != 'Viewer' %}
                 <form method="POST" action="/followups/{{ fu.id }}/complete">
-                    <button class="btn btn-sm btn-outline-success"><i class="bi bi-check-lg"></i></button>
+                    <button class="btn btn-sm btn-outline-success p-1 rounded-circle" title="Mark Done"><i class="bi bi-check-lg"></i></button>
                 </form>
-                {% else %}
+                {% elif fu.completed %}
                 <span class="badge bg-success">Done</span>
                 {% endif %}
             </div>
@@ -81,26 +87,50 @@
         </div>
     </div>
 
-    <!-- Right Column: Notes & Activity Timeline -->
+    <!-- Right Column: Stylish Notes & Activity Timeline -->
     <div class="col-lg-7">
         <div class="card card-custom p-4">
-            <h5 class="fw-bold mb-3"><i class="bi bi-journal-text text-primary me-2"></i>Notes & Activity Timeline</h5>
-            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0 fs-6 text-dark"><i class="bi bi-chat-square-text-fill text-primary me-2"></i>Notes & Activity Timeline</h6>
+                <span class="badge bg-light text-muted border">{{ lead.notes|length }} Notes</span>
+            </div>
+
+            <!-- Redesigned Stylish Note Form -->
+            {% if session.get('user_role') != 'Viewer' %}
             <form method="POST" action="/leads/{{ lead.id }}/note" class="mb-4">
-                <div class="input-group">
-                    <textarea name="content" class="form-control" rows="2" placeholder="Add a client note, call log, or status update..." required></textarea>
-                    <button class="btn btn-primary px-4"><i class="bi bi-send-fill me-1"></i>Add Note</button>
+                <div class="form-group mb-2">
+                    <textarea name="content" class="form-control rounded-3 p-3" rows="3" placeholder="Add a client note, call log, meeting discussion, or status update..." style="font-size:0.85rem; border-color: #cbd5e1;" required></textarea>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-4 py-1.5 fw-bold shadow-sm">
+                        <i class="bi bi-send-fill me-1.5"></i>Add Client Note
+                    </button>
                 </div>
             </form>
+            {% endif %}
 
-            {% for note in lead.notes|sort(attribute='created_at', reverse=True) %}
-            <div class="border-start border-3 border-primary ps-3 py-2 mb-3 bg-light rounded-2">
-                <p class="mb-1 text-dark">{{ note.content }}</p>
-                <small class="text-muted"><i class="bi bi-clock me-1"></i>{{ note.created_at.strftime('%d %b %Y, %H:%M') if note.created_at else '' }}</small>
+            <!-- Stylish Note Cards List -->
+            <div class="note-timeline-list">
+                {% for note in lead.notes|sort(attribute='created_at', reverse=True) %}
+                <div class="card border-0 shadow-sm p-3 mb-3" style="background-color: #f8fafc; border-left: 4px solid #6366f1 !important; border-radius: 10px;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width:24px; height:24px; font-size:0.7rem; font-weight:800;">
+                                <i class="bi bi-chat-left-quote-fill"></i>
+                            </div>
+                            <span class="fw-bold text-dark small">Client Activity Log</span>
+                        </div>
+                        <small class="text-muted" style="font-size:0.72rem;"><i class="bi bi-clock me-1"></i>{{ note.created_at.strftime('%d %b %Y, %H:%M') if note.created_at else '' }}</small>
+                    </div>
+                    <p class="mb-0 text-dark" style="font-size:0.88rem; line-height:1.5;">{{ note.content }}</p>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-5 border rounded-3 bg-light">
+                    <i class="bi bi-chat-left-dots fs-3 d-block text-secondary mb-2"></i>
+                    <span class="small">No notes recorded yet. Use the box above to log calls or meetings.</span>
+                </div>
+                {% endfor %}
             </div>
-            {% else %}
-            <div class="text-center text-muted py-4">No notes recorded yet. Use the box above to log calls or meetings.</div>
-            {% endfor %}
         </div>
     </div>
 </div>

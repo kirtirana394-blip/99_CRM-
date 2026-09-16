@@ -10,7 +10,7 @@
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Google Fonts (Clean Compact Typography) -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -18,8 +18,8 @@
         :root {
             --primary-bg: #f8fafc;
             --sidebar-width: 250px;
-            --sidebar-bg: #0f172a;        /* Rich Dark Slate Sidebar Color */
-            --active-nav-bg: #3b82f6;     /* Vibrant Blue Active Pill */
+            --sidebar-bg: #0f172a;
+            --active-nav-bg: #3b82f6;
             --brand-purple: #818cf8;
             --text-dark: #1e293b;
             --card-radius: 12px;
@@ -34,7 +34,7 @@
             padding: 0;
         }
 
-        /* Dark Slate Sidebar styling */
+        /* Dark Slate Sidebar */
         .sidebar {
             width: var(--sidebar-width);
             min-height: 100vh;
@@ -187,7 +187,7 @@
         .top-header-bar {
             background: #ffffff;
             border-bottom: 1px solid #e2e8f0;
-            padding: 10px 20px;
+            padding: 10px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -197,7 +197,40 @@
         }
 
         .content-body {
-            padding: 18px 20px;
+            padding: 18px 24px;
+        }
+
+        /* Redesigned Sleek Header Date Filter Bar */
+        .date-filter-pill-group {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 24px;
+            padding: 3px 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .date-filter-pill-group select {
+            border: none;
+            background: transparent;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #334155;
+            outline: none;
+            cursor: pointer;
+            padding: 3px 6px;
+        }
+
+        .date-filter-pill-group input[type="date"] {
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            font-size: 0.73rem;
+            font-weight: 600;
+            color: #475569;
+            border-radius: 14px;
+            padding: 2px 8px;
+            outline: none;
         }
 
         /* CLICKABLE Metric Cards */
@@ -315,17 +348,6 @@
         .status-active { background-color: #ccfbf1; color: #115e59; }
         .status-converted { background-color: #dcfce7; color: #15803d; }
         .status-lost { background-color: #fee2e2; color: #b91c1c; }
-
-        .header-date-input {
-            font-size: 0.75rem !important;
-            padding: 3px 8px !important;
-            border-radius: 6px !important;
-        }
-        .header-select {
-            font-size: 0.78rem !important;
-            padding: 4px 8px !important;
-            border-radius: 6px !important;
-        }
     </style>
 </head>
 <body>
@@ -377,7 +399,7 @@
         {% endif %}
     </div>
 
-    <!-- User Profile Footer with Logged-in User Session Details -->
+    <!-- User Profile Footer -->
     <div class="sidebar-user-footer">
         <div class="d-flex align-items-center w-100">
             <div class="user-avatar">{{ (session.get('user_name') or 'U')[0].upper() }}</div>
@@ -396,7 +418,7 @@
 
 <!-- Main Content Area -->
 <div class="main-content">
-    <!-- Top Header Bar with Date Range Pickers & Filter Controls -->
+    <!-- Top Header Bar with Redesigned Sleek Date Filter Pill -->
     <div class="top-header-bar">
         <div class="d-flex align-items-center">
             <span class="fw-bold fs-6 text-dark me-2">
@@ -405,28 +427,32 @@
             <span class="badge bg-light text-dark border">{{ session.get('user_role', 'Member') }} Mode</span>
         </div>
 
-        <!-- Date Range Pickers & Quick Filter Controls -->
-        <form method="GET" action="/" class="d-flex align-items-center gap-1.5">
-            <span class="small fw-semibold text-muted d-none d-md-inline" style="font-size:0.75rem;"><i class="bi bi-calendar3 me-1"></i>Date Filter:</span>
-            
-            <select name="time_filter" class="form-select header-select border-secondary-subtle fw-semibold" style="width: auto;" onchange="this.form.submit()">
-                <option value="this_week" {{ 'selected' if request.args.get('time_filter', 'this_week') == 'this_week' }}>This Week</option>
-                <option value="today" {{ 'selected' if request.args.get('time_filter') == 'today' }}>Today</option>
-                <option value="this_month" {{ 'selected' if request.args.get('time_filter') == 'this_month' }}>This Month</option>
-                <option value="this_quarter" {{ 'selected' if request.args.get('time_filter') == 'this_quarter' }}>This Quarter</option>
-                <option value="all_time" {{ 'selected' if request.args.get('time_filter') == 'all_time' }}>All Time</option>
-            </select>
+        <!-- Sleek Date Filter Pill Group -->
+        <form method="GET" action="/" class="d-flex align-items-center gap-2">
+            <div class="date-filter-pill-group">
+                <i class="bi bi-calendar3 text-primary ms-1"></i>
+                <select name="time_filter" onchange="this.form.submit()">
+                    <option value="this_week" {{ 'selected' if request.args.get('time_filter', 'this_week') == 'this_week' }}>This Week</option>
+                    <option value="today" {{ 'selected' if request.args.get('time_filter') == 'today' }}>Today</option>
+                    <option value="this_month" {{ 'selected' if request.args.get('time_filter') == 'this_month' }}>This Month</option>
+                    <option value="this_quarter" {{ 'selected' if request.args.get('time_filter') == 'this_quarter' }}>This Quarter</option>
+                    <option value="all_time" {{ 'selected' if request.args.get('time_filter') == 'all_time' }}>All Time</option>
+                </select>
 
-            <input type="date" name="start_date" class="form-control header-date-input" value="{{ request.args.get('start_date', '') }}" title="Start Date">
-            <span class="small text-muted" style="font-size:0.7rem;">to</span>
-            <input type="date" name="end_date" class="form-control header-date-input" value="{{ request.args.get('end_date', '') }}" title="End Date">
-            
-            <button type="submit" class="btn btn-xs btn-primary fw-semibold rounded-2 px-2 py-1" style="font-size:0.75rem;" title="Apply Filter">
-                <i class="bi bi-filter"></i>
-            </button>
+                <span class="text-muted small px-1">|</span>
+                <input type="date" name="start_date" value="{{ request.args.get('start_date', '') }}" title="Start Date">
+                <span class="text-muted small">to</span>
+                <input type="date" name="end_date" value="{{ request.args.get('end_date', '') }}" title="End Date">
+
+                <button type="submit" class="btn btn-sm btn-primary rounded-circle p-1 ms-1 d-flex align-items-center justify-content-center" style="width:24px; height:24px;" title="Filter">
+                    <i class="bi bi-arrow-right-short" style="font-size:1rem;"></i>
+                </button>
+            </div>
 
             {% if session.get('user_role') != 'Viewer' %}
-            <a href="/leads/add" class="btn btn-sm btn-primary fw-semibold rounded-2 px-2.5 py-1 ms-1" style="font-size:0.78rem;"><i class="bi bi-plus-lg me-1"></i>Add Lead</a>
+            <a href="/leads/add" class="btn btn-sm btn-primary fw-bold rounded-3 px-3 py-1.5 shadow-sm" style="font-size:0.78rem;">
+                <i class="bi bi-plus-lg me-1"></i>Add Lead
+            </a>
             {% endif %}
         </form>
     </div>
