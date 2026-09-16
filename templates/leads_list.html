@@ -117,13 +117,6 @@
                             </a>
                             {% endif %}
 
-                            <!-- ✉️ Email Button -->
-                            {% if lead.email %}
-                            <a href="mailto:{{ lead.email }}?subject=Property%20Enquiry%20-%20Yayath%20Spaces" class="btn btn-sm btn-light border text-primary p-1 rounded-2" title="Send Email">
-                                <i class="bi bi-envelope-fill" style="font-size:0.85rem;"></i>
-                            </a>
-                            {% endif %}
-
                             <!-- ✏️ Edit Button -->
                             <a href="/leads/{{ lead.id }}/edit" class="btn btn-sm btn-light border text-dark p-1 rounded-2" title="Edit Lead"><i class="bi bi-pencil" style="font-size:0.85rem;"></i></a>
 
