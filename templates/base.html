@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Yayath 99Acres CRM{% endblock %}</title>
+    <title>{% block title %}Yayath Spaces CRM{% endblock %}</title>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -17,8 +17,9 @@
     <style>
         :root {
             --primary-bg: #f8fafc;
-            --sidebar-bg: #1e293b;
-            --sidebar-accent: #334155;
+            --sidebar-width: 270px;
+            --active-nav-bg: #212838;
+            --brand-purple: #6366f1;
             --text-dark: #0f172a;
             --card-radius: 16px;
         }
@@ -27,40 +28,157 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: var(--primary-bg);
             color: var(--text-dark);
+            margin: 0;
+            padding: 0;
         }
 
+        /* Sidebar styling matching uploaded design */
         .sidebar {
+            width: var(--sidebar-width);
             min-height: 100vh;
-            background: var(--sidebar-bg);
-            color: #94a3b8;
+            background: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
         }
-        .sidebar .brand {
-            font-size: 1.25rem;
+
+        .sidebar-brand {
+            padding: 24px 20px 20px 20px;
+            text-align: center;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .brand-title {
+            font-size: 1.45rem;
             font-weight: 800;
-            color: #ffffff;
-            padding: 24px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            letter-spacing: -0.3px;
+            line-height: 1.1;
+            margin: 0;
         }
-        .sidebar a {
+        .brand-title .brand-black { color: #0f172a; }
+        .brand-title .brand-purple { color: #6366f1; }
+        .brand-subtitle {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #64748b;
+            letter-spacing: 0.2px;
+            margin-top: 2px;
+        }
+
+        .sidebar-menu {
+            padding: 16px 16px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .menu-header {
+            font-size: 0.72rem;
+            font-weight: 800;
             color: #94a3b8;
-            text-decoration: none;
-            padding: 12px 18px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 12px 14px 6px 14px;
+        }
+
+        .sidebar-nav-item {
             display: flex;
             align-items: center;
-            border-radius: 10px;
-            margin: 4px 12px;
+            padding: 13px 18px;
+            border-radius: 12px;
+            color: #64748b;
+            text-decoration: none;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
             transition: all 0.2s ease;
         }
-        .sidebar a:hover, .sidebar a.active {
-            background: #3b82f6;
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+
+        .sidebar-nav-item i {
+            font-size: 1.25rem;
+            margin-right: 14px;
+            color: #94a3b8;
+            transition: all 0.2s ease;
         }
 
-        /* Reference UI Card Styling */
+        .sidebar-nav-item:hover {
+            background-color: #f1f5f9;
+            color: #0f172a;
+        }
+        .sidebar-nav-item:hover i {
+            color: #475569;
+        }
+
+        /* Active Nav Item - Navy Dark Pill */
+        .sidebar-nav-item.active {
+            background-color: var(--active-nav-bg);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(33, 40, 56, 0.15);
+        }
+        .sidebar-nav-item.active i {
+            color: #ffffff;
+        }
+
+        /* Sidebar Footer User Profile matching screenshot */
+        .sidebar-user-footer {
+            padding: 18px 20px;
+            border-top: 1px solid #f1f5f9;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .user-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background-color: #6366f1;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+
+        .user-info {
+            flex-grow: 1;
+        }
+        .user-name {
+            font-size: 0.92rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.2;
+            margin: 0;
+        }
+        .user-role {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .status-dot-live {
+            width: 8px;
+            height: 8px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 28px;
+            min-height: 100vh;
+        }
+
+        /* Reference Metric Cards Styling */
         .metric-card {
             border: none;
             border-radius: 14px;
@@ -85,7 +203,7 @@
             line-height: 1;
         }
 
-        /* 7 Pastel Themes matching screenshot */
+        /* 7 Pastel Themes */
         .card-blue { background-color: #ebf5ff; }
         .card-blue .card-value { color: #1e40af; }
         .card-blue .icon { color: #3b82f6; }
@@ -121,7 +239,6 @@
             background: #ffffff;
         }
 
-        /* Quick Action Buttons */
         .quick-action-btn {
             display: flex;
             align-items: center;
@@ -138,8 +255,8 @@
             transition: all 0.2s;
         }
         .quick-action-btn:hover {
-            border-color: #3b82f6;
-            color: #3b82f6;
+            border-color: #6366f1;
+            color: #6366f1;
             background: #f8fafc;
             transform: translateX(2px);
         }
@@ -172,51 +289,89 @@
 </head>
 <body>
 
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar Navigation -->
-        <div class="col-md-2 sidebar p-0 d-flex flex-column">
-            <div class="brand">
-                <i class="bi bi-building-fill text-primary me-2"></i>Yayath 99Acres
-            </div>
-            <nav class="mt-3 flex-grow-1">
-                <a href="/" class="{{ 'active' if request.endpoint == 'web.dashboard' }}">
-                    <i class="bi bi-grid-1x2-fill me-3"></i>Dashboard
-                </a>
-                <a href="/leads" class="{{ 'active' if request.endpoint in ('web.leads_list','web.lead_detail') }}">
-                    <i class="bi bi-people-fill me-3"></i>All Leads
-                </a>
-                <a href="/tasks" class="{{ 'active' if request.endpoint == 'web.tasks_list' }}">
-                    <i class="bi bi-check2-square me-3"></i>Tasks & Follow-ups
-                </a>
-                <a href="/users" class="{{ 'active' if request.endpoint == 'web.users_list' }}">
-                    <i class="bi bi-shield-lock-fill me-3"></i>User Management
-                </a>
-                <a href="/import" class="{{ 'active' if request.endpoint == 'web.import_csv' }}">
-                    <i class="bi bi-file-earmark-spreadsheet-fill me-3"></i>Import / Export
-                </a>
-            </nav>
-            <div class="p-3 border-top border-secondary text-center small text-muted">
-                Yayath CRM v2.0 &copy; 2026
-            </div>
+<!-- Sidebar matching uploaded reference design -->
+<div class="sidebar">
+    <!-- Brand Header -->
+    <div class="sidebar-brand">
+        <div class="brand-title">
+            <span class="brand-black">Yayath</span> <span class="brand-purple">Spaces</span>
         </div>
+        <div class="brand-subtitle">Lead Management CRM</div>
+    </div>
 
-        <!-- Main Content Area -->
-        <div class="col-md-10 p-4" style="min-height: 100vh;">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for cat, msg in messages %}
-                        <div class="alert alert-{{ cat }} alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
-                            {{ msg }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+    <!-- Navigation Menu -->
+    <div class="sidebar-menu">
+        <!-- Active Dashboard Button -->
+        <a href="/" class="sidebar-nav-item {{ 'active' if request.endpoint == 'web.dashboard' }}">
+            <i class="bi bi-grid-fill"></i>Dashboard
+        </a>
 
-            {% block content %}{% endblock %}
+        <div class="menu-header">LEADS</div>
+
+        <a href="/leads" class="sidebar-nav-item {{ 'active' if request.endpoint == 'web.leads_list' and not request.args.get('priority') and not request.args.get('status') }}">
+            <i class="bi bi-people"></i>All Leads
+        </a>
+
+        <a href="/leads?priority=High" class="sidebar-nav-item {{ 'active' if request.args.get('priority') == 'High' }}">
+            <i class="bi bi-fire text-danger"></i>Hot Leads
+        </a>
+
+        <a href="/tasks" class="sidebar-nav-item {{ 'active' if request.endpoint == 'web.tasks_list' }}">
+            <i class="bi bi-calendar2-event"></i>Follow-Ups
+        </a>
+
+        <a href="/leads?status=Meeting+Done" class="sidebar-nav-item {{ 'active' if request.args.get('status') == 'Meeting Done' }}">
+            <i class="bi bi-geo-alt"></i>Site Visits
+        </a>
+
+        <a href="/leads?status=Deal+Close" class="sidebar-nav-item {{ 'active' if request.args.get('status') == 'Deal Close' }}">
+            <i class="bi bi-patch-check"></i>Converted Deals
+        </a>
+
+        <a href="/users" class="sidebar-nav-item {{ 'active' if request.endpoint == 'web.users_list' }}">
+            <i class="bi bi-people-fill"></i>Team Members
+        </a>
+
+        <a href="/reports" class="sidebar-nav-item {{ 'active' if request.endpoint == 'web.reports' }}">
+            <i class="bi bi-graph-up-arrow"></i>Reports & Analytics
+        </a>
+
+        <a href="/settings" class="sidebar-nav-item {{ 'active' if request.endpoint == 'web.settings' }}">
+            <i class="bi bi-gear"></i>Settings
+        </a>
+    </div>
+
+    <!-- User Profile Footer matching screenshot -->
+    <div class="sidebar-user-footer">
+        <div class="d-flex align-items-center">
+            <div class="user-avatar">K</div>
+            <div class="user-info">
+                <div class="user-name">Kiriti</div>
+                <div class="user-role">Super Admin</div>
+                <div class="mt-1 small">
+                    <span class="status-dot-live"></span>
+                    <span class="text-secondary me-2">Live</span>
+                    <a href="/" class="text-danger text-decoration-none fw-semibold">Logout</a>
+                </div>
+            </div>
         </div>
     </div>
+</div>
+
+<!-- Main Content Area -->
+<div class="main-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for cat, msg in messages %}
+                <div class="alert alert-{{ cat }} alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
+                    {{ msg }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

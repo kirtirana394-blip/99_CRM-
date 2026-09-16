@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Settings - Yayath Spaces CRM{% endblock %}
+{% block content %}
+
+<div class="mb-4">
+    <h3 class="fw-bold mb-1"><i class="bi bi-gear-fill text-primary me-2"></i>CRM Settings</h3>
+    <small class="text-muted">Configure company branding, lead assignment rules, and system preferences.</small>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card card-custom p-4 mb-4">
+            <h5 class="fw-bold mb-3 border-bottom pb-2">Company & Branding</h5>
+            <form method="POST" action="/settings">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Company Name</label>
+                    <input type="text" name="company_name" class="form-control" value="Yayath Spaces">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">CRM Title</label>
+                    <input type="text" name="crm_title" class="form-control" value="Lead Management CRM">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Admin Contact Email</label>
+                    <input type="email" name="admin_email" class="form-control" value="kiriti@yayathspaces.com">
+                </div>
+                <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check-circle me-1"></i>Save Settings</button>
+            </form>
+        </div>
+
+        <div class="card card-custom p-4">
+            <h5 class="fw-bold mb-3 border-bottom pb-2">Default Lead Assignment Rules</h5>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="assignment" id="roundrobin" checked>
+                <label class="form-check-label fw-semibold" for="roundrobin">
+                    Round-Robin Auto Assignment (Distribute leads evenly among sales team)
+                </label>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="assignment" id="manual">
+                <label class="form-check-label fw-semibold" for="manual">
+                    Manual Assignment Only (Super Admin / Manager manually assigns leads)
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card card-custom p-4">
+            <h5 class="fw-bold mb-3">System Information</h5>
+            <table class="table table-borderless small mb-0">
+                <tr><td class="text-muted">App Name</td><td><strong>Yayath Spaces CRM</strong></td></tr>
+                <tr><td class="text-muted">Version</td><td><span class="badge bg-primary">v2.4.0</span></td></tr>
+                <tr><td class="text-muted">Environment</td><td><span class="badge bg-success">Production (Render Cloud)</span></td></tr>
+                <tr><td class="text-muted">Database</td><td>SQLite / PostgreSQL</td></tr>
+                <tr><td class="text-muted">Status</td><td>🟢 Live & Active</td></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

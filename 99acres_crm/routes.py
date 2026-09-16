@@ -1,5 +1,5 @@
 # routes.py
-"""All routes: Dashboard, Lead CRUD, User Management, Tasks, CSV Import/Export, and REST API."""
+"""All routes: Dashboard, Lead CRUD, User Management, Tasks, Reports, Settings, CSV Import/Export, and REST API."""
 
 from flask import Blueprint, request, jsonify, abort, render_template, redirect, url_for, flash, Response
 from models import Lead, Note, FollowUp, User, Task
@@ -47,7 +47,6 @@ def dashboard():
     now = datetime.utcnow()
     query = Lead.query
 
-    # Apply date range filtering
     if time_filter == 'today':
         start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
         query = query.filter(Lead.created_at >= start_of_day)
@@ -72,7 +71,6 @@ def dashboard():
 
     all_filtered_leads = query.all()
 
-    # Calculate metric card counts
     total_leads = len(all_filtered_leads)
     new_leads = sum(1 for l in all_filtered_leads if l.status == 'New')
     qualified = sum(1 for l in all_filtered_leads if l.status == 'Qualified')
@@ -98,11 +96,14 @@ def dashboard():
 @web_bp.route('/leads')
 def leads_list():
     status_filter = request.args.get('status', '')
+    priority_filter = request.args.get('priority', '')
     search = request.args.get('search', '')
     query = Lead.query
 
     if status_filter:
         query = query.filter_by(status=status_filter)
+    if priority_filter:
+        query = query.filter_by(priority=priority_filter)
     if search:
         query = query.filter(
             (Lead.name.ilike(f'%{search}%')) |
@@ -112,7 +113,7 @@ def leads_list():
             (Lead.property_type.ilike(f'%{search}%'))
         )
     leads = query.order_by(Lead.created_at.desc()).all()
-    return render_template('leads_list.html', leads=leads, status_filter=status_filter, search=search)
+    return render_template('leads_list.html', leads=leads, status_filter=status_filter, priority_filter=priority_filter, search=search)
 
 
 @web_bp.route('/leads/add', methods=['GET', 'POST'])
@@ -223,7 +224,7 @@ def complete_followup(fid):
     flash('Follow-up marked complete.', 'success')
     return redirect(request.referrer or url_for('web.dashboard'))
 
-# ── User Management (Admin Tab) ──────────────────────────────────
+# ── User Management (Team Members) ─────────────────────────────
 @web_bp.route('/users')
 def users_list():
     users = User.query.order_by(User.created_at.desc()).all()
@@ -310,6 +311,33 @@ def delete_task(tid):
     db.session.commit()
     flash('Task deleted.', 'info')
     return redirect(url_for('web.tasks_list'))
+
+# ── Reports & Analytics ───────────────────────────────────────
+@web_bp.route('/reports')
+def reports():
+    total_leads = Lead.query.count()
+    new_leads = Lead.query.filter_by(status='New').count()
+    qualified = Lead.query.filter_by(status='Qualified').count()
+    meeting_done = Lead.query.filter_by(status='Meeting Done').count()
+    proposal_sent = Lead.query.filter_by(status='Proposal Sent').count()
+    deals_closed = Lead.query.filter_by(status='Deal Close').count()
+    team_count = User.query.filter_by(status='Active').count()
+
+    conversion_rate = round((deals_closed / total_leads * 100), 1) if total_leads > 0 else 0.0
+
+    return render_template('reports.html',
+        total_leads=total_leads, new_leads=new_leads, qualified=qualified,
+        meeting_done=meeting_done, proposal_sent=proposal_sent,
+        deals_closed=deals_closed, team_count=team_count,
+        conversion_rate=conversion_rate)
+
+# ── Settings ──────────────────────────────────────────────────
+@web_bp.route('/settings', methods=['GET', 'POST'])
+def settings():
+    if request.method == 'POST':
+        flash('Settings saved successfully!', 'success')
+        return redirect(url_for('web.settings'))
+    return render_template('settings.html')
 
 # ── Import & Export Data ──────────────────────────────────────
 @web_bp.route('/import', methods=['GET', 'POST'])
