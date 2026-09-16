@@ -257,6 +257,8 @@ def sync_google_sheet_web():
                     if phone and phone != '-': existing.phone = phone
                     if sunil_remarks and sunil_remarks != 'NA': existing.sunil_remarks = sunil_remarks
                     if telecaller_col and telecaller_col != 'NA': existing.telecaller_remarks = telecaller_col
+                    if listing_id: existing.listing_id = listing_id
+                    if response_from: existing.response_from = response_from
                     updated_count += 1
                 else:
                     # Insert new lead
@@ -274,6 +276,8 @@ def sync_google_sheet_web():
                         is_imported=True,
                         sunil_remarks=sunil_remarks if sunil_remarks and sunil_remarks != 'NA' else '',
                         telecaller_remarks=telecaller_col if telecaller_col and telecaller_col != 'NA' else '',
+                        listing_id=listing_id,
+                        response_from=response_from,
                         created_at=created_at
                     )
                     db.session.add(lead)

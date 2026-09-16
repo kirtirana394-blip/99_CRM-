@@ -64,6 +64,18 @@ def create_app():
             db.session.rollback()
 
         try:
+            db.session.execute(text("ALTER TABLE leads ADD COLUMN listing_id VARCHAR(100);"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
+        try:
+            db.session.execute(text("ALTER TABLE leads ADD COLUMN response_from VARCHAR(100);"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
+        try:
             db.session.execute(text("UPDATE users SET user_id_name = 'Kirti Rana', name = 'Kirti Rana', email = 'kirti@yayathspaces.com' WHERE user_id_name = 'kiriti' OR user_id_name = 'ADMIN-001' OR email = 'kiriti@yayathspaces.com';"))
             db.session.execute(text("UPDATE users SET user_id_name = 'ravi' WHERE user_id_name = 'MGR-002' OR email = 'ravi@yayathspaces.com';"))
             db.session.execute(text("UPDATE users SET user_id_name = 'neha' WHERE user_id_name = 'EDITOR-003' OR email = 'neha@yayathspaces.com';"))

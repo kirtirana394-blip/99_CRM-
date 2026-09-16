@@ -54,53 +54,45 @@
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>#</th>
+                    <th>S No.</th>
+                    <th>Date</th>
                     <th>Name</th>
-                    <th>Source</th>
-                    <th>Phone</th>
-                    <th>Location</th>
+                    <th>Phone No.</th>
+                    <th>Listing ID</th>
                     <th>Property Type</th>
-                    <th>Budget</th>
-                    <th>Status</th>
+                    <th>Price of Property</th>
+                    <th>Locality</th>
+                    <th>Response From</th>
                     <th>Sunil Remarks</th>
                     <th>Telecaller</th>
-                    <th>Actions & Communication</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for lead in leads %}
                 <tr>
                     <td>{{ lead.id }}</td>
+                    <td><small class="text-muted fw-semibold" style="white-space:nowrap;">{{ lead.created_at.strftime('%d/%m/%Y') if lead.created_at else '-' }}</small></td>
                     <td>
-                        <a href="/leads/{{ lead.id }}" class="text-decoration-none fw-bold text-dark">{{ lead.name }}</a>
-                        <br><small class="text-muted">{{ lead.email }}</small>
-                    </td>
-                    <td>
-                        <span class="badge {{ 'bg-primary' if lead.source == '99acres' else ('bg-success' if lead.source == 'Direct' else 'bg-warning text-dark') }}">
+                        <a href="/leads/{{ lead.id }}" class="text-decoration-none fw-bold text-dark" style="white-space:nowrap;">{{ lead.name }}</a>
+                        <br><span class="badge {{ 'bg-primary' if lead.source == '99acres' else ('bg-success' if lead.source == 'Direct' else 'bg-warning text-dark') }}" style="font-size:0.65rem;">
                             {{ lead.source or '99acres' }}
                         </span>
                     </td>
-                    <td>{{ lead.phone or '-' }}</td>
-                    <td>{{ lead.location or '-' }}</td>
-                    <td>{{ lead.property_type or '-' }}</td>
-                    <td>{{ lead.budget or '-' }}</td>
-                    <td>
-                        {% set status_class = {
-                            'New':'status-new', 'Contacted':'status-contacted',
-                            'Qualified':'status-qualified', 'Meeting Done':'status-meeting',
-                            'Proposal Sent':'status-proposal', 'Active Pipeline':'status-active',
-                            'Deal Close':'status-converted', 'Lost':'status-lost'
-                        } %}
-                        <span class="badge-status {{ status_class.get(lead.status, 'bg-secondary text-white') }}">{{ lead.status }}</span>
-                    </td>
+                    <td><small class="fw-bold" style="white-space:nowrap;">{{ lead.phone or '-' }}</small></td>
+                    <td><small class="font-monospace text-primary fw-bold">{{ lead.listing_id or '-' }}</small></td>
+                    <td><small>{{ lead.property_type or '-' }}</small></td>
+                    <td><small class="fw-semibold text-dark" style="white-space:nowrap;">{{ lead.budget or '-' }}</small></td>
+                    <td><small>{{ lead.location or '-' }}</small></td>
+                    <td><small class="badge bg-light text-dark border">{{ lead.response_from or '-' }}</small></td>
                     <td>
                         {% if lead.sunil_remarks %}
-                        <small class="text-dark d-block text-truncate" style="max-width:150px;" title="{{ lead.sunil_remarks }}">{{ lead.sunil_remarks }}</small>
+                        <small class="text-dark d-block" style="max-width:140px; font-size:0.78rem; line-height:1.2;">{{ lead.sunil_remarks }}</small>
                         {% else %}-{% endif %}
                     </td>
                     <td>
                         {% if lead.telecaller_remarks %}
-                        <small class="text-dark d-block text-truncate" style="max-width:140px;" title="{{ lead.telecaller_remarks }}">{{ lead.telecaller_remarks }}</small>
+                        <small class="text-dark d-block" style="max-width:130px; font-size:0.78rem; line-height:1.2;">{{ lead.telecaller_remarks }}</small>
                         {% else %}-{% endif %}
                     </td>
                     <td>
