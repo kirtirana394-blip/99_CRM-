@@ -157,6 +157,88 @@ def create_app():
             db.session.add_all(users_data)
             db.session.commit()
 
+        # Auto-sync Google Sheet leads on startup if empty
+        if Lead.query.count() <= 8:
+            try:
+                import urllib.request, urllib.parse, csv, io
+                sheet_tabs = ['July - Aug', 'Sep']
+                sheet_id = '1VfFPHNkZ3ljCx_iT-GIRMZpxqgAVP4kdZptXlR6u7qc'
+
+                for tab_name in sheet_tabs:
+                    url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={urllib.parse.quote(tab_name)}'
+                    csv_bytes = urllib.request.urlopen(url, timeout=30).read()
+                    csv_text = csv_bytes.decode('utf-8')
+                    reader = csv.reader(io.StringIO(csv_text))
+                    rows = list(reader)
+                    if not rows or len(rows) < 2:
+                        continue
+
+                    for r in rows[1:]:
+                        if not r or len(r) < 3:
+                            continue
+
+                        col2 = r[2].strip() if len(r) > 2 else ''
+                        col3 = r[3].strip() if len(r) > 3 else ''
+                        if not col2 or col2 in ('-', '', 'Name'):
+                            continue
+
+                        date_str = r[1].strip() if len(r) > 1 else ''
+                        clean_col2 = re.sub(r'[^\d]', '', col2)
+
+                        if len(clean_col2) >= 10 and (col2.isdigit() or col2.startswith('91-') or clean_col2 in col2.replace('-', '')):
+                            phone = col2
+                            location = col3
+                            name = f"Client {clean_col2[-10:]}"
+                        else:
+                            name = col2
+                            phone = col3
+                            locality = r[7].strip() if len(r) > 7 else ''
+                            project = r[8].strip() if len(r) > 8 else ''
+                            location = f"{locality} ({project})" if (project and project != '-') else locality
+
+                        listing_id = r[4].strip() if len(r) > 4 else ''
+                        property_type = r[5].strip() if len(r) > 5 else ''
+                        raw_budget = r[6].strip() if len(r) > 6 else ''
+                        budget = '' if 'Himmat' in raw_budget else raw_budget
+                        source_val = 'Himmat Data' if 'Himmat' in raw_budget else '99acres'
+                        response_from = r[9].strip() if len(r) > 9 else ''
+                        sunil_remarks = r[10].strip() if len(r) > 10 else ''
+                        telecaller_col = r[11].strip() if len(r) > 11 else ''
+
+                        created_at = None
+                        if date_str:
+                            for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%m/%d/%Y']:
+                                try:
+                                    created_at = datetime.strptime(date_str, fmt)
+                                    break
+                                except ValueError:
+                                    pass
+
+                        if not created_at:
+                            if 'Sep' in tab_name:
+                                created_at = datetime(2026, 9, 1)
+                            else:
+                                created_at = datetime(2026, 7, 20)
+
+                        clean_name = name.lower().replace(' ', '.').replace('/', '')
+                        email = f"{clean_name}@lead99.com"
+
+                        lead = Lead(
+                            name=name, email=email, phone=phone, source=source_val,
+                            property_type=property_type or 'Office Space', budget=budget,
+                            location=location, status='New', priority='Medium',
+                            assigned_to='Admin Kiriti', is_imported=True,
+                            sunil_remarks=sunil_remarks if sunil_remarks and sunil_remarks != 'NA' else '',
+                            telecaller_remarks=telecaller_col if telecaller_col and telecaller_col != 'NA' else '',
+                            listing_id=listing_id, response_from=response_from,
+                            created_at=created_at
+                        )
+                        db.session.add(lead)
+                db.session.commit()
+            except Exception as e:
+                print("Auto sync on startup error:", e)
+                db.session.rollback()
+
         if Lead.query.count() == 0:
             leads_data = [
                 Lead(name="Rahul Sharma", email="rahul.sharma@gmail.com", phone="9876543210",
