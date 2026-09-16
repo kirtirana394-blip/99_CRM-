@@ -35,6 +35,54 @@ def api_list_leads():
     leads = Lead.query.order_by(Lead.created_at.desc()).all()
     return jsonify([l.to_dict() for l in leads])
 
+@api_bp.route('/google-sheet-sync', methods=['POST'])
+def api_google_sheet_sync():
+    """Flexible API endpoint for Google Sheets sync (accepts single object or array of objects)."""
+    data = request.get_json(silent=True) or request.form.to_dict()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+
+    items = data if isinstance(data, list) else [data]
+    added_leads = []
+
+    for item in items:
+        name = item.get('name') or item.get('Name') or item.get('Full Name')
+        email = item.get('email') or item.get('Email') or f"lead_{int(datetime.utcnow().timestamp())}@yayath.com"
+        phone = item.get('phone') or item.get('Phone') or item.get('Mobile') or item.get('Contact') or ''
+        source = item.get('source') or item.get('Source') or '99acres'
+        property_type = item.get('property_type') or item.get('Property Type') or item.get('Property') or ''
+        budget = item.get('budget') or item.get('Budget') or ''
+        location = item.get('location') or item.get('Location') or item.get('City') or ''
+        status = item.get('status') or item.get('Status') or 'New'
+        priority = item.get('priority') or item.get('Priority') or 'Medium'
+        assigned_to = item.get('assigned_to') or item.get('Assigned To') or 'Admin Kiriti'
+
+        if not name:
+            continue
+
+        lead = Lead(
+            name=str(name).strip(),
+            email=str(email).strip(),
+            phone=str(phone).strip(),
+            source=str(source).strip() if str(source).strip() in ['99acres', 'Direct'] else '99acres',
+            property_type=str(property_type).strip(),
+            budget=str(budget).strip(),
+            location=str(location).strip(),
+            status=str(status).strip() or 'New',
+            priority=str(priority).strip() or 'Medium',
+            assigned_to=str(assigned_to).strip() or 'Admin Kiriti',
+            is_imported=True
+        )
+        db.session.add(lead)
+        added_leads.append(lead)
+
+    db.session.commit()
+    return jsonify({
+        'success': True,
+        'message': f'Successfully synced {len(added_leads)} leads from Google Sheets.',
+        'count': len(added_leads)
+    }), 201
+
 # ── Web UI Blueprint ──────────────────────────────────────────
 web_bp = Blueprint('web', __name__)
 
