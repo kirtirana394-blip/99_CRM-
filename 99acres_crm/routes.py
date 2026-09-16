@@ -9,6 +9,7 @@ import csv
 import io
 import urllib.request
 import urllib.parse
+import re
 
 # ── API Blueprint ──────────────────────────────────────────────
 api_bp = Blueprint('api', __name__)
@@ -192,30 +193,40 @@ def sync_google_sheet_web():
                 continue
 
             for r in rows[1:]:  # Skip header row
-                if not r or len(r) < 4:
+                if not r or len(r) < 3:
                     continue
 
-                # Extract by column index
-                name = r[2].strip() if len(r) > 2 else ''
-                if not name or name in ('-', '', 'Name'):
+                col2 = r[2].strip() if len(r) > 2 else ''
+                col3 = r[3].strip() if len(r) > 3 else ''
+                if not col2 or col2 in ('-', '', 'Name'):
                     continue
 
                 date_str = r[1].strip() if len(r) > 1 else ''
-                phone = r[3].strip() if len(r) > 3 else ''
+                clean_col2 = re.sub(r'[^\d]', '', col2)
+
+                # Check if Column 2 is actually a phone number (e.g., 9818281199 or 91-8448919797)
+                if len(clean_col2) >= 10 and (col2.isdigit() or col2.startswith('91-') or clean_col2 in col2.replace('-', '')):
+                    phone = col2
+                    location = col3  # Column 3 has location like 'location 57'
+                    name = f"Client {clean_col2[-10:]}"
+                else:
+                    name = col2
+                    phone = col3
+                    locality = r[7].strip() if len(r) > 7 else ''
+                    project = r[8].strip() if len(r) > 8 else ''
+                    if project and project != '-':
+                        location = f"{locality} ({project})" if locality else project
+                    else:
+                        location = locality
+
                 listing_id = r[4].strip() if len(r) > 4 else ''
                 property_type = r[5].strip() if len(r) > 5 else ''
-                budget = r[6].strip() if len(r) > 6 else ''
-                locality = r[7].strip() if len(r) > 7 else ''
-                project = r[8].strip() if len(r) > 8 else ''
+                raw_budget = r[6].strip() if len(r) > 6 else ''
+                budget = '' if 'Himmat' in raw_budget else raw_budget
+                source_val = 'Himmat Data' if 'Himmat' in raw_budget else '99acres'
                 response_from = r[9].strip() if len(r) > 9 else ''
                 sunil_remarks = r[10].strip() if len(r) > 10 else ''
                 telecaller_col = r[11].strip() if len(r) > 11 else ''
-
-                # Build location
-                if project and project != '-':
-                    location = f"{locality} ({project})" if locality else project
-                else:
-                    location = locality
 
                 # Parse date
                 created_at = datetime.utcnow()
@@ -253,7 +264,7 @@ def sync_google_sheet_web():
                         name=name,
                         email=email,
                         phone=phone,
-                        source='99acres',
+                        source=source_val,
                         property_type=property_type or 'Office Space',
                         budget=budget,
                         location=location,

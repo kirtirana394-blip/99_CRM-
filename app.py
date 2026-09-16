@@ -72,6 +72,29 @@ def create_app():
         except Exception:
             db.session.rollback()
 
+        # Auto-heal misaligned imported leads
+        try:
+            import re
+            from models import Lead
+            misaligned_leads = Lead.query.all()
+            for l in misaligned_leads:
+                if not l.name:
+                    continue
+                clean_num = re.sub(r'[^\d]', '', l.name)
+                if len(clean_num) >= 10 and (l.name.isdigit() or l.name.startswith('91-') or clean_num in l.name.replace('-', '')):
+                    real_phone = l.name.strip()
+                    real_loc = l.phone.strip() if (l.phone and not re.sub(r'[^\d]', '', l.phone).isdigit()) else (l.location or '')
+                    l.phone = real_phone
+                    l.location = real_loc
+                    l.name = f"Client {real_phone[-10:]}"
+                    if l.budget and 'Himmat' in l.budget:
+                        l.source = 'Himmat Data'
+                        l.budget = ''
+            db.session.commit()
+        except Exception as e:
+            print("Auto-heal error:", e)
+            db.session.rollback()
+
         # Auto-seed sample users (Admin, Editor, Viewer, Manager) and leads if empty
         from models import Lead, Note, FollowUp, User, Task
         if User.query.count() == 0:
