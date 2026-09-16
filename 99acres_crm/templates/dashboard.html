@@ -2,76 +2,97 @@
 {% block title %}Dashboard - Yayath Spaces CRM{% endblock %}
 {% block content %}
 
-<!-- 7 Top Non-Clickable Metric Cards with Medium Font Sizes -->
+<!-- 7 Top CLICKABLE Metric Cards -->
 <div class="row g-3 mb-4">
+    <!-- 1. New Leads -->
     <div class="col" style="min-width: 130px;">
-        <div class="metric-card card-blue">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="icon"><i class="bi bi-plus-lg"></i></span>
+        <a href="/leads?status=New" class="metric-card-link" title="Click to view New Leads">
+            <div class="metric-card card-blue">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="icon"><i class="bi bi-plus-lg"></i></span>
+                </div>
+                <div class="card-title">New Leads</div>
+                <div class="card-value">{{ new_leads }}</div>
             </div>
-            <div class="card-title">New Leads</div>
-            <div class="card-value">{{ new_leads }}</div>
-        </div>
+        </a>
     </div>
 
+    <!-- 2. Total Leads -->
     <div class="col" style="min-width: 130px;">
-        <div class="metric-card card-green">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="icon"><i class="bi bi-person-fill"></i></span>
+        <a href="/leads" class="metric-card-link" title="Click to view All Leads">
+            <div class="metric-card card-green">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="icon"><i class="bi bi-person-fill"></i></span>
+                </div>
+                <div class="card-title">Total Leads</div>
+                <div class="card-value">{{ total_leads }}</div>
             </div>
-            <div class="card-title">Total Leads</div>
-            <div class="card-value">{{ total_leads }}</div>
-        </div>
+        </a>
     </div>
 
+    <!-- 3. Qualified -->
     <div class="col" style="min-width: 130px;">
-        <div class="metric-card card-yellow">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="icon"><i class="bi bi-check-lg"></i></span>
+        <a href="/leads?status=Qualified" class="metric-card-link" title="Click to view Qualified Leads">
+            <div class="metric-card card-yellow">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="icon"><i class="bi bi-check-lg"></i></span>
+                </div>
+                <div class="card-title">Qualified</div>
+                <div class="card-value">{{ qualified }}</div>
             </div>
-            <div class="card-title">Qualified</div>
-            <div class="card-value">{{ qualified }}</div>
-        </div>
+        </a>
     </div>
 
+    <!-- 4. Meeting Done -->
     <div class="col" style="min-width: 130px;">
-        <div class="metric-card card-purple">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="icon"><i class="bi bi-grid-fill"></i></span>
+        <a href="/leads?status=Meeting+Done" class="metric-card-link" title="Click to view Meeting Done">
+            <div class="metric-card card-purple">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="icon"><i class="bi bi-grid-fill"></i></span>
+                </div>
+                <div class="card-title">Meeting Done</div>
+                <div class="card-value">{{ meeting_done }}</div>
             </div>
-            <div class="card-title">Meeting Done</div>
-            <div class="card-value">{{ meeting_done }}</div>
-        </div>
+        </a>
     </div>
 
+    <!-- 5. Proposal Sent -->
     <div class="col" style="min-width: 130px;">
-        <div class="metric-card card-pink">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="icon"><i class="bi bi-file-earmark-text-fill"></i></span>
+        <a href="/leads?status=Proposal+Sent" class="metric-card-link" title="Click to view Proposals Sent">
+            <div class="metric-card card-pink">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="icon"><i class="bi bi-file-earmark-text-fill"></i></span>
+                </div>
+                <div class="card-title">Proposal Sent</div>
+                <div class="card-value">{{ proposal_sent }}</div>
             </div>
-            <div class="card-title">Proposal Sent</div>
-            <div class="card-value">{{ proposal_sent }}</div>
-        </div>
+        </a>
     </div>
 
+    <!-- 6. Active Pipeline -->
     <div class="col" style="min-width: 130px;">
-        <div class="metric-card card-teal">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="icon"><i class="bi bi-diamond-fill"></i></span>
+        <a href="/leads" class="metric-card-link" title="Click to view Active Pipeline">
+            <div class="metric-card card-teal">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="icon"><i class="bi bi-diamond-fill"></i></span>
+                </div>
+                <div class="card-title">Active Pipeline</div>
+                <div class="card-value">{{ active_pipeline }}</div>
             </div>
-            <div class="card-title">Active Pipeline</div>
-            <div class="card-value">{{ active_pipeline }}</div>
-        </div>
+        </a>
     </div>
 
+    <!-- 7. Deal Close -->
     <div class="col" style="min-width: 130px;">
-        <div class="metric-card card-orange">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="icon"><i class="bi bi-rocket-takeoff-fill"></i></span>
+        <a href="/leads?status=Deal+Close" class="metric-card-link" title="Click to view Converted Deals">
+            <div class="metric-card card-orange">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="icon"><i class="bi bi-rocket-takeoff-fill"></i></span>
+                </div>
+                <div class="card-title">Deal Close</div>
+                <div class="card-value">{{ deal_close }}</div>
             </div>
-            <div class="card-title">Deal Close</div>
-            <div class="card-value">{{ deal_close }}</div>
-        </div>
+        </a>
     </div>
 </div>
 
@@ -171,7 +192,6 @@
 
 <!-- Secondary Row: Recent Leads with Property Type & Latest Note Preview -->
 <div class="row g-4">
-    <!-- Recent Leads with Property Type & Note -->
     <div class="col-lg-8">
         <div class="card card-custom p-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -271,7 +291,6 @@
     </div>
 </div>
 
-<!-- Chart.js Script for Pipeline Visualization -->
 <script>
 function toggleCustomDates(val) {
     const container = document.getElementById('customDateContainer');
