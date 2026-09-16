@@ -264,14 +264,11 @@ def logout():
     return redirect(url_for('web.login'))
 
 
-@web_bp.route('/')
-def dashboard():
+def apply_date_filter(query):
     time_filter = request.args.get('time_filter', 'all_time')
     start_date_str = request.args.get('start_date', '')
     end_date_str = request.args.get('end_date', '')
-
     now = datetime.utcnow()
-    query = Lead.query
 
     if time_filter == 'today':
         start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -283,17 +280,39 @@ def dashboard():
     elif time_filter == 'this_month':
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         query = query.filter(Lead.created_at >= start_of_month)
+    elif time_filter == 'july':
+        query = query.filter(Lead.created_at >= datetime(2026, 7, 1), Lead.created_at < datetime(2026, 8, 1))
+    elif time_filter == 'august':
+        query = query.filter(Lead.created_at >= datetime(2026, 8, 1), Lead.created_at < datetime(2026, 9, 1))
+    elif time_filter == 'september':
+        query = query.filter(Lead.created_at >= datetime(2026, 9, 1), Lead.created_at < datetime(2026, 10, 1))
+    elif time_filter == 'october':
+        query = query.filter(Lead.created_at >= datetime(2026, 10, 1), Lead.created_at < datetime(2026, 11, 1))
     elif time_filter == 'this_quarter':
         quarter_month = ((now.month - 1) // 3) * 3 + 1
         start_of_quarter = now.replace(month=quarter_month, day=1, hour=0, minute=0, second=0, microsecond=0)
         query = query.filter(Lead.created_at >= start_of_quarter)
-    elif time_filter == 'custom' and start_date_str and end_date_str:
+    
+    if start_date_str:
         try:
             sd = datetime.strptime(start_date_str, '%Y-%m-%d')
-            ed = datetime.strptime(end_date_str, '%Y-%m-%d') + timedelta(days=1)
-            query = query.filter(Lead.created_at >= sd, Lead.created_at < ed)
+            query = query.filter(Lead.created_at >= sd)
         except ValueError:
             pass
+    if end_date_str:
+        try:
+            ed = datetime.strptime(end_date_str, '%Y-%m-%d') + timedelta(days=1)
+            query = query.filter(Lead.created_at < ed)
+        except ValueError:
+            pass
+
+    return query, time_filter, start_date_str, end_date_str
+
+
+@web_bp.route('/')
+def dashboard():
+    query = Lead.query
+    query, time_filter, start_date_str, end_date_str = apply_date_filter(query)
 
     all_filtered_leads = query.all()
 
@@ -305,9 +324,8 @@ def dashboard():
     deal_close = sum(1 for l in all_filtered_leads if l.status == 'Deal Close')
     active_pipeline = sum(1 for l in all_filtered_leads if l.status not in ('Deal Close', 'Lost'))
 
-    recent_leads = Lead.query.order_by(Lead.created_at.desc()).limit(7).all()
+    recent_leads = query.order_by(Lead.created_at.desc()).limit(7).all()
     today_followups = FollowUp.query.filter(FollowUp.completed == False).order_by(FollowUp.scheduled_at.asc()).limit(5).all()
-
     users_list = User.query.filter_by(status='Active').all()
 
     return render_template('dashboard.html',
@@ -326,6 +344,8 @@ def leads_list():
     search = request.args.get('search', '')
     query = Lead.query
 
+    query, time_filter, start_date_str, end_date_str = apply_date_filter(query)
+
     if status_filter:
         query = query.filter_by(status=status_filter)
     if priority_filter:
@@ -339,7 +359,7 @@ def leads_list():
             (Lead.property_type.ilike(f'%{search}%'))
         )
     leads = query.order_by(Lead.created_at.desc()).all()
-    return render_template('leads_list.html', leads=leads, status_filter=status_filter, priority_filter=priority_filter, search=search)
+    return render_template('leads_list.html', leads=leads, status_filter=status_filter, priority_filter=priority_filter, search=search, time_filter=time_filter, start_date=start_date_str, end_date=end_date_str)
 
 
 @web_bp.route('/leads/add', methods=['GET', 'POST'])

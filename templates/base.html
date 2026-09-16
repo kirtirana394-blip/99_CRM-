@@ -433,6 +433,10 @@
                 <i class="bi bi-calendar3 text-primary ms-1"></i>
                 <select name="time_filter" onchange="this.form.submit()">
                     <option value="all_time" {{ 'selected' if request.args.get('time_filter', 'all_time') == 'all_time' }}>All Time</option>
+                    <option value="july" {{ 'selected' if request.args.get('time_filter') == 'july' }}>July 2026</option>
+                    <option value="august" {{ 'selected' if request.args.get('time_filter') == 'august' }}>August 2026</option>
+                    <option value="september" {{ 'selected' if request.args.get('time_filter') == 'september' }}>September 2026</option>
+                    <option value="october" {{ 'selected' if request.args.get('time_filter') == 'october' }}>October 2026</option>
                     <option value="today" {{ 'selected' if request.args.get('time_filter') == 'today' }}>Today</option>
                     <option value="this_week" {{ 'selected' if request.args.get('time_filter') == 'this_week' }}>This Week</option>
                     <option value="this_month" {{ 'selected' if request.args.get('time_filter') == 'this_month' }}>This Month</option>
