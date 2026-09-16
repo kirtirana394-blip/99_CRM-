@@ -1,5 +1,5 @@
 # routes.py
-"""All routes: Dashboard, Lead CRUD, User Management, Tasks, Reports, Settings, CSV Import/Export, and REST API."""
+"""All routes: Dashboard, Lead CRUD, User Management (User ID & Password edit), Tasks, Reports, Settings, CSV Import/Export, and REST API."""
 
 from flask import Blueprint, request, jsonify, abort, render_template, redirect, url_for, flash, Response
 from models import Lead, Note, FollowUp, User, Task
@@ -224,7 +224,7 @@ def complete_followup(fid):
     flash('Follow-up marked complete.', 'success')
     return redirect(request.referrer or url_for('web.dashboard'))
 
-# ── User Management (Team Members) ─────────────────────────────
+# ── User Management (Team Members with Password & User ID edit) ──
 @web_bp.route('/users')
 def users_list():
     users = User.query.order_by(User.created_at.desc()).all()
@@ -235,13 +235,15 @@ def add_user():
     if request.method == 'POST':
         name = request.form['name']
         email = request.form['email']
+        user_id_name = request.form.get('user_id_name', '').strip()
+        password = request.form.get('password', 'Password@123').strip()
         role = request.form.get('role', 'Sales Executive')
         
         if User.query.filter_by(email=email).first():
             flash('User with this email already exists.', 'danger')
             return redirect(url_for('web.add_user'))
             
-        user = User(name=name, email=email, role=role)
+        user = User(name=name, email=email, user_id_name=user_id_name or f"USR-{email.split('@')[0]}", password=password, role=role)
         db.session.add(user)
         db.session.commit()
         flash(f'User {name} ({role}) created successfully!', 'success')
@@ -254,10 +256,14 @@ def edit_user(uid):
     if request.method == 'POST':
         user.name = request.form['name']
         user.email = request.form['email']
+        user.user_id_name = request.form.get('user_id_name', user.user_id_name).strip()
+        new_password = request.form.get('password', '').strip()
+        if new_password:
+            user.password = new_password
         user.role = request.form.get('role', 'Sales Executive')
         user.status = request.form.get('status', 'Active')
         db.session.commit()
-        flash('User updated successfully!', 'success')
+        flash(f'User {user.name} details & password updated successfully!', 'success')
         return redirect(url_for('web.users_list'))
     return render_template('user_form.html', user=user, action='Edit')
 
@@ -266,7 +272,7 @@ def delete_user(uid):
     user = User.query.get_or_404(uid)
     db.session.delete(user)
     db.session.commit()
-    flash('User deleted.', 'info')
+    flash(f'User {user.name} deleted successfully.', 'info')
     return redirect(url_for('web.users_list'))
 
 # ── Tasks & Follow-ups Tab ──────────────────────────────────────
@@ -339,9 +345,12 @@ def settings():
         return redirect(url_for('web.settings'))
     return render_template('settings.html')
 
-# ── Import & Export Data ──────────────────────────────────────
+# ── Import & Export Data & Clear Imported Data ────────────────
 @web_bp.route('/import', methods=['GET', 'POST'])
 def import_csv():
+    imported_count = Lead.query.filter_by(is_imported=True).count()
+    total_leads_count = Lead.query.count()
+
     if request.method == 'POST':
         file = request.files.get('file')
         if not file or not file.filename.endswith('.csv'):
@@ -376,16 +385,26 @@ def import_csv():
                 status=(row.get('Status') or row.get('status') or 'New').strip(),
                 priority=(row.get('Priority') or row.get('priority') or 'Medium').strip(),
                 assigned_to=(row.get('Assigned To') or row.get('assigned_to') or '').strip(),
+                is_imported=True,
                 created_at=created_at
             )
             db.session.add(lead)
             count += 1
         
         db.session.commit()
-        flash(f'Successfully imported {count} leads! They are now updated in your Dashboard.', 'success')
+        flash(f'Successfully imported {count} leads! Dashboard metrics and tables have been updated.', 'success')
         return redirect(url_for('web.dashboard'))
 
-    return render_template('import.html')
+    return render_template('import.html', imported_count=imported_count, total_leads_count=total_leads_count)
+
+
+@web_bp.route('/import/clear', methods=['POST'])
+def clear_imported_leads():
+    """Smooth bulk delete option for imported data."""
+    deleted_count = Lead.query.filter_by(is_imported=True).delete()
+    db.session.commit()
+    flash(f'Successfully deleted {deleted_count} imported leads.', 'info')
+    return redirect(url_for('web.import_csv'))
 
 
 @web_bp.route('/export')

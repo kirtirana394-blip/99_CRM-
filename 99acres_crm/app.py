@@ -1,10 +1,11 @@
 # app.py
-"""Yayath 99Acres CRM - Flask Application."""
+"""Yayath Spaces CRM - Flask Application."""
 
 from flask import Flask
 from config import Config
 from extensions import db
 from datetime import datetime, timedelta
+from sqlalchemy import text
 
 
 def create_app():
@@ -18,14 +19,34 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+
+        # Safe schema alter for new columns (user_id_name, password, is_imported)
+        try:
+            db.session.execute(text("ALTER TABLE users ADD COLUMN user_id_name VARCHAR(100);"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
+        try:
+            db.session.execute(text("ALTER TABLE users ADD COLUMN password VARCHAR(255) DEFAULT 'Password@123';"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
+        try:
+            db.session.execute(text("ALTER TABLE leads ADD COLUMN is_imported BOOLEAN DEFAULT FALSE;"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
         # Auto-seed sample users and leads if empty
         from models import Lead, Note, FollowUp, User, Task
         if User.query.count() == 0:
             users_data = [
-                User(name="Admin Kirti", email="kirti@yayath.com", role="Admin"),
-                User(name="Ravi Kumar", email="ravi@yayath.com", role="Manager"),
-                User(name="Neha Sharma", email="neha@yayath.com", role="Sales Executive"),
-                User(name="Suresh Verma", email="suresh@yayath.com", role="Sales Executive"),
+                User(name="Admin Kiriti", email="kiriti@yayathspaces.com", user_id_name="ADMIN-001", password="SuperPassword123", role="Admin"),
+                User(name="Ravi Kumar", email="ravi@yayathspaces.com", user_id_name="MGR-002", password="Password@123", role="Manager"),
+                User(name="Neha Sharma", email="neha@yayathspaces.com", user_id_name="SALES-003", password="Password@123", role="Sales Executive"),
+                User(name="Suresh Verma", email="suresh@yayathspaces.com", user_id_name="SALES-004", password="Password@123", role="Sales Executive"),
             ]
             db.session.add_all(users_data)
             db.session.commit()
@@ -34,10 +55,10 @@ def create_app():
             leads_data = [
                 Lead(name="Rahul Sharma", email="rahul.sharma@gmail.com", phone="9876543210",
                      source="99acres", property_type="Flat/Apartment", budget="50L - 75L",
-                     location="Sector 62, Noida", status="New", priority="High", assigned_to="Admin Kirti"),
+                     location="Sector 62, Noida", status="New", priority="High", assigned_to="Admin Kiriti"),
                 Lead(name="Priya Gupta", email="priya.gupta@yahoo.com", phone="9123456789",
                      source="MagicBricks", property_type="House/Villa", budget="1Cr - 1.5Cr",
-                     location="DLF Phase 3, Gurgaon", status="Contacted", priority="High", assigned_to="Admin Kirti"),
+                     location="DLF Phase 3, Gurgaon", status="Contacted", priority="High", assigned_to="Admin Kiriti"),
                 Lead(name="Amit Verma", email="amit.verma@hotmail.com", phone="9988776655",
                      source="99acres", property_type="Plot/Land", budget="30L - 50L",
                      location="Greater Noida West", status="Qualified", priority="Medium", assigned_to="Ravi Kumar"),
@@ -49,7 +70,7 @@ def create_app():
                      location="Connaught Place, Delhi", status="Proposal Sent", priority="High", assigned_to="Ravi Kumar"),
                 Lead(name="Anita Mehra", email="anita.mehra@gmail.com", phone="9654321098",
                      source="99acres", property_type="Flat/Apartment", budget="40L - 60L",
-                     location="Vaishali, Ghaziabad", status="Deal Close", priority="Low", assigned_to="Admin Kirti"),
+                     location="Vaishali, Ghaziabad", status="Deal Close", priority="Low", assigned_to="Admin Kiriti"),
                 Lead(name="Deepak Kumar", email="deepak.kumar@gmail.com", phone="9012345678",
                      source="Housing.com", property_type="Shop/Showroom", budget="80L - 1Cr",
                      location="Karol Bagh, Delhi", status="Lost", priority="Medium", assigned_to="Suresh Verma"),
@@ -81,7 +102,7 @@ def create_app():
 
             tasks = [
                 Task(title="Follow up with Vikram regarding Proposal", lead_id=5, assigned_to="Ravi Kumar", priority="High"),
-                Task(title="Site visit arrangement for Rahul", lead_id=1, assigned_to="Admin Kirti", priority="High"),
+                Task(title="Site visit arrangement for Rahul", lead_id=1, assigned_to="Admin Kiriti", priority="High"),
                 Task(title="Send quarterly inventory sheet to Priya", lead_id=2, assigned_to="Neha Sharma", priority="Medium"),
             ]
             db.session.add_all(tasks)

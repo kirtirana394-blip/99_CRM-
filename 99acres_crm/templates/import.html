@@ -1,30 +1,45 @@
 {% extends "base.html" %}
-{% block title %}Import & Export - Yayath 99Acres CRM{% endblock %}
+{% block title %}Import & Export Data - Yayath Spaces CRM{% endblock %}
 {% block content %}
 
 <div class="mb-4">
     <h3 class="fw-bold mb-1"><i class="bi bi-file-earmark-spreadsheet-fill text-primary me-2"></i>Import & Export Data</h3>
-    <small class="text-muted">Bulk upload leads using CSV or export your complete lead database anytime.</small>
+    <small class="text-muted">Bulk upload leads using CSV, manage imported datasets, or export complete lead data.</small>
 </div>
 
 <div class="row g-4">
     <!-- Import Section -->
     <div class="col-lg-7">
-        <div class="card card-custom p-4">
+        <div class="card card-custom p-4 mb-4">
             <h5 class="fw-bold mb-3"><i class="bi bi-file-earmark-arrow-up text-success me-2"></i>Import Leads (CSV)</h5>
-            <p class="text-muted small">Upload a <code>.csv</code> file containing lead details. Imported leads will automatically reflect on your Dashboard and Leads table.</p>
+            <p class="text-muted small">Upload a <code>.csv</code> file containing lead details. Imported leads will automatically reflect on your Dashboard, Metric Cards, and Leads directory.</p>
 
             <form method="POST" action="/import" enctype="multipart/form-data" class="mb-4">
                 <div class="mb-3">
                     <label class="form-label fw-bold">Select CSV File</label>
                     <input type="file" name="file" class="form-control" accept=".csv" required>
                 </div>
-                <button type="submit" class="btn btn-success px-4"><i class="bi bi-upload me-2"></i>Upload & Import Leads</button>
+                <button type="submit" class="btn btn-success px-4 fw-semibold"><i class="bi bi-upload me-2"></i>Upload & Import Leads</button>
             </form>
 
-            <div class="alert alert-light border small text-muted">
+            <div class="alert alert-light border small text-muted mb-0">
                 <strong>Expected CSV Columns:</strong><br>
                 <code>Name</code>, <code>Email</code>, <code>Phone</code>, <code>Source</code>, <code>Property Type</code>, <code>Budget</code>, <code>Location</code>, <code>Status</code>, <code>Priority</code>, <code>Assigned To</code>, <code>Created Date</code>
+            </div>
+        </div>
+
+        <!-- Smooth Clear Imported Data Section -->
+        <div class="card card-custom p-4 border-danger-subtle">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="fw-bold text-danger mb-1"><i class="bi bi-trash3-fill me-2"></i>Delete Imported Data</h5>
+                    <small class="text-muted">Currently <strong>{{ imported_count }}</strong> imported leads in database.</small>
+                </div>
+                <form method="POST" action="/import/clear" onsubmit="return confirm('Are you sure you want to delete ALL {{ imported_count }} imported leads?')">
+                    <button type="submit" class="btn btn-outline-danger fw-semibold" {{ 'disabled' if imported_count == 0 }}>
+                        <i class="bi bi-trash me-1"></i>Clear Imported Leads
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -33,9 +48,9 @@
     <div class="col-lg-5">
         <div class="card card-custom p-4 h-100">
             <h5 class="fw-bold mb-3"><i class="bi bi-file-earmark-arrow-down text-primary me-2"></i>Export Leads</h5>
-            <p class="text-muted small">Download your entire CRM lead database as a CSV spreadsheet for offline analysis or backup.</p>
+            <p class="text-muted small">Download your entire CRM lead database (Total {{ total_leads_count }} leads) as a CSV spreadsheet anytime.</p>
             <div class="mt-auto">
-                <a href="/export" class="btn btn-outline-primary w-100 py-2 fw-semibold"><i class="bi bi-download me-2"></i>Export All Leads (CSV)</a>
+                <a href="/export" class="btn btn-outline-primary w-100 py-2.5 fw-bold"><i class="bi bi-download me-2"></i>Export All Leads (CSV)</a>
             </div>
         </div>
     </div>

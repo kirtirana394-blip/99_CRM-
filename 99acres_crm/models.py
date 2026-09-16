@@ -1,5 +1,5 @@
 # models.py
-"""SQLAlchemy models for Yayath 99Acres CRM."""
+"""SQLAlchemy models for Yayath Spaces CRM."""
 
 from extensions import db
 from datetime import datetime
@@ -9,8 +9,10 @@ class User(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
+    user_id_name = db.Column(db.String(100), nullable=True) # Custom User ID / Username
     name = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(255), nullable=False, unique=True)
+    password = db.Column(db.String(255), nullable=True, default='Password@123') # Changeable password
     role = db.Column(db.String(50), nullable=False, default='Sales Executive')  # Admin, Manager, Sales Executive
     status = db.Column(db.String(20), nullable=False, default='Active')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -18,6 +20,7 @@ class User(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
+            'user_id_name': self.user_id_name or f"USER-{self.id}",
             'name': self.name,
             'email': self.email,
             'role': self.role,
@@ -38,9 +41,9 @@ class Lead(db.Model):
     budget = db.Column(db.String(100), nullable=True)
     location = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(50), nullable=False, default='New')  
-    # Statuses: New, Contacted, Qualified, Meeting Done, Proposal Sent, Active Pipeline, Deal Close, Lost
     priority = db.Column(db.String(20), nullable=False, default='Medium')
     assigned_to = db.Column(db.String(255), nullable=True)
+    is_imported = db.Column(db.Boolean, default=False) # Tag for imported leads
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -61,6 +64,7 @@ class Lead(db.Model):
             'status': self.status,
             'priority': self.priority,
             'assigned_to': self.assigned_to,
+            'is_imported': self.is_imported,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M') if self.created_at else '',
             'created_date': self.created_at.strftime('%Y-%m-%d') if self.created_at else '',
             'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M') if self.updated_at else '',
