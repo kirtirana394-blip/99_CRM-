@@ -39,14 +39,14 @@ def create_app():
         except Exception:
             db.session.rollback()
 
-        # Auto-seed sample users and leads if empty
+        # Auto-seed sample users (Admin, Editor, Viewer, Manager) and leads if empty
         from models import Lead, Note, FollowUp, User, Task
         if User.query.count() == 0:
             users_data = [
                 User(name="Admin Kiriti", email="kiriti@yayathspaces.com", user_id_name="ADMIN-001", password="SuperPassword123", role="Admin"),
                 User(name="Ravi Kumar", email="ravi@yayathspaces.com", user_id_name="MGR-002", password="Password@123", role="Manager"),
-                User(name="Neha Sharma", email="neha@yayathspaces.com", user_id_name="SALES-003", password="Password@123", role="Sales Executive"),
-                User(name="Suresh Verma", email="suresh@yayathspaces.com", user_id_name="SALES-004", password="Password@123", role="Sales Executive"),
+                User(name="Neha Sharma", email="neha@yayathspaces.com", user_id_name="EDITOR-003", password="Password@123", role="Editor"),
+                User(name="Suresh Verma", email="suresh@yayathspaces.com", user_id_name="VIEWER-004", password="Password@123", role="Viewer"),
             ]
             db.session.add_all(users_data)
             db.session.commit()
@@ -57,22 +57,22 @@ def create_app():
                      source="99acres", property_type="Flat/Apartment", budget="50L - 75L",
                      location="Sector 62, Noida", status="New", priority="High", assigned_to="Admin Kiriti"),
                 Lead(name="Priya Gupta", email="priya.gupta@yahoo.com", phone="9123456789",
-                     source="MagicBricks", property_type="House/Villa", budget="1Cr - 1.5Cr",
+                     source="99acres", property_type="House/Villa", budget="1Cr - 1.5Cr",
                      location="DLF Phase 3, Gurgaon", status="Contacted", priority="High", assigned_to="Admin Kiriti"),
                 Lead(name="Amit Verma", email="amit.verma@hotmail.com", phone="9988776655",
-                     source="99acres", property_type="Plot/Land", budget="30L - 50L",
+                     source="Direct", property_type="Plot/Land", budget="30L - 50L",
                      location="Greater Noida West", status="Qualified", priority="Medium", assigned_to="Ravi Kumar"),
                 Lead(name="Sneha Patel", email="sneha.patel@gmail.com", phone="8877665544",
-                     source="Referral", property_type="Flat/Apartment", budget="75L - 1Cr",
+                     source="99acres", property_type="Flat/Apartment", budget="75L - 1Cr",
                      location="Indirapuram, Ghaziabad", status="Meeting Done", priority="Medium", assigned_to="Neha Sharma"),
                 Lead(name="Vikram Singh", email="vikram.singh@outlook.com", phone="7766554433",
-                     source="Walk-in", property_type="Office Space", budget="1.5Cr - 2Cr",
+                     source="Direct", property_type="Office Space", budget="1.5Cr - 2Cr",
                      location="Connaught Place, Delhi", status="Proposal Sent", priority="High", assigned_to="Ravi Kumar"),
                 Lead(name="Anita Mehra", email="anita.mehra@gmail.com", phone="9654321098",
                      source="99acres", property_type="Flat/Apartment", budget="40L - 60L",
                      location="Vaishali, Ghaziabad", status="Deal Close", priority="Low", assigned_to="Admin Kiriti"),
                 Lead(name="Deepak Kumar", email="deepak.kumar@gmail.com", phone="9012345678",
-                     source="Housing.com", property_type="Shop/Showroom", budget="80L - 1Cr",
+                     source="Direct", property_type="Shop/Showroom", budget="80L - 1Cr",
                      location="Karol Bagh, Delhi", status="Lost", priority="Medium", assigned_to="Suresh Verma"),
                 Lead(name="Kavita Rani", email="kavita.rani@yahoo.com", phone="8901234567",
                      source="99acres", property_type="Flat/Apartment", budget="25L - 40L",

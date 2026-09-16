@@ -29,7 +29,7 @@
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--primary-bg);
             color: var(--text-dark);
-            font-size: 0.82rem; /* Compact Small/Medium Base Font */
+            font-size: 0.82rem;
             margin: 0;
             padding: 0;
         }
@@ -200,7 +200,7 @@
             padding: 18px 20px;
         }
 
-        /* CLICKABLE Metric Cards with Small/Medium Font Sizes */
+        /* CLICKABLE Metric Cards */
         .metric-card-link {
             text-decoration: none;
             color: inherit;
@@ -227,7 +227,7 @@
             margin-bottom: 3px;
         }
         .metric-card .card-value {
-            font-size: 1.25rem; /* Smaller Balanced Medium Font Size */
+            font-size: 1.25rem;
             font-weight: 800;
             margin: 0;
             line-height: 1;
@@ -316,7 +316,6 @@
         .status-converted { background-color: #dcfce7; color: #15803d; }
         .status-lost { background-color: #fee2e2; color: #b91c1c; }
 
-        /* Compact Top Header Controls */
         .header-date-input {
             font-size: 0.75rem !important;
             padding: 3px 8px !important;
@@ -361,30 +360,34 @@
             <i class="bi bi-patch-check"></i>Converted Deals
         </a>
 
+        {% if session.get('user_role') in ('Admin', 'Manager') %}
         <a href="/users" class="sidebar-nav-item {{ 'active' if request.endpoint in ('web.users_list', 'web.add_user', 'web.edit_user') }}">
             <i class="bi bi-people-fill"></i>Team Members
         </a>
+        {% endif %}
 
         <a href="/reports" class="sidebar-nav-item {{ 'active' if request.endpoint == 'web.reports' }}">
             <i class="bi bi-graph-up-arrow"></i>Reports & Analytics
         </a>
 
+        {% if session.get('user_role') in ('Admin', 'Manager') %}
         <a href="/settings" class="sidebar-nav-item {{ 'active' if request.endpoint == 'web.settings' }}">
             <i class="bi bi-gear"></i>Settings
         </a>
+        {% endif %}
     </div>
 
-    <!-- User Profile Footer -->
+    <!-- User Profile Footer with Logged-in User Session Details -->
     <div class="sidebar-user-footer">
-        <div class="d-flex align-items-center">
-            <div class="user-avatar">K</div>
+        <div class="d-flex align-items-center w-100">
+            <div class="user-avatar">{{ (session.get('user_name') or 'U')[0].upper() }}</div>
             <div class="user-info">
-                <div class="user-name">Kiriti</div>
-                <div class="user-role">Super Admin</div>
-                <div class="mt-0.5 small">
+                <div class="user-name text-truncate" style="max-width: 110px;">{{ session.get('user_name') or 'User' }}</div>
+                <div class="user-role">{{ session.get('user_role') or 'Role' }}</div>
+                <div class="mt-0.5 small d-flex align-items-center">
                     <span class="status-dot-live"></span>
-                    <span class="text-secondary me-2" style="font-size:0.7rem;">Live</span>
-                    <a href="/" class="text-danger text-decoration-none fw-semibold" style="font-size:0.7rem;">Logout</a>
+                    <span class="text-secondary me-2" style="font-size:0.68rem;">Live</span>
+                    <a href="/logout" class="text-danger text-decoration-none fw-bold ms-auto" style="font-size:0.72rem;"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
                 </div>
             </div>
         </div>
@@ -396,16 +399,16 @@
     <!-- Top Header Bar with Date Range Pickers & Filter Controls -->
     <div class="top-header-bar">
         <div class="d-flex align-items-center">
-            <span class="fw-bold fs-6 text-dark">
+            <span class="fw-bold fs-6 text-dark me-2">
                 {% if request.endpoint == 'web.dashboard' %}Dashboard Overview{% elif request.endpoint == 'web.leads_list' %}Lead Directory{% elif request.endpoint == 'web.users_list' %}Team Management{% else %}Portal{% endif %}
             </span>
+            <span class="badge bg-light text-dark border">{{ session.get('user_role', 'Member') }} Mode</span>
         </div>
 
-        <!-- Date Range Pickers & Quick Filter Controls directly in Top Header -->
+        <!-- Date Range Pickers & Quick Filter Controls -->
         <form method="GET" action="/" class="d-flex align-items-center gap-1.5">
             <span class="small fw-semibold text-muted d-none d-md-inline" style="font-size:0.75rem;"><i class="bi bi-calendar3 me-1"></i>Date Filter:</span>
             
-            <!-- Quick Period Select -->
             <select name="time_filter" class="form-select header-select border-secondary-subtle fw-semibold" style="width: auto;" onchange="this.form.submit()">
                 <option value="this_week" {{ 'selected' if request.args.get('time_filter', 'this_week') == 'this_week' }}>This Week</option>
                 <option value="today" {{ 'selected' if request.args.get('time_filter') == 'today' }}>Today</option>
@@ -414,7 +417,6 @@
                 <option value="all_time" {{ 'selected' if request.args.get('time_filter') == 'all_time' }}>All Time</option>
             </select>
 
-            <!-- Explicit Date Pickers directly in Top Header -->
             <input type="date" name="start_date" class="form-control header-date-input" value="{{ request.args.get('start_date', '') }}" title="Start Date">
             <span class="small text-muted" style="font-size:0.7rem;">to</span>
             <input type="date" name="end_date" class="form-control header-date-input" value="{{ request.args.get('end_date', '') }}" title="End Date">
@@ -423,7 +425,9 @@
                 <i class="bi bi-filter"></i>
             </button>
 
+            {% if session.get('user_role') != 'Viewer' %}
             <a href="/leads/add" class="btn btn-sm btn-primary fw-semibold rounded-2 px-2.5 py-1 ms-1" style="font-size:0.78rem;"><i class="bi bi-plus-lg me-1"></i>Add Lead</a>
+            {% endif %}
         </form>
     </div>
 

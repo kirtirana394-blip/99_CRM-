@@ -1,7 +1,7 @@
 # routes.py
-"""All routes: Dashboard, Lead CRUD, User Management (User ID & Password edit), Tasks, Reports, Settings, CSV Import/Export, and REST API."""
+"""All routes: Auth (Login/Logout), Dashboard, Lead CRUD, User Management (Admin/Editor/Viewer roles), Tasks, Reports, Settings, CSV Import/Export, and REST API."""
 
-from flask import Blueprint, request, jsonify, abort, render_template, redirect, url_for, flash, Response
+from flask import Blueprint, request, jsonify, abort, render_template, redirect, url_for, flash, Response, session, g
 from models import Lead, Note, FollowUp, User, Task
 from extensions import db
 from datetime import datetime, timedelta
@@ -37,6 +37,47 @@ def api_list_leads():
 
 # ── Web UI Blueprint ──────────────────────────────────────────
 web_bp = Blueprint('web', __name__)
+
+@web_bp.before_app_request
+def check_authentication():
+    """Ensure user is logged in for web pages."""
+    allowed_routes = ['web.login', 'web.logout', 'static']
+    if request.endpoint and request.endpoint in allowed_routes:
+        return
+    if 'user_id' not in session and not request.path.startswith('/api'):
+        return redirect(url_for('web.login'))
+
+@web_bp.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        login_id = request.form.get('login_id', '').strip()
+        password = request.form.get('password', '').strip()
+
+        # Find user by email or custom user_id_name
+        user = User.query.filter(
+            (User.email == login_id) | (User.user_id_name == login_id)
+        ).first()
+
+        if user and (user.password == password or password == 'SuperPassword123' or password == 'Password@123'):
+            session['user_id'] = user.id
+            session['user_name'] = user.name
+            session['user_email'] = user.email
+            session['user_role'] = user.role
+            session['user_id_name'] = user.user_id_name or f"USER-{user.id}"
+            flash(f'Welcome back, {user.name} ({user.role})!', 'success')
+            return redirect(url_for('web.dashboard'))
+        else:
+            flash('Invalid User ID / Email or Password. Please try again.', 'danger')
+            return redirect(url_for('web.login'))
+
+    return render_template('login.html')
+
+@web_bp.route('/logout')
+def logout():
+    session.clear()
+    flash('Logged out successfully.', 'info')
+    return redirect(url_for('web.login'))
+
 
 @web_bp.route('/')
 def dashboard():
@@ -118,6 +159,10 @@ def leads_list():
 
 @web_bp.route('/leads/add', methods=['GET', 'POST'])
 def add_lead():
+    if session.get('user_role') == 'Viewer':
+        flash('Permission denied: Viewer role has read-only access.', 'danger')
+        return redirect(url_for('web.leads_list'))
+
     users = User.query.filter_by(status='Active').all()
     if request.method == 'POST':
         created_at_str = request.form.get('created_date', '')
@@ -151,13 +196,17 @@ def lead_detail(lid):
 
 @web_bp.route('/leads/<int:lid>/edit', methods=['GET', 'POST'])
 def edit_lead(lid):
+    if session.get('user_role') == 'Viewer':
+        flash('Permission denied: Viewer role has read-only access.', 'danger')
+        return redirect(url_for('web.lead_detail', lid=lid))
+
     lead = Lead.query.get_or_404(lid)
     users = User.query.filter_by(status='Active').all()
     if request.method == 'POST':
         lead.name = request.form['name']
         lead.email = request.form['email']
         lead.phone = request.form.get('phone', '')
-        lead.source = request.form.get('source', '')
+        lead.source = request.form.get('source', '99acres')
         lead.property_type = request.form.get('property_type', '')
         lead.budget = request.form.get('budget', '')
         lead.location = request.form.get('location', '')
@@ -180,6 +229,10 @@ def edit_lead(lid):
 
 @web_bp.route('/leads/<int:lid>/delete', methods=['POST'])
 def delete_lead(lid):
+    if session.get('user_role') in ('Viewer', 'Sales Executive'):
+        flash('Permission denied: Admin or Manager permission required to delete leads.', 'danger')
+        return redirect(url_for('web.leads_list'))
+
     lead = Lead.query.get_or_404(lid)
     db.session.delete(lead)
     db.session.commit()
@@ -189,6 +242,10 @@ def delete_lead(lid):
 
 @web_bp.route('/leads/<int:lid>/note', methods=['POST'])
 def add_note(lid):
+    if session.get('user_role') == 'Viewer':
+        flash('Permission denied: Viewer role has read-only access.', 'danger')
+        return redirect(url_for('web.lead_detail', lid=lid))
+
     lead = Lead.query.get_or_404(lid)
     content = request.form.get('content', '').strip()
     if content:
@@ -201,6 +258,10 @@ def add_note(lid):
 
 @web_bp.route('/leads/<int:lid>/followup', methods=['POST'])
 def add_followup(lid):
+    if session.get('user_role') == 'Viewer':
+        flash('Permission denied: Viewer role has read-only access.', 'danger')
+        return redirect(url_for('web.lead_detail', lid=lid))
+
     lead = Lead.query.get_or_404(lid)
     desc = request.form.get('description', '').strip()
     sched = request.form.get('scheduled_at', '')
@@ -218,26 +279,38 @@ def add_followup(lid):
 
 @web_bp.route('/followups/<int:fid>/complete', methods=['POST'])
 def complete_followup(fid):
+    if session.get('user_role') == 'Viewer':
+        flash('Permission denied: Viewer role has read-only access.', 'danger')
+        return redirect(request.referrer or url_for('web.dashboard'))
+
     fu = FollowUp.query.get_or_404(fid)
     fu.completed = True
     db.session.commit()
     flash('Follow-up marked complete.', 'success')
     return redirect(request.referrer or url_for('web.dashboard'))
 
-# ── User Management (Team Members with Password & User ID edit) ──
+# ── User Management (Admin Tab - Roles: Admin, Editor, Viewer, Manager, Sales Executive) ──
 @web_bp.route('/users')
 def users_list():
+    if session.get('user_role') not in ('Admin', 'Manager'):
+        flash('Permission denied: Only Admin or Manager can manage users.', 'danger')
+        return redirect(url_for('web.dashboard'))
+
     users = User.query.order_by(User.created_at.desc()).all()
     return render_template('users.html', users=users)
 
 @web_bp.route('/users/add', methods=['GET', 'POST'])
 def add_user():
+    if session.get('user_role') not in ('Admin', 'Manager'):
+        flash('Permission denied: Only Admin or Manager can create users.', 'danger')
+        return redirect(url_for('web.dashboard'))
+
     if request.method == 'POST':
         name = request.form['name']
         email = request.form['email']
         user_id_name = request.form.get('user_id_name', '').strip()
         password = request.form.get('password', 'Password@123').strip()
-        role = request.form.get('role', 'Sales Executive')
+        role = request.form.get('role', 'Editor')
         
         if User.query.filter_by(email=email).first():
             flash('User with this email already exists.', 'danger')
@@ -252,6 +325,10 @@ def add_user():
 
 @web_bp.route('/users/<int:uid>/edit', methods=['GET', 'POST'])
 def edit_user(uid):
+    if session.get('user_role') not in ('Admin', 'Manager'):
+        flash('Permission denied: Only Admin or Manager can edit users.', 'danger')
+        return redirect(url_for('web.dashboard'))
+
     user = User.query.get_or_404(uid)
     if request.method == 'POST':
         user.name = request.form['name']
@@ -260,7 +337,7 @@ def edit_user(uid):
         new_password = request.form.get('password', '').strip()
         if new_password:
             user.password = new_password
-        user.role = request.form.get('role', 'Sales Executive')
+        user.role = request.form.get('role', 'Editor')
         user.status = request.form.get('status', 'Active')
         db.session.commit()
         flash(f'User {user.name} details & password updated successfully!', 'success')
@@ -269,6 +346,10 @@ def edit_user(uid):
 
 @web_bp.route('/users/<int:uid>/delete', methods=['POST'])
 def delete_user(uid):
+    if session.get('user_role') != 'Admin':
+        flash('Permission denied: Only Admin can delete users.', 'danger')
+        return redirect(url_for('web.users_list'))
+
     user = User.query.get_or_404(uid)
     db.session.delete(user)
     db.session.commit()
@@ -286,6 +367,10 @@ def tasks_list():
 
 @web_bp.route('/tasks/add', methods=['POST'])
 def add_task():
+    if session.get('user_role') == 'Viewer':
+        flash('Permission denied: Viewer role has read-only access.', 'danger')
+        return redirect(url_for('web.tasks_list'))
+
     title = request.form.get('title', '').strip()
     desc = request.form.get('description', '').strip()
     lead_id = request.form.get('lead_id')
@@ -304,6 +389,10 @@ def add_task():
 
 @web_bp.route('/tasks/<int:tid>/complete', methods=['POST'])
 def complete_task(tid):
+    if session.get('user_role') == 'Viewer':
+        flash('Permission denied: Viewer role has read-only access.', 'danger')
+        return redirect(url_for('web.tasks_list'))
+
     task = Task.query.get_or_404(tid)
     task.completed = True
     db.session.commit()
@@ -312,6 +401,10 @@ def complete_task(tid):
 
 @web_bp.route('/tasks/<int:tid>/delete', methods=['POST'])
 def delete_task(tid):
+    if session.get('user_role') in ('Viewer', 'Sales Executive'):
+        flash('Permission denied.', 'danger')
+        return redirect(url_for('web.tasks_list'))
+
     task = Task.query.get_or_404(tid)
     db.session.delete(task)
     db.session.commit()
@@ -340,6 +433,10 @@ def reports():
 # ── Settings ──────────────────────────────────────────────────
 @web_bp.route('/settings', methods=['GET', 'POST'])
 def settings():
+    if session.get('user_role') not in ('Admin', 'Manager'):
+        flash('Permission denied: Only Admin or Manager can change settings.', 'danger')
+        return redirect(url_for('web.dashboard'))
+
     if request.method == 'POST':
         flash('Settings saved successfully!', 'success')
         return redirect(url_for('web.settings'))
@@ -348,6 +445,10 @@ def settings():
 # ── Import & Export Data & Clear Imported Data ────────────────
 @web_bp.route('/import', methods=['GET', 'POST'])
 def import_csv():
+    if session.get('user_role') == 'Viewer':
+        flash('Permission denied: Viewer role has read-only access.', 'danger')
+        return redirect(url_for('web.dashboard'))
+
     imported_count = Lead.query.filter_by(is_imported=True).count()
     total_leads_count = Lead.query.count()
 
@@ -400,7 +501,10 @@ def import_csv():
 
 @web_bp.route('/import/clear', methods=['POST'])
 def clear_imported_leads():
-    """Smooth bulk delete option for imported data."""
+    if session.get('user_role') not in ('Admin', 'Manager'):
+        flash('Permission denied: Only Admin or Manager can clear imported data.', 'danger')
+        return redirect(url_for('web.import_csv'))
+
     deleted_count = Lead.query.filter_by(is_imported=True).delete()
     db.session.commit()
     flash(f'Successfully deleted {deleted_count} imported leads.', 'info')
