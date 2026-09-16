@@ -37,7 +37,7 @@ def api_list_leads():
 
 @api_bp.route('/google-sheet-sync', methods=['POST'])
 def api_google_sheet_sync():
-    """Flexible API endpoint customized for 99Acres Response Sheet structure."""
+    """Flexible API endpoint customized for live Google Sheet structure (NAME, NUMBER, Loction, BUDGET, Requirement, Remarks)."""
     data = request.get_json(silent=True) or request.form.to_dict()
     if not data:
         return jsonify({'error': 'No data provided'}), 400
@@ -46,27 +46,22 @@ def api_google_sheet_sync():
     added_leads = []
 
     for item in items:
-        name = item.get('name') or item.get('Name') or item.get('Full Name')
+        name = item.get('NAME') or item.get('Name') or item.get('name') or item.get('Full Name')
         if not name or str(name).strip() == '' or str(name).strip().startswith('-'):
             continue
 
-        # Extract Phone No.
-        phone = item.get('Phone No.') or item.get('Phone No') or item.get('phone') or item.get('Phone') or item.get('Mobile') or ''
+        # Extract Phone No / NUMBER
+        phone = item.get('NUMBER') or item.get('Number') or item.get('Phone No.') or item.get('Phone No') or item.get('phone') or item.get('Phone') or item.get('Mobile') or ''
+        
+        # Extract Location / Loction
+        location = item.get('Loction') or item.get('location') or item.get('Location') or item.get('Locality') or ''
         
         # Extract Budget / Price
-        budget = item.get('Price of Property') or item.get('Price') or item.get('budget') or item.get('Budget') or ''
+        budget = item.get('BUDGET') or item.get('Budget') or item.get('Price of Property') or item.get('Price') or ''
         
-        # Extract Location / Locality + Project
-        locality = item.get('Locality') or item.get('locality') or ''
-        project = item.get('Project') or item.get('project') or ''
-        if project and project != '-':
-            location = f"{locality} ({project})" if locality else project
-        else:
-            location = locality or item.get('location') or item.get('Location') or ''
-
-        # Extract Property Type & Listing ID
-        property_type = item.get('Property Type') or item.get('property_type') or ''
-        listing_id = item.get('Listing ID') or item.get('Listing Id') or ''
+        # Extract Requirement & Property Type
+        requirement = item.get('Requirement') or item.get('requirement') or ''
+        property_type = item.get('Property Type') or item.get('property_type') or 'Commercial Office Space'
 
         # Extract Date
         date_str = item.get('Date') or item.get('date') or item.get('created_date')
@@ -80,19 +75,19 @@ def api_google_sheet_sync():
                     pass
 
         # Email fallback
-        clean_name = str(name).strip().lower().replace(' ', '.')
+        clean_name = str(name).strip().lower().replace(' ', '.').replace('/', '')
         email = item.get('email') or item.get('Email') or f"{clean_name}@lead99.com"
 
-        # Remarks / Telecaller Note
-        remarks = item.get('Sunil Remarks') or item.get('Remarks') or item.get('remarks') or ''
+        # Remarks & Source Detection
+        remarks = item.get('Remarks') or item.get('remarks') or item.get('Sunil Remarks') or ''
         telecaller = item.get('Telecaller') or item.get('telecaller') or ''
-        response_from = item.get('Response From') or item.get('response_from') or ''
+        source = '99acres' if '99acres' in str(remarks).lower() or '99acres' in str(item).lower() else '99acres'
 
         lead = Lead(
             name=str(name).strip(),
             email=str(email).strip(),
             phone=str(phone).strip(),
-            source='99acres',
+            source=source,
             property_type=str(property_type).strip(),
             budget=str(budget).strip(),
             location=str(location).strip(),
@@ -105,17 +100,15 @@ def api_google_sheet_sync():
         db.session.add(lead)
         db.session.flush() # get lead.id
 
-        # Attach Note if remarks or listing ID present
+        # Attach Note for Requirement and Remarks
         note_parts = []
-        if listing_id:
-            note_parts.append(f"Listing ID: {listing_id}")
-        if response_from:
-            note_parts.append(f"Response From: {response_from}")
-        if remarks and remarks != 'NA':
+        if requirement:
+            note_parts.append(f"Requirement: {requirement}")
+        if remarks:
             note_parts.append(f"Remarks: {remarks}")
             
         if note_parts:
-            note = Note(lead_id=lead.id, content=" | ".join(note_parts), author=telecaller if telecaller and telecaller != 'NA' else 'Google Sheet Sync')
+            note = Note(lead_id=lead.id, content=" | ".join(note_parts), author='Google Sheet Sync')
             db.session.add(note)
 
         added_leads.append(lead)
@@ -123,7 +116,7 @@ def api_google_sheet_sync():
     db.session.commit()
     return jsonify({
         'success': True,
-        'message': f'Successfully synced {len(added_leads)} leads from 99Acres Sheet.',
+        'message': f'Successfully synced {len(added_leads)} leads from Google Sheet.',
         'count': len(added_leads)
     }), 201
 
