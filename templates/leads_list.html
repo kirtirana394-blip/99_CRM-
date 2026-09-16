@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}All Leads - Yayath 99Acres CRM{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-people me-2"></i>All Leads</h3>
+    <a href="/leads/add" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Add New Lead</a>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+        <form method="GET" class="row g-2 align-items-center">
+            <div class="col-auto">
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search name, email, phone..." value="{{ search }}">
+            </div>
+            <div class="col-auto">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All Status</option>
+                    {% for s in ['New','Contacted','Qualified','Converted','Lost'] %}
+                    <option value="{{ s }}" {{ 'selected' if status_filter == s }}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-sm btn-outline-primary">Filter</button>
+                <a href="/leads" class="btn btn-sm btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Leads Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Location</th>
+                    <th>Property</th>
+                    <th>Budget</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Assigned To</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lead in leads %}
+                <tr>
+                    <td>{{ lead.id }}</td>
+                    <td>
+                        <a href="/leads/{{ lead.id }}" class="text-decoration-none fw-bold">{{ lead.name }}</a>
+                        <br><small class="text-muted">{{ lead.email }}</small>
+                    </td>
+                    <td>{{ lead.phone or '-' }}</td>
+                    <td>{{ lead.location or '-' }}</td>
+                    <td>{{ lead.property_type or '-' }}</td>
+                    <td>{{ lead.budget or '-' }}</td>
+                    <td>
+                        {% set sc = {'New':'badge-new','Contacted':'badge-contacted','Qualified':'badge-qualified','Converted':'badge-converted','Lost':'badge-lost'} %}
+                        <span class="badge {{ sc.get(lead.status, 'bg-secondary') }}">{{ lead.status }}</span>
+                    </td>
+                    <td>
+                        <span class="priority-{{ lead.priority|lower }}">{{ lead.priority }}</span>
+                    </td>
+                    <td>{{ lead.assigned_to or '-' }}</td>
+                    <td><small>{{ lead.created_at.strftime('%d %b') if lead.created_at else '' }}</small></td>
+                    <td>
+                        <a href="/leads/{{ lead.id }}/edit" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
+                        <form method="POST" action="/leads/{{ lead.id }}/delete" class="d-inline" onsubmit="return confirm('Delete this lead?')">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="11" class="text-center text-muted py-4">No leads found. <a href="/leads/add">Add one!</a></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="mt-2 text-muted"><small>Showing {{ leads|length }} leads</small></div>
+{% endblock %}

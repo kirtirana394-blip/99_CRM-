@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block auth_content %}
+<div class="login-page"><div class="login-card"><div class="brand justify-content-center mb-4"><span class="brand-mark">99</span><div><b>99Acres</b><small>Lead CRM</small></div></div><h2>Welcome back</h2><p class="text-muted">Sign in to manage your commercial real-estate leads.</p>
+<form method="post"><label>Username or email</label><input class="form-control mb-3" name="identity" required autofocus><label>Password</label><input class="form-control mb-4" type="password" name="password" required><button class="btn btn-primary w-100 py-2">Sign in</button></form>
+<div class="login-hint">Local default: <b>admin</b> / <b>ChangeMe123!</b></div></div></div>{% endblock %}

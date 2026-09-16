@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Yayath 99Acres CRM{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h3>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card stat-card text-center p-3">
+            <div class="icon text-primary"><i class="bi bi-people"></i></div>
+            <h2 class="mt-2 mb-0">{{ total }}</h2>
+            <small class="text-muted">Total Leads</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card text-center p-3">
+            <div class="icon text-info"><i class="bi bi-star"></i></div>
+            <h2 class="mt-2 mb-0">{{ new_count }}</h2>
+            <small class="text-muted">New</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card text-center p-3">
+            <div class="icon text-warning"><i class="bi bi-telephone"></i></div>
+            <h2 class="mt-2 mb-0">{{ contacted }}</h2>
+            <small class="text-muted">Contacted</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card text-center p-3">
+            <div class="icon text-success"><i class="bi bi-check-circle"></i></div>
+            <h2 class="mt-2 mb-0">{{ qualified }}</h2>
+            <small class="text-muted">Qualified</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card text-center p-3">
+            <div class="icon" style="color:#20c997"><i class="bi bi-trophy"></i></div>
+            <h2 class="mt-2 mb-0">{{ converted }}</h2>
+            <small class="text-muted">Converted</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card text-center p-3">
+            <div class="icon text-danger"><i class="bi bi-x-circle"></i></div>
+            <h2 class="mt-2 mb-0">{{ lost }}</h2>
+            <small class="text-muted">Lost</small>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Leads -->
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Leads</h5>
+                <a href="/leads/add" class="btn btn-sm btn-primary"><i class="bi bi-plus"></i> Add Lead</a>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Name</th><th>Phone</th><th>Source</th><th>Status</th><th>Date</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for lead in recent %}
+                        <tr style="cursor:pointer" onclick="window.location='/leads/{{ lead.id }}'">
+                            <td><strong>{{ lead.name }}</strong><br><small class="text-muted">{{ lead.email }}</small></td>
+                            <td>{{ lead.phone or '-' }}</td>
+                            <td>{{ lead.source or '-' }}</td>
+                            <td>
+                                {% set sc = {'New':'badge-new','Contacted':'badge-contacted','Qualified':'badge-qualified','Converted':'badge-converted','Lost':'badge-lost'} %}
+                                <span class="badge {{ sc.get(lead.status, 'bg-secondary') }}">{{ lead.status }}</span>
+                            </td>
+                            <td><small>{{ lead.created_at.strftime('%d %b %Y') if lead.created_at else '' }}</small></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted py-4">No leads yet. <a href="/leads/add">Add one!</a></td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Follow-ups -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-bell text-warning me-1"></i>Pending Follow-ups</h5>
+            </div>
+            <div class="card-body">
+                {% for fu in today_followups %}
+                <div class="border-bottom pb-2 mb-2">
+                    <strong>{{ fu.lead.name }}</strong><br>
+                    <small class="text-muted">{{ fu.description or 'Follow up' }}</small><br>
+                    <small class="text-danger"><i class="bi bi-clock"></i> {{ fu.scheduled_at.strftime('%d %b %H:%M') }}</small>
+                    <form method="POST" action="/followups/{{ fu.id }}/complete" class="d-inline">
+                        <button class="btn btn-sm btn-outline-success ms-2"><i class="bi bi-check"></i></button>
+                    </form>
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">No pending follow-ups</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

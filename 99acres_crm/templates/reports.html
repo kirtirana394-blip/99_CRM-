@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block content %}<div class="page-head"><div><div class="eyebrow">Analytics</div><h1>Reports</h1><p>Database-driven performance views.</p></div></div><div class="row g-4"><div class="col-lg-6"><div class="panel"><h3>Leads by status</h3><canvas id="statusChart"></canvas></div></div><div class="col-lg-6"><div class="panel"><h3>User performance</h3><canvas id="userChart"></canvas></div></div><div class="col-lg-6"><div class="panel"><h3>Top properties</h3><canvas id="propertyChart"></canvas></div></div><div class="col-lg-6"><div class="panel"><h3>Top locations</h3><canvas id="locationChart"></canvas></div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script><script>
+const statusData={{by_status|tojson}}; const userData={{users|tojson}}; const propertyData={{by_property|tojson}}; const locationData={{by_location|tojson}};
+function make(id,data){new Chart(document.getElementById(id),{type:'bar',data:{labels:data.map(x=>x[0]||'Unknown'),datasets:[{label:'Leads',data:data.map(x=>x[1])}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}})}
+make('statusChart',statusData);make('userChart',userData);make('propertyChart',propertyData);make('locationChart',locationData);
+</script>{% endblock %}

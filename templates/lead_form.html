@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}{{ action }} Lead - Yayath 99Acres CRM{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-person-{{ 'gear' if action == 'Edit' else 'plus' }} me-2"></i>{{ action }} Lead</h3>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <form method="POST">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Name <span class="text-danger">*</span></label>
+                    <input type="text" name="name" class="form-control" value="{{ lead.name if lead else '' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Email <span class="text-danger">*</span></label>
+                    <input type="email" name="email" class="form-control" value="{{ lead.email if lead else '' }}" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Phone</label>
+                    <input type="text" name="phone" class="form-control" value="{{ lead.phone if lead else '' }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Source</label>
+                    <select name="source" class="form-select">
+                        {% for s in ['99acres','MagicBricks','Housing.com','Walk-in','Referral','Website','Other'] %}
+                        <option value="{{ s }}" {{ 'selected' if lead and lead.source == s }}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Property Type</label>
+                    <select name="property_type" class="form-select">
+                        <option value="">-- Select --</option>
+                        {% for p in ['Flat/Apartment','House/Villa','Plot/Land','Office Space','Shop/Showroom','Commercial Land','Warehouse','Other'] %}
+                        <option value="{{ p }}" {{ 'selected' if lead and lead.property_type == p }}>{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Budget</label>
+                    <input type="text" name="budget" class="form-control" placeholder="e.g. 50L - 1Cr" value="{{ lead.budget if lead else '' }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Location</label>
+                    <input type="text" name="location" class="form-control" placeholder="e.g. Sector 62, Noida" value="{{ lead.location if lead else '' }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Assigned To</label>
+                    <input type="text" name="assigned_to" class="form-control" placeholder="Team member name" value="{{ lead.assigned_to if lead else '' }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Status</label>
+                    <select name="status" class="form-select">
+                        {% for s in ['New','Contacted','Qualified','Negotiation','Converted','Lost'] %}
+                        <option value="{{ s }}" {{ 'selected' if lead and lead.status == s }}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Priority</label>
+                    <select name="priority" class="form-select">
+                        {% for p in ['High','Medium','Low'] %}
+                        <option value="{{ p }}" {{ 'selected' if lead and lead.priority == p }}>{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <hr>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>{{ action }} Lead</button>
+            <a href="/leads" class="btn btn-outline-secondary ms-2">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
