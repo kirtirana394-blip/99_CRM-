@@ -208,6 +208,7 @@
                             <th>Lead Details</th>
                             <th>Source</th>
                             <th>Property Type</th>
+                            <th>Sunil Remarks</th>
                             <th>Latest Client Note</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -231,7 +232,16 @@
                                 </span>
                                 {% if lead.location %}<br><small class="text-muted"><i class="bi bi-geo-alt me-1"></i>{{ lead.location }}</small>{% endif %}
                             </td>
-                            <td style="max-width: 200px;">
+                            <td style="max-width: 160px;">
+                                {% if lead.sunil_remarks %}
+                                    <small class="text-dark d-block text-truncate" title="{{ lead.sunil_remarks }}">
+                                        <i class="bi bi-chat-quote-fill text-warning me-1"></i>{{ lead.sunil_remarks }}
+                                    </small>
+                                {% else %}
+                                    <small class="text-muted">-</small>
+                                {% endif %}
+                            </td>
+                            <td style="max-width: 180px;">
                                 {% if lead.latest_note %}
                                     <small class="text-dark d-block text-truncate" title="{{ lead.latest_note }}">
                                         <i class="bi bi-chat-left-text-fill text-info me-1"></i>"{{ lead.latest_note }}"
@@ -255,7 +265,7 @@
                             </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="6" class="text-center text-muted py-4">No leads recorded yet. <a href="/leads/add">Add lead</a> or <a href="/import">Import CSV</a></td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-4">No leads recorded yet. <a href="/leads/add">Add lead</a> or <a href="/import">Import CSV</a></td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

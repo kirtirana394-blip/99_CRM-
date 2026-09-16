@@ -408,6 +408,8 @@ def add_lead():
             status=request.form.get('status', 'New'),
             priority=request.form.get('priority', 'Medium'),
             assigned_to=request.form.get('assigned_to', ''),
+            sunil_remarks=request.form.get('sunil_remarks', ''),
+            telecaller_remarks=request.form.get('telecaller_remarks', ''),
             created_at=created_at
         )
         db.session.add(lead)
@@ -443,6 +445,8 @@ def edit_lead(lid):
         lead.status = request.form.get('status', 'New')
         lead.priority = request.form.get('priority', 'Medium')
         lead.assigned_to = request.form.get('assigned_to', '')
+        lead.sunil_remarks = request.form.get('sunil_remarks', '')
+        lead.telecaller_remarks = request.form.get('telecaller_remarks', '')
         
         created_at_str = request.form.get('created_date', '')
         if created_at_str:
