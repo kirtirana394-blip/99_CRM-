@@ -51,6 +51,18 @@ def create_app():
         except Exception:
             db.session.rollback()
 
+        try:
+            db.session.execute(text("ALTER TABLE leads ADD COLUMN is_deleted BOOLEAN DEFAULT FALSE;"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
+        try:
+            db.session.execute(text("ALTER TABLE leads ADD COLUMN deleted_at DATETIME;"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
         # Auto-seed sample users (Admin, Editor, Viewer, Manager) and leads if empty
         from models import Lead, Note, FollowUp, User, Task
         if User.query.count() == 0:

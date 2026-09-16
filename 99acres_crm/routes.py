@@ -290,6 +290,7 @@ def logout():
 
 
 def apply_date_filter(query):
+    query = query.filter((Lead.is_deleted == False) | (Lead.is_deleted == None))
     time_filter = request.args.get('time_filter', 'all_time')
     start_date_str = request.args.get('start_date', '')
     end_date_str = request.args.get('end_date', '')
@@ -349,6 +350,13 @@ def dashboard():
     deal_close = sum(1 for l in all_filtered_leads if l.status == 'Deal Close')
     active_pipeline = sum(1 for l in all_filtered_leads if l.status not in ('Deal Close', 'Lost'))
 
+    # Source breakdown metrics
+    source_99acres = sum(1 for l in all_filtered_leads if l.source == '99acres')
+    source_direct = sum(1 for l in all_filtered_leads if l.source == 'Direct')
+    source_himmat = sum(1 for l in all_filtered_leads if l.source == 'Himmat Data')
+    source_sunil = sum(1 for l in all_filtered_leads if l.source == 'Sunil Data')
+    trash_count = Lead.query.filter_by(is_deleted=True).count()
+
     recent_leads = query.order_by(Lead.created_at.desc()).limit(7).all()
     today_followups = FollowUp.query.filter(FollowUp.completed == False).order_by(FollowUp.scheduled_at.asc()).limit(5).all()
     users_list = User.query.filter_by(status='Active').all()
@@ -357,6 +365,8 @@ def dashboard():
         total_leads=total_leads, new_leads=new_leads, qualified=qualified,
         meeting_done=meeting_done, proposal_sent=proposal_sent,
         active_pipeline=active_pipeline, deal_close=deal_close,
+        source_99acres=source_99acres, source_direct=source_direct,
+        source_himmat=source_himmat, source_sunil=source_sunil, trash_count=trash_count,
         recent_leads=recent_leads, today_followups=today_followups,
         time_filter=time_filter, start_date=start_date_str, end_date=end_date_str,
         users_list=users_list)
@@ -366,6 +376,7 @@ def dashboard():
 def leads_list():
     status_filter = request.args.get('status', '')
     priority_filter = request.args.get('priority', '')
+    source_filter = request.args.get('source', '')
     search = request.args.get('search', '')
     query = Lead.query
 
@@ -375,6 +386,8 @@ def leads_list():
         query = query.filter_by(status=status_filter)
     if priority_filter:
         query = query.filter_by(priority=priority_filter)
+    if source_filter:
+        query = query.filter_by(source=source_filter)
     if search:
         query = query.filter(
             (Lead.name.ilike(f'%{search}%')) |
@@ -384,7 +397,8 @@ def leads_list():
             (Lead.property_type.ilike(f'%{search}%'))
         )
     leads = query.order_by(Lead.created_at.desc()).all()
-    return render_template('leads_list.html', leads=leads, status_filter=status_filter, priority_filter=priority_filter, search=search, time_filter=time_filter, start_date=start_date_str, end_date=end_date_str)
+    trash_count = Lead.query.filter_by(is_deleted=True).count()
+    return render_template('leads_list.html', leads=leads, status_filter=status_filter, priority_filter=priority_filter, source_filter=source_filter, search=search, time_filter=time_filter, start_date=start_date_str, end_date=end_date_str, trash_count=trash_count)
 
 
 @web_bp.route('/leads/add', methods=['GET', 'POST'])
@@ -468,10 +482,63 @@ def delete_lead(lid):
         return redirect(url_for('web.leads_list'))
 
     lead = Lead.query.get_or_404(lid)
+    lead.is_deleted = True
+    lead.deleted_at = datetime.utcnow()
+    db.session.commit()
+    flash(f'Lead "{lead.name}" moved to Recycle Bin / Trash.', 'warning')
+    return redirect(request.referrer or url_for('web.leads_list'))
+
+
+@web_bp.route('/trash')
+def trash_list():
+    if session.get('user_role') in ('Viewer', 'Sales Executive'):
+        flash('Permission denied: Admin or Manager permission required to access Recycle Bin.', 'danger')
+        return redirect(url_for('web.dashboard'))
+
+    deleted_leads = Lead.query.filter_by(is_deleted=True).order_by(Lead.deleted_at.desc()).all()
+    return render_template('trash.html', leads=deleted_leads)
+
+
+@web_bp.route('/trash/<int:lid>/restore', methods=['POST'])
+def restore_lead(lid):
+    if session.get('user_role') in ('Viewer', 'Sales Executive'):
+        flash('Permission denied.', 'danger')
+        return redirect(url_for('web.trash_list'))
+
+    lead = Lead.query.get_or_404(lid)
+    lead.is_deleted = False
+    lead.deleted_at = None
+    db.session.commit()
+    flash(f'Lead "{lead.name}" restored successfully!', 'success')
+    return redirect(url_for('web.trash_list'))
+
+
+@web_bp.route('/trash/<int:lid>/permanent-delete', methods=['POST'])
+def permanent_delete_lead(lid):
+    if session.get('user_role') not in ('Admin', 'Manager'):
+        flash('Permission denied: Only Admin or Manager can permanently delete leads.', 'danger')
+        return redirect(url_for('web.trash_list'))
+
+    lead = Lead.query.get_or_404(lid)
     db.session.delete(lead)
     db.session.commit()
-    flash('Lead deleted.', 'info')
-    return redirect(url_for('web.leads_list'))
+    flash(f'Lead permanently deleted.', 'info')
+    return redirect(url_for('web.trash_list'))
+
+
+@web_bp.route('/trash/empty', methods=['POST'])
+def empty_trash():
+    if session.get('user_role') != 'Admin':
+        flash('Permission denied: Only Admin can empty the Recycle Bin.', 'danger')
+        return redirect(url_for('web.trash_list'))
+
+    deleted_leads = Lead.query.filter_by(is_deleted=True).all()
+    count = len(deleted_leads)
+    for l in deleted_leads:
+        db.session.delete(l)
+    db.session.commit()
+    flash(f'Recycle Bin emptied! {count} leads permanently purged.', 'info')
+    return redirect(url_for('web.trash_list'))
 
 
 @web_bp.route('/leads/<int:lid>/note', methods=['POST'])

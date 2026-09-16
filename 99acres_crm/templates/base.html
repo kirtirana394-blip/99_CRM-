@@ -396,6 +396,9 @@
         <a href="/settings" class="sidebar-nav-item {{ 'active' if request.endpoint == 'web.settings' }}">
             <i class="bi bi-gear"></i>Settings
         </a>
+        <a href="/trash" class="sidebar-nav-item {{ 'active' if request.endpoint == 'web.trash_list' }}">
+            <i class="bi bi-trash3"></i>Recycle Bin
+        </a>
         {% endif %}
     </div>
 

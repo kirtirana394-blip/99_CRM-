@@ -46,6 +46,8 @@ class Lead(db.Model):
     is_imported = db.Column(db.Boolean, default=False)
     sunil_remarks = db.Column(db.Text, nullable=True)
     telecaller_remarks = db.Column(db.Text, nullable=True)
+    is_deleted = db.Column(db.Boolean, default=False)
+    deleted_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Recycle Bin (Trash) - Yayath Spaces CRM{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1 text-danger"><i class="bi bi-trash3-fill me-2"></i>Recycle Bin (Trash)</h3>
+        <small class="text-muted">Deleted leads remain here until restored or permanently purged.</small>
+    </div>
+    {% if leads %}
+    <form method="POST" action="/trash/empty" onsubmit="return confirm('Are you sure you want to PERMANENTLY delete ALL leads in Recycle Bin? This action cannot be undone!')">
+        <button class="btn btn-danger fw-bold"><i class="bi bi-x-circle-fill me-1"></i>Empty Recycle Bin</button>
+    </form>
+    {% endif %}
+</div>
+
+<!-- Deleted Leads Table -->
+<div class="card card-custom p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Source</th>
+                    <th>Property Type</th>
+                    <th>Deleted Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lead in leads %}
+                <tr>
+                    <td>{{ lead.id }}</td>
+                    <td>
+                        <span class="fw-bold text-dark">{{ lead.name }}</span>
+                        <br><small class="text-muted">{{ lead.email }}</small>
+                    </td>
+                    <td>{{ lead.phone or '-' }}</td>
+                    <td><span class="badge bg-secondary">{{ lead.source or '99acres' }}</span></td>
+                    <td>{{ lead.property_type or '-' }}</td>
+                    <td><small class="text-danger fw-semibold">{{ lead.deleted_at.strftime('%Y-%m-%d %H:%M') if lead.deleted_at else 'Recently' }}</small></td>
+                    <td>
+                        <!-- Restore Button -->
+                        <form method="POST" action="/trash/{{ lead.id }}/restore" class="d-inline">
+                            <button class="btn btn-sm btn-success fw-bold me-1" title="Restore Lead"><i class="bi bi-arrow-counterclockwise me-1"></i>Restore</button>
+                        </form>
+                        <!-- Delete Forever Button -->
+                        <form method="POST" action="/trash/{{ lead.id }}/permanent-delete" class="d-inline" onsubmit="return confirm('Permanently delete this lead forever?')">
+                            <button class="btn btn-sm btn-outline-danger" title="Delete Permanently"><i class="bi bi-trash"></i> Delete Forever</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-5">
+                        <i class="bi bi-trash text-secondary display-4 d-block mb-2"></i>
+                        Recycle Bin is empty. No deleted leads found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
