@@ -1,21 +1,23 @@
 # config.py
-"""Configuration - supports Render (PostgreSQL), Cloud MySQL, or Local MySQL."""
+"""Configuration supporting Render cloud (SQLite/Postgres) and local MySQL."""
 
 import os
 
 class Config:
-    # Render sets DATABASE_URL automatically for its free PostgreSQL
-    # If DATABASE_URL is set, use it directly (cloud deployment)
-    # Otherwise fall back to MySQL config (local development)
     DATABASE_URL = os.getenv('DATABASE_URL', '')
+    IS_RENDER = os.getenv('RENDER', False)
 
     if DATABASE_URL:
-        # Render uses postgres:// but SQLAlchemy needs postgresql://
         if DATABASE_URL.startswith('postgres://'):
             DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
         SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    elif IS_RENDER:
+        # On Render cloud, use zero-config SQLite file if no DATABASE_URL is set
+        BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+        SQLITE_PATH = os.path.join(BASE_DIR, 'crm.sqlite')
+        SQLALCHEMY_DATABASE_URI = f"sqlite:///{SQLITE_PATH}"
     else:
-        # Local MySQL fallback
+        # Local development with MySQL
         MYSQL_USER = os.getenv('MYSQL_USER', 'root')
         MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'Rana1530#')
         MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')
