@@ -7,6 +7,8 @@ from extensions import db
 from datetime import datetime, timedelta
 import csv
 import io
+import urllib.request
+import urllib.parse
 
 # ── API Blueprint ──────────────────────────────────────────────
 api_bp = Blueprint('api', __name__)
@@ -160,16 +162,16 @@ def login():
 @web_bp.route('/sync-google-sheet-now', methods=['GET', 'POST'])
 def sync_google_sheet_web():
     """One-click web trigger to pull latest leads from Google Sheet (July - Aug & Sep tabs)."""
-    import urllib.parse
     sheet_tabs = ['July - Aug', 'Sep']
     sheet_id = '1VfFPHNkZ3ljCx_iT-GIRMZpxqgAVP4kdZptXlR6u7qc'
     added_count = 0
     updated_count = 0
+    errors = []
 
     for tab_name in sheet_tabs:
         try:
             url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={urllib.parse.quote(tab_name)}'
-            csv_bytes = urllib.request.urlopen(url, timeout=10).read()
+            csv_bytes = urllib.request.urlopen(url, timeout=30).read()
             csv_text = csv_bytes.decode('utf-8')
             reader = csv.reader(io.StringIO(csv_text))
             rows = list(reader)
@@ -267,10 +269,13 @@ def sync_google_sheet_web():
 
                     added_count += 1
         except Exception as e:
-            print("Sheet sync error:", e)
+            errors.append(f"{tab_name}: {str(e)}")
 
     db.session.commit()
-    flash(f'✅ Google Sheet Sync Complete! Added {added_count} new leads & refreshed {updated_count} existing leads from Google Sheet.', 'success')
+    if errors:
+        flash(f'⚠️ Google Sheet Sync: Added {added_count} new, refreshed {updated_count} existing. Errors: {"; ".join(errors)}', 'warning')
+    else:
+        flash(f'✅ Google Sheet Sync Complete! Added {added_count} new leads & refreshed {updated_count} existing leads from Google Sheet.', 'success')
     return redirect(request.referrer or url_for('web.dashboard'))
 
 @web_bp.route('/logout')
