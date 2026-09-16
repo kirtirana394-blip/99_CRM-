@@ -164,6 +164,7 @@ def sync_google_sheet_web():
     sheet_tabs = ['July - Aug', 'Sep']
     sheet_id = '1VfFPHNkZ3ljCx_iT-GIRMZpxqgAVP4kdZptXlR6u7qc'
     added_count = 0
+    updated_count = 0
 
     for tab_name in sheet_tabs:
         try:
@@ -213,15 +214,30 @@ def sync_google_sheet_web():
 
                 # Check if lead with same phone or name already exists
                 existing = None
-                if phone and phone != '-':
-                    existing = Lead.query.filter(Lead.phone == phone).first()
-                if not existing:
-                    existing = Lead.query.filter(Lead.name == name).first()
+                if phone and phone != '-' and phone != '':
+                    existing = Lead.query.filter(Lead.phone == str(phone).strip()).first()
+                if not existing and name:
+                    existing = Lead.query.filter(Lead.name == str(name).strip()).first()
 
-                if not existing:
-                    remarks = row_dict.get('Sunil Remarks ') or row_dict.get('Remarks') or row_dict.get('Simmy remarks') or ''
-                    listing_id = row_dict.get('Listing ID') or ''
+                remarks = row_dict.get('Sunil Remarks ') or row_dict.get('Remarks') or row_dict.get('Simmy remarks') or ''
+                listing_id = row_dict.get('Listing ID') or ''
 
+                if existing:
+                    # Update existing lead fields if provided
+                    if location: existing.location = str(location).strip()
+                    if budget: existing.budget = str(budget).strip()
+                    if property_type: existing.property_type = str(property_type).strip()
+                    if phone and phone != '-': existing.phone = str(phone).strip()
+
+                    # Add new note if remarks exist
+                    if remarks and remarks != 'NA':
+                        existing_notes = [n.content for n in existing.notes]
+                        note_text = f"Remarks: {remarks}"
+                        if listing_id: note_text = f"Listing ID: {listing_id} | " + note_text
+                        if not any(remarks in n for n in existing_notes):
+                            db.session.add(Note(lead_id=existing.id, content=note_text))
+                    updated_count += 1
+                else:
                     lead = Lead(
                         name=str(name).strip(),
                         email=email,
@@ -254,7 +270,7 @@ def sync_google_sheet_web():
             print("Sheet sync error:", e)
 
     db.session.commit()
-    flash(f'✅ Google Sheet Sync Complete! {added_count} new leads added from July - Aug & Sep sheets.', 'success')
+    flash(f'✅ Google Sheet Sync Complete! Added {added_count} new leads & refreshed {updated_count} existing leads from Google Sheet.', 'success')
     return redirect(request.referrer or url_for('web.dashboard'))
 
 @web_bp.route('/logout')
