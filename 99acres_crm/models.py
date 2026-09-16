@@ -9,10 +9,10 @@ class User(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id_name = db.Column(db.String(100), nullable=True) # Custom User ID / Username
+    user_id_name = db.Column(db.String(100), nullable=True)
     name = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(255), nullable=False, unique=True)
-    password = db.Column(db.String(255), nullable=True, default='Password@123') # Changeable password
+    password = db.Column(db.String(255), nullable=True, default='Password@123')
     role = db.Column(db.String(50), nullable=False, default='Sales Executive')  # Admin, Manager, Sales Executive
     status = db.Column(db.String(20), nullable=False, default='Active')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -43,13 +43,19 @@ class Lead(db.Model):
     status = db.Column(db.String(50), nullable=False, default='New')  
     priority = db.Column(db.String(20), nullable=False, default='Medium')
     assigned_to = db.Column(db.String(255), nullable=True)
-    is_imported = db.Column(db.Boolean, default=False) # Tag for imported leads
+    is_imported = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     notes = db.relationship('Note', backref='lead', lazy=True, cascade='all, delete-orphan')
     followups = db.relationship('FollowUp', backref='lead', lazy=True, cascade='all, delete-orphan')
     tasks = db.relationship('Task', backref='lead', lazy=True, cascade='all, delete-orphan')
+
+    @property
+    def latest_note(self):
+        if self.notes:
+            return sorted(self.notes, key=lambda n: n.created_at)[-1].content
+        return None
 
     def to_dict(self):
         return {
@@ -64,6 +70,7 @@ class Lead(db.Model):
             'status': self.status,
             'priority': self.priority,
             'assigned_to': self.assigned_to,
+            'latest_note': self.latest_note,
             'is_imported': self.is_imported,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M') if self.created_at else '',
             'created_date': self.created_at.strftime('%Y-%m-%d') if self.created_at else '',

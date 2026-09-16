@@ -1,11 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - Yayath 99Acres CRM{% endblock %}
+{% block title %}Dashboard - Yayath Spaces CRM{% endblock %}
 {% block content %}
 
-<!-- 7 Top Metric Cards matching Reference Design -->
+<!-- 7 Top Soft Pastel Metric Cards -->
 <div class="row g-3 mb-4">
-    <!-- 1. New Leads (Blue) -->
-    <div class="col" style="min-width: 140px;">
+    <div class="col" style="min-width: 135px;">
         <div class="metric-card card-blue">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="icon"><i class="bi bi-plus-lg"></i></span>
@@ -15,8 +14,7 @@
         </div>
     </div>
 
-    <!-- 2. Total Leads (Green) -->
-    <div class="col" style="min-width: 140px;">
+    <div class="col" style="min-width: 135px;">
         <div class="metric-card card-green">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="icon"><i class="bi bi-person-fill"></i></span>
@@ -26,8 +24,7 @@
         </div>
     </div>
 
-    <!-- 3. Qualified (Yellow) -->
-    <div class="col" style="min-width: 140px;">
+    <div class="col" style="min-width: 135px;">
         <div class="metric-card card-yellow">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="icon"><i class="bi bi-check-lg"></i></span>
@@ -37,8 +34,7 @@
         </div>
     </div>
 
-    <!-- 4. Meeting Done (Purple) -->
-    <div class="col" style="min-width: 140px;">
+    <div class="col" style="min-width: 135px;">
         <div class="metric-card card-purple">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="icon"><i class="bi bi-grid-fill"></i></span>
@@ -48,8 +44,7 @@
         </div>
     </div>
 
-    <!-- 5. Proposal Sent (Pink) -->
-    <div class="col" style="min-width: 140px;">
+    <div class="col" style="min-width: 135px;">
         <div class="metric-card card-pink">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="icon"><i class="bi bi-file-earmark-text-fill"></i></span>
@@ -59,8 +54,7 @@
         </div>
     </div>
 
-    <!-- 6. Active Pipeline (Teal) -->
-    <div class="col" style="min-width: 140px;">
+    <div class="col" style="min-width: 135px;">
         <div class="metric-card card-teal">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="icon"><i class="bi bi-diamond-fill"></i></span>
@@ -70,8 +64,7 @@
         </div>
     </div>
 
-    <!-- 7. Deal Close (Orange) -->
-    <div class="col" style="min-width: 140px;">
+    <div class="col" style="min-width: 135px;">
         <div class="metric-card card-orange">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="icon"><i class="bi bi-rocket-takeoff-fill"></i></span>
@@ -84,12 +77,12 @@
 
 <!-- Main Row: Leads Overview Chart & Quick Actions -->
 <div class="row g-4 mb-4">
-    <!-- Left Column: Leads Overview Chart -->
+    <!-- Left Column: Leads Overview Bar Chart -->
     <div class="col-lg-8">
         <div class="card card-custom p-4 h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                    <h5 class="fw-bold mb-0">Leads Overview</h5>
+                    <h5 class="fw-bold mb-0 text-dark">Leads Overview</h5>
                     <small class="text-muted">Current pipeline performance</small>
                 </div>
                 
@@ -113,7 +106,7 @@
                 </form>
             </div>
 
-            <!-- Bar Chart Canvas -->
+            <!-- Softened Bar Chart Canvas -->
             <div style="height: 300px; position: relative;">
                 <canvas id="leadsChart"></canvas>
             </div>
@@ -177,23 +170,26 @@
     </div>
 </div>
 
-<!-- Secondary Row: Recent Leads & Pending Follow-ups -->
+<!-- Secondary Row: Recent Leads with Property Type & Latest Note Preview -->
 <div class="row g-4">
-    <!-- Recent Leads -->
+    <!-- Recent Leads with Property Type & Note -->
     <div class="col-lg-8">
         <div class="card card-custom p-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold mb-0">Recent Leads</h5>
-                <a href="/leads" class="btn btn-sm btn-outline-primary rounded-pill px-3">View All</a>
+                <div>
+                    <h5 class="fw-bold mb-0">Recent Leads & Notes</h5>
+                    <small class="text-muted">Includes Property Type & Client Activity Log</small>
+                </div>
+                <a href="/leads" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">View All</a>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Name</th>
-                            <th>Property</th>
+                            <th>Lead Details</th>
+                            <th>Property Type</th>
+                            <th>Latest Client Note</th>
                             <th>Status</th>
-                            <th>Assigned To</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -202,9 +198,23 @@
                         <tr>
                             <td>
                                 <a href="/leads/{{ lead.id }}" class="fw-bold text-decoration-none text-dark">{{ lead.name }}</a>
-                                <br><small class="text-muted">{{ lead.phone or lead.email }}</small>
+                                <br><small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ lead.phone or lead.email }}</small>
                             </td>
-                            <td><small class="fw-semibold">{{ lead.property_type or '-' }}</small><br><small class="text-muted">{{ lead.location or '' }}</small></td>
+                            <td>
+                                <span class="badge bg-light text-dark border font-monospace">
+                                    <i class="bi bi-building me-1 text-primary"></i>{{ lead.property_type or 'General' }}
+                                </span>
+                                {% if lead.location %}<br><small class="text-muted"><i class="bi bi-geo-alt me-1"></i>{{ lead.location }}</small>{% endif %}
+                            </td>
+                            <td style="max-width: 220px;">
+                                {% if lead.latest_note %}
+                                    <small class="text-dark d-block text-truncate" title="{{ lead.latest_note }}">
+                                        <i class="bi bi-chat-left-text-fill text-info me-1"></i>"{{ lead.latest_note }}"
+                                    </small>
+                                {% else %}
+                                    <small class="text-muted italic"><i class="bi bi-pencil me-1"></i>No note added</small>
+                                {% endif %}
+                            </td>
                             <td>
                                 {% set status_class = {
                                     'New':'status-new', 'Contacted':'status-contacted',
@@ -214,10 +224,9 @@
                                 } %}
                                 <span class="badge-status {{ status_class.get(lead.status, 'bg-secondary text-white') }}">{{ lead.status }}</span>
                             </td>
-                            <td><small>{{ lead.assigned_to or 'Unassigned' }}</small></td>
                             <td>
-                                <a href="/leads/{{ lead.id }}/edit" class="btn btn-sm btn-light border me-1"><i class="bi bi-pencil"></i></a>
-                                <a href="/leads/{{ lead.id }}" class="btn btn-sm btn-light border"><i class="bi bi-eye"></i></a>
+                                <a href="/leads/{{ lead.id }}" class="btn btn-sm btn-light border me-1" title="View & Add Note"><i class="bi bi-journal-plus text-primary"></i></a>
+                                <a href="/leads/{{ lead.id }}/edit" class="btn btn-sm btn-light border" title="Edit"><i class="bi bi-pencil"></i></a>
                             </td>
                         </tr>
                         {% else %}
@@ -257,7 +266,7 @@
     </div>
 </div>
 
-<!-- Chart.js Script for Pipeline Visualization -->
+<!-- Softened Chart.js Script for Pipeline Visualization -->
 <script>
 function toggleCustomDates(val) {
     const container = document.getElementById('customDateContainer');
@@ -272,7 +281,6 @@ function toggleCustomDates(val) {
 document.addEventListener('DOMContentLoaded', function() {
     const ctx = document.getElementById('leadsChart').getContext('2d');
     
-    // Values from backend template context
     const dataValues = [
         {{ new_leads }},
         {{ total_leads }},
@@ -291,17 +299,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 label: 'Leads Count',
                 data: dataValues,
                 backgroundColor: [
-                    '#3b82f6', // Blue (New Leads)
-                    '#10b981', // Green (Total Leads)
-                    '#eab308', // Yellow (Qualified)
-                    '#a855f7', // Purple (Meeting Done)
-                    '#f43f5e', // Pink (Proposal Sent)
-                    '#0284c7', // Teal (Active Pipeline)
-                    '#f97316'  // Orange (Deal Close)
+                    '#60a5fa', // Soft Blue
+                    '#4ade80', // Soft Green
+                    '#facc15', // Soft Yellow
+                    '#c084fc', // Soft Purple
+                    '#fb7185', // Soft Pink
+                    '#38bdf8', // Soft Teal
+                    '#fb923c'  // Soft Orange
                 ],
                 borderRadius: 8,
                 borderSkipped: false,
-                barThickness: 32
+                barThickness: 30
             }]
         },
         options: {
@@ -318,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
             scales: {
                 y: {
                     beginAtZero: true,
-                    grid: { color: '#f1f5f9' },
+                    grid: { color: '#f8fafc' },
                     ticks: { precision: 0, font: { family: 'Plus Jakarta Sans' } }
                 },
                 x: {

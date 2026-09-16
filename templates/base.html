@@ -9,7 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Google Fonts (Clean, Attractive Typography) -->
+    <!-- Google Fonts (Clean Plus Jakarta Sans) -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,8 +17,8 @@
     <style>
         :root {
             --primary-bg: #f8fafc;
-            --sidebar-width: 270px;
-            --active-nav-bg: #212838;
+            --sidebar-width: 260px;
+            --active-nav-bg: #1e293b;
             --brand-purple: #6366f1;
             --text-dark: #0f172a;
             --card-radius: 16px;
@@ -32,7 +32,7 @@
             padding: 0;
         }
 
-        /* Sidebar styling matching design */
+        /* Compact Sidebar styling (No Scrollbar, Soft Elegance) */
         .sidebar {
             width: var(--sidebar-width);
             min-height: 100vh;
@@ -48,13 +48,13 @@
         }
 
         .sidebar-brand {
-            padding: 24px 20px 20px 20px;
+            padding: 20px 18px 16px 18px;
             text-align: center;
             border-bottom: 1px solid #f1f5f9;
         }
 
         .brand-title {
-            font-size: 1.45rem;
+            font-size: 1.4rem;
             font-weight: 800;
             line-height: 1.1;
             margin: 0;
@@ -62,7 +62,7 @@
         .brand-title .brand-black { color: #0f172a; }
         .brand-title .brand-purple { color: #6366f1; }
         .brand-subtitle {
-            font-size: 0.78rem;
+            font-size: 0.76rem;
             font-weight: 600;
             color: #64748b;
             letter-spacing: 0.2px;
@@ -70,53 +70,59 @@
         }
 
         .sidebar-menu {
-            padding: 16px 16px;
+            padding: 12px 14px;
             flex-grow: 1;
             overflow-y: auto;
+            /* Hide scrollbar for Chrome, Safari and Opera */
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .sidebar-menu::-webkit-scrollbar {
+            display: none;
         }
 
         .menu-header {
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             font-weight: 800;
             color: #94a3b8;
             letter-spacing: 1.2px;
             text-transform: uppercase;
-            padding: 12px 14px 6px 14px;
+            padding: 10px 12px 4px 12px;
         }
 
         .sidebar-nav-item {
             display: flex;
             align-items: center;
-            padding: 13px 18px;
-            border-radius: 12px;
+            padding: 10px 14px;
+            border-radius: 10px;
             color: #64748b;
             text-decoration: none;
             font-weight: 600;
-            font-size: 0.95rem;
-            margin-bottom: 6px;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
             transition: all 0.2s ease;
         }
 
         .sidebar-nav-item i {
-            font-size: 1.25rem;
-            margin-right: 14px;
+            font-size: 1.15rem;
+            margin-right: 12px;
             color: #94a3b8;
             transition: all 0.2s ease;
         }
 
         .sidebar-nav-item:hover {
-            background-color: #f1f5f9;
-            color: #0f172a;
+            background-color: #f8fafc;
+            color: #6366f1;
         }
         .sidebar-nav-item:hover i {
-            color: #475569;
+            color: #6366f1;
         }
 
         /* Active Nav Item - Navy Dark Pill */
         .sidebar-nav-item.active {
             background-color: var(--active-nav-bg);
             color: #ffffff;
-            box-shadow: 0 4px 12px rgba(33, 40, 56, 0.15);
+            box-shadow: 0 4px 12px rgba(30, 41, 59, 0.12);
         }
         .sidebar-nav-item.active i {
             color: #ffffff;
@@ -124,7 +130,7 @@
 
         /* Sidebar Footer User Profile */
         .sidebar-user-footer {
-            padding: 18px 20px;
+            padding: 14px 18px;
             border-top: 1px solid #f1f5f9;
             background: #ffffff;
             display: flex;
@@ -133,31 +139,31 @@
         }
 
         .user-avatar {
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             background-color: #6366f1;
             color: #ffffff;
             font-weight: 800;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 12px;
+            margin-right: 10px;
         }
 
         .user-info {
             flex-grow: 1;
         }
         .user-name {
-            font-size: 0.92rem;
+            font-size: 0.9rem;
             font-weight: 800;
             color: #0f172a;
             line-height: 1.2;
             margin: 0;
         }
         .user-role {
-            font-size: 0.75rem;
+            font-size: 0.74rem;
             color: #64748b;
             font-weight: 500;
             margin: 0;
@@ -172,7 +178,7 @@
             margin-right: 4px;
         }
 
-        /* Main Content Layout & Header Bar */
+        /* Main Content Layout & Top Header */
         .main-content {
             margin-left: var(--sidebar-width);
             min-height: 100vh;
@@ -181,7 +187,7 @@
         .top-header-bar {
             background: #ffffff;
             border-bottom: 1px solid #e2e8f0;
-            padding: 14px 28px;
+            padding: 12px 28px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -191,67 +197,67 @@
         }
 
         .content-body {
-            padding: 28px;
+            padding: 24px 28px;
         }
 
-        /* Metric Cards */
+        /* Softer Pastel Metric Cards */
         .metric-card {
             border: none;
             border-radius: 14px;
-            padding: 18px 20px;
+            padding: 16px 18px;
             transition: transform 0.2s, box-shadow 0.2s;
             height: 100%;
         }
         .metric-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.03);
         }
         .metric-card .card-title {
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             font-weight: 700;
             color: #475569;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .metric-card .card-value {
-            font-size: 1.85rem;
+            font-size: 1.75rem;
             font-weight: 800;
             margin: 0;
             line-height: 1;
         }
 
-        /* 7 Pastel Themes */
-        .card-blue { background-color: #ebf5ff; }
-        .card-blue .card-value { color: #1e40af; }
+        /* Softer 7 Pastel Themes */
+        .card-blue { background-color: #f0f7ff; }
+        .card-blue .card-value { color: #1d4ed8; }
         .card-blue .icon { color: #3b82f6; }
 
-        .card-green { background-color: #e6f9f0; }
-        .card-green .card-value { color: #065f46; }
-        .card-green .icon { color: #10b981; }
+        .card-green { background-color: #f0fdf4; }
+        .card-green .card-value { color: #15803d; }
+        .card-green .icon { color: #22c55e; }
 
-        .card-yellow { background-color: #fef9c3; }
-        .card-yellow .card-value { color: #854d0e; }
+        .card-yellow { background-color: #fefce8; }
+        .card-yellow .card-value { color: #a16207; }
         .card-yellow .icon { color: #eab308; }
 
-        .card-purple { background-color: #f3e8ff; }
-        .card-purple .card-value { color: #6b21a8; }
+        .card-purple { background-color: #faf5ff; }
+        .card-purple .card-value { color: #7e22ce; }
         .card-purple .icon { color: #a855f7; }
 
-        .card-pink { background-color: #ffe4e6; }
-        .card-pink .card-value { color: #9f1239; }
+        .card-pink { background-color: #fff1f2; }
+        .card-pink .card-value { color: #be123c; }
         .card-pink .icon { color: #f43f5e; }
 
-        .card-teal { background-color: #e0f2fe; }
-        .card-teal .card-value { color: #075985; }
-        .card-teal .icon { color: #0284c7; }
+        .card-teal { background-color: #f0fdfa; }
+        .card-teal .card-value { color: #0f766e; }
+        .card-teal .icon { color: #14b8a6; }
 
-        .card-orange { background-color: #ffedd5; }
-        .card-orange .card-value { color: #9a3412; }
+        .card-orange { background-color: #fff7ed; }
+        .card-orange .card-value { color: #c2410c; }
         .card-orange .icon { color: #f97316; }
 
         .card-custom {
             border: none;
             border-radius: var(--card-radius);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 15px -3px rgba(0,0,0,0.03);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 6px 12px -2px rgba(0,0,0,0.02);
             background: #ffffff;
         }
 
@@ -259,53 +265,53 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 16px;
+            padding: 11px 14px;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
             background: #ffffff;
             color: #334155;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             text-decoration: none;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             transition: all 0.2s;
         }
         .quick-action-btn:hover {
             border-color: #6366f1;
             color: #6366f1;
-            background: #f8fafc;
+            background: #faf5ff;
             transform: translateX(2px);
         }
         .quick-action-btn .icon-box {
-            width: 34px;
-            height: 34px;
+            width: 32px;
+            height: 32px;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
-            margin-right: 12px;
+            font-size: 0.95rem;
+            margin-right: 10px;
         }
 
         .badge-status {
             font-weight: 700;
             font-size: 0.75rem;
-            padding: 6px 12px;
+            padding: 5px 11px;
             border-radius: 20px;
         }
-        .status-new { background-color: #dbeafe; color: #1e40af; }
+        .status-new { background-color: #e0f2fe; color: #0369a1; }
         .status-contacted { background-color: #fef3c7; color: #92400e; }
-        .status-qualified { background-color: #fef08a; color: #713f12; }
+        .status-qualified { background-color: #fef9c3; color: #854d0e; }
         .status-meeting { background-color: #f3e8ff; color: #6b21a8; }
         .status-proposal { background-color: #ffe4e6; color: #9f1239; }
-        .status-active { background-color: #e0f2fe; color: #075985; }
-        .status-converted { background-color: #dcfce7; color: #166534; }
-        .status-lost { background-color: #fee2e2; color: #991b1b; }
+        .status-active { background-color: #ccfbf1; color: #115e59; }
+        .status-converted { background-color: #dcfce7; color: #15803d; }
+        .status-lost { background-color: #fee2e2; color: #b91c1c; }
     </style>
 </head>
 <body>
 
-<!-- Sidebar matching design (Hot Leads & Site Visits Removed) -->
+<!-- Softer Compact Sidebar -->
 <div class="sidebar">
     <!-- Brand Header -->
     <div class="sidebar-brand">
