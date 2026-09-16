@@ -161,12 +161,17 @@ def login():
 
 @web_bp.route('/sync-google-sheet-now', methods=['GET', 'POST'])
 def sync_google_sheet_web():
-    """One-click web trigger to pull latest leads from Google Sheet (July - Aug & Sep tabs)."""
+    """One-click sync: pulls leads from Google Sheet July-Aug & Sep tabs using fixed column positions."""
     sheet_tabs = ['July - Aug', 'Sep']
     sheet_id = '1VfFPHNkZ3ljCx_iT-GIRMZpxqgAVP4kdZptXlR6u7qc'
     added_count = 0
     updated_count = 0
     errors = []
+
+    # Column positions (verified from actual sheet):
+    # [0]=S No | [1]=Date | [2]=Name | [3]=Phone No. | [4]=Listing ID
+    # [5]=Property Type | [6]=Price of Property | [7]=Locality | [8]=Project
+    # [9]=Response From | [10]=Sunil Remarks | [11]=Telecaller/Simmy remarks
 
     for tab_name in sheet_tabs:
         try:
@@ -176,112 +181,105 @@ def sync_google_sheet_web():
             reader = csv.reader(io.StringIO(csv_text))
             rows = list(reader)
             if not rows or len(rows) < 2:
+                errors.append(f"{tab_name}: No data rows found")
                 continue
 
-            headers = [h.strip() for h in rows[0]]
-
-            for r in rows[1:]:
-                if not r or len(r) < 3:
-                    continue
-                row_dict = {}
-                for idx, h in enumerate(headers):
-                    if idx < len(r):
-                        row_dict[h] = r[idx].strip()
-
-                name = row_dict.get('Name') or row_dict.get('NAME')
-                if not name or name in ('-', 'Name', ''):
+            for r in rows[1:]:  # Skip header row
+                if not r or len(r) < 4:
                     continue
 
-                phone = row_dict.get('Phone No.') or row_dict.get('NUMBER') or row_dict.get('Phone') or ''
-                location = row_dict.get('Locality') or row_dict.get('Loction') or row_dict.get('Location') or ''
-                project = row_dict.get('Project') or ''
+                # Extract by column index
+                name = r[2].strip() if len(r) > 2 else ''
+                if not name or name in ('-', '', 'Name'):
+                    continue
+
+                date_str = r[1].strip() if len(r) > 1 else ''
+                phone = r[3].strip() if len(r) > 3 else ''
+                listing_id = r[4].strip() if len(r) > 4 else ''
+                property_type = r[5].strip() if len(r) > 5 else ''
+                budget = r[6].strip() if len(r) > 6 else ''
+                locality = r[7].strip() if len(r) > 7 else ''
+                project = r[8].strip() if len(r) > 8 else ''
+                response_from = r[9].strip() if len(r) > 9 else ''
+                sunil_remarks = r[10].strip() if len(r) > 10 else ''
+                telecaller_col = r[11].strip() if len(r) > 11 else ''
+
+                # Build location
                 if project and project != '-':
-                    location = f"{location} ({project})" if location else project
+                    location = f"{locality} ({project})" if locality else project
+                else:
+                    location = locality
 
-                budget = row_dict.get('Price of Property') or row_dict.get('BUDGET') or ''
-                property_type = row_dict.get('Property Type') or row_dict.get('Requirement') or 'Commercial Office Space'
-
-                date_str = row_dict.get('Date')
+                # Parse date
                 created_at = datetime.utcnow()
                 if date_str:
-                    for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%m/%d/%Y']:
+                    for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y']:
                         try:
-                            created_at = datetime.strptime(str(date_str).strip(), fmt)
+                            created_at = datetime.strptime(date_str, fmt)
                             break
                         except ValueError:
                             pass
 
-                clean_name = str(name).strip().lower().replace(' ', '.').replace('/', '')
+                # Email fallback
+                clean_name = name.lower().replace(' ', '.').replace('/', '')
                 email = f"{clean_name}@lead99.com"
 
-                # Check if lead with same phone or name already exists
+                # Check duplicate by phone or name
                 existing = None
-                if phone and phone != '-' and phone != '':
-                    existing = Lead.query.filter(Lead.phone == str(phone).strip()).first()
-                if not existing and name:
-                    existing = Lead.query.filter(Lead.name == str(name).strip()).first()
-
-                remarks = row_dict.get('Sunil Remarks') or row_dict.get('Sunil Remarks ') or row_dict.get('Remarks') or ''
-                simmy_remarks = row_dict.get('Simmy remarks') or row_dict.get('Simmy Remarks') or ''
-                telecaller = row_dict.get('Telecaller') or row_dict.get('Telecaller ') or ''
-                listing_id = row_dict.get('Listing ID') or ''
-                response_from = row_dict.get('Response From') or ''
-
-                # Build combined telecaller_remarks
-                telecaller_text = telecaller if telecaller and telecaller not in ('NA', '') else ''
-                if simmy_remarks and simmy_remarks not in ('NA', ''):
-                    telecaller_text = (telecaller_text + ' | Simmy: ' + simmy_remarks).strip(' | ')
+                if phone and phone != '-':
+                    existing = Lead.query.filter(Lead.phone == phone).first()
+                if not existing:
+                    existing = Lead.query.filter(Lead.name == name).first()
 
                 if existing:
-                    # Update existing lead fields if provided
-                    if location: existing.location = str(location).strip()
-                    if budget: existing.budget = str(budget).strip()
-                    if property_type: existing.property_type = str(property_type).strip()
-                    if phone and phone != '-': existing.phone = str(phone).strip()
-                    if remarks and remarks not in ('NA', ''): existing.sunil_remarks = str(remarks).strip()
-                    if telecaller_text: existing.telecaller_remarks = str(telecaller_text).strip()
+                    # Update existing lead
+                    if location: existing.location = location
+                    if budget: existing.budget = budget
+                    if property_type: existing.property_type = property_type
+                    if phone and phone != '-': existing.phone = phone
+                    if sunil_remarks and sunil_remarks != 'NA': existing.sunil_remarks = sunil_remarks
+                    if telecaller_col and telecaller_col != 'NA': existing.telecaller_remarks = telecaller_col
                     updated_count += 1
                 else:
+                    # Insert new lead
                     lead = Lead(
-                        name=str(name).strip(),
+                        name=name,
                         email=email,
-                        phone=str(phone).strip(),
+                        phone=phone,
                         source='99acres',
-                        property_type=str(property_type).strip(),
-                        budget=str(budget).strip(),
-                        location=str(location).strip(),
+                        property_type=property_type or 'Office Space',
+                        budget=budget,
+                        location=location,
                         status='New',
                         priority='Medium',
                         assigned_to='Admin Kiriti',
                         is_imported=True,
-                        sunil_remarks=str(remarks).strip() if remarks and remarks not in ('NA', '') else '',
-                        telecaller_remarks=str(telecaller_text).strip() if telecaller_text else '',
+                        sunil_remarks=sunil_remarks if sunil_remarks and sunil_remarks != 'NA' else '',
+                        telecaller_remarks=telecaller_col if telecaller_col and telecaller_col != 'NA' else '',
                         created_at=created_at
                     )
                     db.session.add(lead)
                     db.session.flush()
 
+                    # Add note with listing ID, response from, remarks
                     note_parts = []
-                    if listing_id:
-                        note_parts.append(f"Listing ID: {listing_id}")
-                    if response_from:
-                        note_parts.append(f"Response From: {response_from}")
-                    if remarks and remarks not in ('NA', ''):
-                        note_parts.append(f"Remarks: {remarks}")
-
+                    if listing_id: note_parts.append(f"Listing ID: {listing_id}")
+                    if response_from: note_parts.append(f"Response From: {response_from}")
+                    if sunil_remarks and sunil_remarks != 'NA': note_parts.append(f"Sunil: {sunil_remarks}")
+                    if telecaller_col and telecaller_col != 'NA': note_parts.append(f"Telecaller: {telecaller_col}")
                     if note_parts:
-                        note = Note(lead_id=lead.id, content=" | ".join(note_parts))
-                        db.session.add(note)
+                        db.session.add(Note(lead_id=lead.id, content=" | ".join(note_parts)))
 
                     added_count += 1
+
         except Exception as e:
             errors.append(f"{tab_name}: {str(e)}")
 
     db.session.commit()
     if errors:
-        flash(f'⚠️ Google Sheet Sync: Added {added_count} new, refreshed {updated_count} existing. Errors: {"; ".join(errors)}', 'warning')
+        flash(f'⚠️ Sync Done: {added_count} new + {updated_count} updated. Errors: {"; ".join(errors)}', 'warning')
     else:
-        flash(f'✅ Google Sheet Sync Complete! Added {added_count} new leads & refreshed {updated_count} existing leads from Google Sheet.', 'success')
+        flash(f'✅ Google Sheet Sync Complete! {added_count} new leads added, {updated_count} existing leads updated.', 'success')
     return redirect(request.referrer or url_for('web.dashboard'))
 
 @web_bp.route('/logout')
