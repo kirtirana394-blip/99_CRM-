@@ -432,11 +432,11 @@
             <div class="date-filter-pill-group">
                 <i class="bi bi-calendar3 text-primary ms-1"></i>
                 <select name="time_filter" onchange="this.form.submit()">
-                    <option value="this_week" {{ 'selected' if request.args.get('time_filter', 'this_week') == 'this_week' }}>This Week</option>
+                    <option value="all_time" {{ 'selected' if request.args.get('time_filter', 'all_time') == 'all_time' }}>All Time</option>
                     <option value="today" {{ 'selected' if request.args.get('time_filter') == 'today' }}>Today</option>
+                    <option value="this_week" {{ 'selected' if request.args.get('time_filter') == 'this_week' }}>This Week</option>
                     <option value="this_month" {{ 'selected' if request.args.get('time_filter') == 'this_month' }}>This Month</option>
                     <option value="this_quarter" {{ 'selected' if request.args.get('time_filter') == 'this_quarter' }}>This Quarter</option>
-                    <option value="all_time" {{ 'selected' if request.args.get('time_filter') == 'all_time' }}>All Time</option>
                 </select>
 
                 <span class="text-muted small px-1">|</span>

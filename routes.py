@@ -266,7 +266,7 @@ def logout():
 
 @web_bp.route('/')
 def dashboard():
-    time_filter = request.args.get('time_filter', 'this_week')
+    time_filter = request.args.get('time_filter', 'all_time')
     start_date_str = request.args.get('start_date', '')
     end_date_str = request.args.get('end_date', '')
 
