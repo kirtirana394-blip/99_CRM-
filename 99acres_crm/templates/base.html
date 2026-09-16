@@ -450,6 +450,9 @@
             </div>
 
             {% if session.get('user_role') != 'Viewer' %}
+            <a href="/sync-google-sheet-now" class="btn btn-sm btn-success fw-bold rounded-3 px-3 py-1.5 shadow-sm" style="font-size:0.78rem;" title="Sync latest leads from Google Sheet">
+                <i class="bi bi-file-earmark-spreadsheet-fill me-1"></i>Sync Google Sheet
+            </a>
             <a href="/leads/add" class="btn btn-sm btn-primary fw-bold rounded-3 px-3 py-1.5 shadow-sm" style="font-size:0.78rem;">
                 <i class="bi bi-plus-lg me-1"></i>Add Lead
             </a>

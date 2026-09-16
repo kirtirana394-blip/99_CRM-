@@ -157,6 +157,106 @@ def login():
 
     return render_template('login.html')
 
+@web_bp.route('/sync-google-sheet-now', methods=['GET', 'POST'])
+def sync_google_sheet_web():
+    """One-click web trigger to pull latest leads from Google Sheet (July - Aug & Sep tabs)."""
+    import urllib.parse
+    sheet_tabs = ['July - Aug', 'Sep']
+    sheet_id = '1VfFPHNkZ3ljCx_iT-GIRMZpxqgAVP4kdZptXlR6u7qc'
+    added_count = 0
+
+    for tab_name in sheet_tabs:
+        try:
+            url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={urllib.parse.quote(tab_name)}'
+            csv_bytes = urllib.request.urlopen(url, timeout=10).read()
+            csv_text = csv_bytes.decode('utf-8')
+            reader = csv.reader(io.StringIO(csv_text))
+            rows = list(reader)
+            if not rows or len(rows) < 2:
+                continue
+
+            headers = [h.strip() for h in rows[0]]
+
+            for r in rows[1:]:
+                if not r or len(r) < 3:
+                    continue
+                row_dict = {}
+                for idx, h in enumerate(headers):
+                    if idx < len(r):
+                        row_dict[h] = r[idx].strip()
+
+                name = row_dict.get('Name') or row_dict.get('NAME')
+                if not name or name in ('-', 'Name', ''):
+                    continue
+
+                phone = row_dict.get('Phone No.') or row_dict.get('NUMBER') or row_dict.get('Phone') or ''
+                location = row_dict.get('Locality') or row_dict.get('Loction') or row_dict.get('Location') or ''
+                project = row_dict.get('Project') or ''
+                if project and project != '-':
+                    location = f"{location} ({project})" if location else project
+
+                budget = row_dict.get('Price of Property') or row_dict.get('BUDGET') or ''
+                property_type = row_dict.get('Property Type') or row_dict.get('Requirement') or 'Commercial Office Space'
+
+                date_str = row_dict.get('Date')
+                created_at = datetime.utcnow()
+                if date_str:
+                    for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%m/%d/%Y']:
+                        try:
+                            created_at = datetime.strptime(str(date_str).strip(), fmt)
+                            break
+                        except ValueError:
+                            pass
+
+                clean_name = str(name).strip().lower().replace(' ', '.').replace('/', '')
+                email = f"{clean_name}@lead99.com"
+
+                # Check if lead with same phone or name already exists
+                existing = None
+                if phone and phone != '-':
+                    existing = Lead.query.filter(Lead.phone == phone).first()
+                if not existing:
+                    existing = Lead.query.filter(Lead.name == name).first()
+
+                if not existing:
+                    remarks = row_dict.get('Sunil Remarks ') or row_dict.get('Remarks') or row_dict.get('Simmy remarks') or ''
+                    listing_id = row_dict.get('Listing ID') or ''
+
+                    lead = Lead(
+                        name=str(name).strip(),
+                        email=email,
+                        phone=str(phone).strip(),
+                        source='99acres',
+                        property_type=str(property_type).strip(),
+                        budget=str(budget).strip(),
+                        location=str(location).strip(),
+                        status='New',
+                        priority='Medium',
+                        assigned_to='Admin Kiriti',
+                        is_imported=True,
+                        created_at=created_at
+                    )
+                    db.session.add(lead)
+                    db.session.flush()
+
+                    note_parts = []
+                    if listing_id:
+                        note_parts.append(f"Listing ID: {listing_id}")
+                    if remarks and remarks != 'NA':
+                        note_parts.append(f"Remarks: {remarks}")
+
+                    if note_parts:
+                        note = Note(lead_id=lead.id, content=" | ".join(note_parts))
+                        db.session.add(note)
+
+                    added_count += 1
+        except Exception as e:
+            print("Sheet sync error:", e)
+
+    db.session.commit()
+    flash(f'✅ Google Sheet Sync Complete! {added_count} new leads added from July - Aug & Sep sheets.', 'success')
+    return redirect(request.referrer or url_for('web.dashboard'))
+
 @web_bp.route('/logout')
 def logout():
     session.clear()
