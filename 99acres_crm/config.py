@@ -1,20 +1,31 @@
-import os
-from pathlib import Path
+# config.py
+"""Configuration supporting Render cloud (SQLite/Postgres) and local MySQL."""
 
-BASE_DIR = Path(__file__).resolve().parent
+import os
 
 class Config:
-    SECRET_KEY = os.getenv("SECRET_KEY", "change-this-local-secret")
-    database_url = os.getenv("DATABASE_URL")
-    if database_url:
-        if database_url.startswith("postgres://"):
-            database_url = database_url.replace("postgres://", "postgresql://", 1)
-        if database_url.startswith("postgresql://") and "+psycopg" not in database_url:
-            database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
-    SQLALCHEMY_DATABASE_URI = database_url or f"sqlite:///{BASE_DIR/'crm.sqlite3'}"
+    DATABASE_URL = os.getenv('DATABASE_URL', '')
+    IS_RENDER = os.getenv('RENDER', False)
+
+    if DATABASE_URL:
+        if DATABASE_URL.startswith('postgres://'):
+            DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+        SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    elif IS_RENDER:
+        # On Render cloud, use zero-config SQLite file if no DATABASE_URL is set
+        BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+        SQLITE_PATH = os.path.join(BASE_DIR, 'crm.sqlite')
+        SQLALCHEMY_DATABASE_URI = f"sqlite:///{SQLITE_PATH}"
+    else:
+        # Local development with MySQL
+        MYSQL_USER = os.getenv('MYSQL_USER', 'root')
+        MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'Rana1530#')
+        MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')
+        MYSQL_PORT = os.getenv('MYSQL_PORT', '3306')
+        MYSQL_DB = os.getenv('MYSQL_DB', 'crm')
+        SQLALCHEMY_DATABASE_URI = (
+            f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}"
+        )
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    UPLOAD_FOLDER = str(BASE_DIR / "uploads")
-    MAX_CONTENT_LENGTH = 20 * 1024 * 1024
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = "Lax"
-    SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE","0") == "1"
+    SECRET_KEY = os.getenv('SECRET_KEY', 'yayath-99acres-crm-secret-2026')
