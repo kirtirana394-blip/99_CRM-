@@ -1,81 +1,227 @@
 {% extends "base.html" %}
 {% block title %}Dashboard - Yayath 99Acres CRM{% endblock %}
 {% block content %}
-<h3 class="mb-4"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h3>
 
-<!-- Stats Cards -->
-<div class="row mb-4">
-    <div class="col-md-2">
-        <div class="card stat-card text-center p-3">
-            <div class="icon text-primary"><i class="bi bi-people"></i></div>
-            <h2 class="mt-2 mb-0">{{ total }}</h2>
-            <small class="text-muted">Total Leads</small>
+<!-- 7 Top Metric Cards matching Reference Design -->
+<div class="row g-3 mb-4">
+    <!-- 1. New Leads (Blue) -->
+    <div class="col" style="min-width: 140px;">
+        <div class="metric-card card-blue">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="icon"><i class="bi bi-plus-lg"></i></span>
+            </div>
+            <div class="card-title">New Leads</div>
+            <div class="card-value">{{ new_leads }}</div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="card stat-card text-center p-3">
-            <div class="icon text-info"><i class="bi bi-star"></i></div>
-            <h2 class="mt-2 mb-0">{{ new_count }}</h2>
-            <small class="text-muted">New</small>
+
+    <!-- 2. Total Leads (Green) -->
+    <div class="col" style="min-width: 140px;">
+        <div class="metric-card card-green">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="icon"><i class="bi bi-person-fill"></i></span>
+            </div>
+            <div class="card-title">Total Leads</div>
+            <div class="card-value">{{ total_leads }}</div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="card stat-card text-center p-3">
-            <div class="icon text-warning"><i class="bi bi-telephone"></i></div>
-            <h2 class="mt-2 mb-0">{{ contacted }}</h2>
-            <small class="text-muted">Contacted</small>
+
+    <!-- 3. Qualified (Yellow) -->
+    <div class="col" style="min-width: 140px;">
+        <div class="metric-card card-yellow">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="icon"><i class="bi bi-check-lg"></i></span>
+            </div>
+            <div class="card-title">Qualified</div>
+            <div class="card-value">{{ qualified }}</div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="card stat-card text-center p-3">
-            <div class="icon text-success"><i class="bi bi-check-circle"></i></div>
-            <h2 class="mt-2 mb-0">{{ qualified }}</h2>
-            <small class="text-muted">Qualified</small>
+
+    <!-- 4. Meeting Done (Purple) -->
+    <div class="col" style="min-width: 140px;">
+        <div class="metric-card card-purple">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="icon"><i class="bi bi-grid-fill"></i></span>
+            </div>
+            <div class="card-title">Meeting Done</div>
+            <div class="card-value">{{ meeting_done }}</div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="card stat-card text-center p-3">
-            <div class="icon" style="color:#20c997"><i class="bi bi-trophy"></i></div>
-            <h2 class="mt-2 mb-0">{{ converted }}</h2>
-            <small class="text-muted">Converted</small>
+
+    <!-- 5. Proposal Sent (Pink) -->
+    <div class="col" style="min-width: 140px;">
+        <div class="metric-card card-pink">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="icon"><i class="bi bi-file-earmark-text-fill"></i></span>
+            </div>
+            <div class="card-title">Proposal Sent</div>
+            <div class="card-value">{{ proposal_sent }}</div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="card stat-card text-center p-3">
-            <div class="icon text-danger"><i class="bi bi-x-circle"></i></div>
-            <h2 class="mt-2 mb-0">{{ lost }}</h2>
-            <small class="text-muted">Lost</small>
+
+    <!-- 6. Active Pipeline (Teal) -->
+    <div class="col" style="min-width: 140px;">
+        <div class="metric-card card-teal">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="icon"><i class="bi bi-diamond-fill"></i></span>
+            </div>
+            <div class="card-title">Active Pipeline</div>
+            <div class="card-value">{{ active_pipeline }}</div>
+        </div>
+    </div>
+
+    <!-- 7. Deal Close (Orange) -->
+    <div class="col" style="min-width: 140px;">
+        <div class="metric-card card-orange">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="icon"><i class="bi bi-rocket-takeoff-fill"></i></span>
+            </div>
+            <div class="card-title">Deal Close</div>
+            <div class="card-value">{{ deal_close }}</div>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <!-- Recent Leads -->
-    <div class="col-md-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Recent Leads</h5>
-                <a href="/leads/add" class="btn btn-sm btn-primary"><i class="bi bi-plus"></i> Add Lead</a>
+<!-- Main Row: Leads Overview Chart & Quick Actions -->
+<div class="row g-4 mb-4">
+    <!-- Left Column: Leads Overview Chart -->
+    <div class="col-lg-8">
+        <div class="card card-custom p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="fw-bold mb-0">Leads Overview</h5>
+                    <small class="text-muted">Current pipeline performance</small>
+                </div>
+                
+                <!-- Date Filter Dropdown Form -->
+                <form method="GET" id="filterForm" class="d-flex gap-2 align-items-center">
+                    <select name="time_filter" class="form-select form-select-sm rounded-3 shadow-none border-secondary-subtle" onchange="toggleCustomDates(this.value)">
+                        <option value="this_week" {{ 'selected' if time_filter == 'this_week' }}>This Week</option>
+                        <option value="today" {{ 'selected' if time_filter == 'today' }}>Today</option>
+                        <option value="this_month" {{ 'selected' if time_filter == 'this_month' }}>This Month</option>
+                        <option value="this_quarter" {{ 'selected' if time_filter == 'this_quarter' }}>This Quarter</option>
+                        <option value="all_time" {{ 'selected' if time_filter == 'all_time' }}>All Time</option>
+                        <option value="custom" {{ 'selected' if time_filter == 'custom' }}>Custom Range</option>
+                    </select>
+
+                    <div id="customDateContainer" class="d-flex gap-1 align-items-center {{ 'd-none' if time_filter != 'custom' }}">
+                        <input type="date" name="start_date" class="form-control form-control-sm" value="{{ start_date }}">
+                        <span class="small text-muted">to</span>
+                        <input type="date" name="end_date" class="form-control form-control-sm" value="{{ end_date }}">
+                        <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-filter"></i></button>
+                    </div>
+                </form>
             </div>
-            <div class="card-body p-0">
-                <table class="table table-hover mb-0">
+
+            <!-- Bar Chart Canvas -->
+            <div style="height: 300px; position: relative;">
+                <canvas id="leadsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Quick Actions Panel -->
+    <div class="col-lg-4">
+        <div class="card card-custom p-4 h-100">
+            <h5 class="fw-bold mb-1">Quick Actions</h5>
+            <small class="text-muted mb-3 d-block">Common tasks</small>
+
+            <a href="/leads/add" class="quick-action-btn">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box bg-primary text-white"><i class="bi bi-plus-lg"></i></div>
+                    Add New Lead
+                </div>
+                <i class="bi bi-chevron-right text-muted small"></i>
+            </a>
+
+            <a href="/import" class="quick-action-btn">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box bg-success text-white"><i class="bi bi-file-earmark-arrow-up"></i></div>
+                    Import Data (CSV)
+                </div>
+                <i class="bi bi-chevron-right text-muted small"></i>
+            </a>
+
+            <a href="/tasks" class="quick-action-btn">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box text-white" style="background-color: #a855f7;"><i class="bi bi-calendar-event"></i></div>
+                    Schedule Follow Up / Task
+                </div>
+                <i class="bi bi-chevron-right text-muted small"></i>
+            </a>
+
+            <a href="/leads?status=Proposal+Sent" class="quick-action-btn">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box text-white" style="background-color: #f43f5e;"><i class="bi bi-file-earmark-text"></i></div>
+                    View Proposals
+                </div>
+                <i class="bi bi-chevron-right text-muted small"></i>
+            </a>
+
+            <a href="/leads?status=Deal+Close" class="quick-action-btn">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box text-white" style="background-color: #0284c7;"><i class="bi bi-trophy"></i></div>
+                    View Closed Deals
+                </div>
+                <i class="bi bi-chevron-right text-muted small"></i>
+            </a>
+
+            <a href="/users" class="quick-action-btn">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box text-white" style="background-color: #f97316;"><i class="bi bi-shield-lock"></i></div>
+                    Manage Users & Roles
+                </div>
+                <i class="bi bi-chevron-right text-muted small"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Row: Recent Leads & Pending Follow-ups -->
+<div class="row g-4">
+    <!-- Recent Leads -->
+    <div class="col-lg-8">
+        <div class="card card-custom p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">Recent Leads</h5>
+                <a href="/leads" class="btn btn-sm btn-outline-primary rounded-pill px-3">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
-                        <tr><th>Name</th><th>Phone</th><th>Source</th><th>Status</th><th>Date</th></tr>
+                        <tr>
+                            <th>Name</th>
+                            <th>Property</th>
+                            <th>Status</th>
+                            <th>Assigned To</th>
+                            <th>Actions</th>
+                        </tr>
                     </thead>
                     <tbody>
-                        {% for lead in recent %}
-                        <tr style="cursor:pointer" onclick="window.location='/leads/{{ lead.id }}'">
-                            <td><strong>{{ lead.name }}</strong><br><small class="text-muted">{{ lead.email }}</small></td>
-                            <td>{{ lead.phone or '-' }}</td>
-                            <td>{{ lead.source or '-' }}</td>
+                        {% for lead in recent_leads %}
+                        <tr>
                             <td>
-                                {% set sc = {'New':'badge-new','Contacted':'badge-contacted','Qualified':'badge-qualified','Converted':'badge-converted','Lost':'badge-lost'} %}
-                                <span class="badge {{ sc.get(lead.status, 'bg-secondary') }}">{{ lead.status }}</span>
+                                <a href="/leads/{{ lead.id }}" class="fw-bold text-decoration-none text-dark">{{ lead.name }}</a>
+                                <br><small class="text-muted">{{ lead.phone or lead.email }}</small>
                             </td>
-                            <td><small>{{ lead.created_at.strftime('%d %b %Y') if lead.created_at else '' }}</small></td>
+                            <td><small class="fw-semibold">{{ lead.property_type or '-' }}</small><br><small class="text-muted">{{ lead.location or '' }}</small></td>
+                            <td>
+                                {% set status_class = {
+                                    'New':'status-new', 'Contacted':'status-contacted',
+                                    'Qualified':'status-qualified', 'Meeting Done':'status-meeting',
+                                    'Proposal Sent':'status-proposal', 'Active Pipeline':'status-active',
+                                    'Deal Close':'status-converted', 'Lost':'status-lost'
+                                } %}
+                                <span class="badge-status {{ status_class.get(lead.status, 'bg-secondary text-white') }}">{{ lead.status }}</span>
+                            </td>
+                            <td><small>{{ lead.assigned_to or 'Unassigned' }}</small></td>
+                            <td>
+                                <a href="/leads/{{ lead.id }}/edit" class="btn btn-sm btn-light border me-1"><i class="bi bi-pencil"></i></a>
+                                <a href="/leads/{{ lead.id }}" class="btn btn-sm btn-light border"><i class="bi bi-eye"></i></a>
+                            </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="5" class="text-center text-muted py-4">No leads yet. <a href="/leads/add">Add one!</a></td></tr>
+                        <tr><td colspan="5" class="text-center text-muted py-4">No leads recorded yet. <a href="/leads/add">Add lead</a> or <a href="/import">Import CSV</a></td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -83,27 +229,106 @@
         </div>
     </div>
 
-    <!-- Today's Follow-ups -->
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="bi bi-bell text-warning me-1"></i>Pending Follow-ups</h5>
+    <!-- Pending Follow-ups -->
+    <div class="col-lg-4">
+        <div class="card card-custom p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-bell-fill text-warning me-2"></i>Follow-ups</h5>
+                <a href="/tasks" class="btn btn-sm btn-link text-decoration-none">Manage</a>
             </div>
-            <div class="card-body">
-                {% for fu in today_followups %}
-                <div class="border-bottom pb-2 mb-2">
-                    <strong>{{ fu.lead.name }}</strong><br>
-                    <small class="text-muted">{{ fu.description or 'Follow up' }}</small><br>
-                    <small class="text-danger"><i class="bi bi-clock"></i> {{ fu.scheduled_at.strftime('%d %b %H:%M') }}</small>
-                    <form method="POST" action="/followups/{{ fu.id }}/complete" class="d-inline">
-                        <button class="btn btn-sm btn-outline-success ms-2"><i class="bi bi-check"></i></button>
-                    </form>
+            {% for fu in today_followups %}
+            <div class="border-bottom pb-2 mb-2 d-flex justify-content-between align-items-center">
+                <div>
+                    <a href="/leads/{{ fu.lead.id }}" class="fw-bold text-dark text-decoration-none small">{{ fu.lead.name }}</a>
+                    <br><small class="text-muted">{{ fu.description or 'Scheduled Follow-up' }}</small>
+                    <br><small class="text-danger fw-semibold"><i class="bi bi-clock me-1"></i>{{ fu.scheduled_at.strftime('%d %b %H:%M') }}</small>
                 </div>
-                {% else %}
-                <p class="text-muted text-center mb-0">No pending follow-ups</p>
-                {% endfor %}
+                <form method="POST" action="/followups/{{ fu.id }}/complete">
+                    <button class="btn btn-sm btn-outline-success rounded-circle" title="Mark Done"><i class="bi bi-check-lg"></i></button>
+                </form>
             </div>
+            {% else %}
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-check-circle fs-3 text-success d-block mb-1"></i>
+                <small>No pending follow-ups</small>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </div>
+
+<!-- Chart.js Script for Pipeline Visualization -->
+<script>
+function toggleCustomDates(val) {
+    const container = document.getElementById('customDateContainer');
+    if (val === 'custom') {
+        container.classList.remove('d-none');
+    } else {
+        container.classList.add('d-none');
+        document.getElementById('filterForm').submit();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('leadsChart').getContext('2d');
+    
+    // Values from backend template context
+    const dataValues = [
+        {{ new_leads }},
+        {{ total_leads }},
+        {{ qualified }},
+        {{ meeting_done }},
+        {{ proposal_sent }},
+        {{ active_pipeline }},
+        {{ deal_close }}
+    ];
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['New Leads', 'Total Leads', 'Qualified', 'Meeting Done', 'Proposal Sent', 'Active Pipeline', 'Deal Close'],
+            datasets: [{
+                label: 'Leads Count',
+                data: dataValues,
+                backgroundColor: [
+                    '#3b82f6', // Blue (New Leads)
+                    '#10b981', // Green (Total Leads)
+                    '#eab308', // Yellow (Qualified)
+                    '#a855f7', // Purple (Meeting Done)
+                    '#f43f5e', // Pink (Proposal Sent)
+                    '#0284c7', // Teal (Active Pipeline)
+                    '#f97316'  // Orange (Deal Close)
+                ],
+                borderRadius: 8,
+                borderSkipped: false,
+                barThickness: 32
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    padding: 12,
+                    cornerRadius: 8
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#f1f5f9' },
+                    ticks: { precision: 0, font: { family: 'Plus Jakarta Sans' } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { family: 'Plus Jakarta Sans', weight: '600', size: 11 } }
+                }
+            }
+        }
+    });
+});
+</script>
+
 {% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Tasks & Follow-ups - Yayath 99Acres CRM{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-check2-square text-primary me-2"></i>Tasks & Follow-up Scheduler</h3>
+        <small class="text-muted">Schedule client follow-ups, assign tasks to team members, and track completed items.</small>
+    </div>
+    <button class="btn btn-primary rounded-3 px-3" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+        <i class="bi bi-plus-lg me-2"></i>Add New Task
+    </button>
+</div>
+
+<div class="row g-4">
+    <!-- Follow-ups Column -->
+    <div class="col-lg-6">
+        <div class="card card-custom p-4 h-100">
+            <h5 class="fw-bold mb-3"><i class="bi bi-bell-fill text-warning me-2"></i>Scheduled Follow-ups</h5>
+            <div class="list-group list-group-flush">
+                {% for fu in followups %}
+                <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
+                    <div>
+                        <a href="/leads/{{ fu.lead.id }}" class="fw-bold text-dark text-decoration-none fs-6">{{ fu.lead.name }}</a>
+                        <br><small class="text-muted">{{ fu.description or 'Follow-up Call/Meeting' }}</small>
+                        <br><small class="{{ 'text-decoration-line-through text-muted' if fu.completed else 'text-danger fw-semibold' }}">
+                            <i class="bi bi-clock me-1"></i>{{ fu.scheduled_at.strftime('%d %b %Y, %H:%M') }}
+                        </small>
+                    </div>
+                    {% if not fu.completed %}
+                    <form method="POST" action="/followups/{{ fu.id }}/complete">
+                        <button class="btn btn-sm btn-outline-success"><i class="bi bi-check-lg me-1"></i>Mark Done</button>
+                    </form>
+                    {% else %}
+                    <span class="badge bg-success">Completed</span>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">No scheduled follow-ups.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks Column -->
+    <div class="col-lg-6">
+        <div class="card card-custom p-4 h-100">
+            <h5 class="fw-bold mb-3"><i class="bi bi-list-task text-primary me-2"></i>Team Tasks</h5>
+            <div class="list-group list-group-flush">
+                {% for t in tasks %}
+                <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
+                    <div>
+                        <span class="fw-bold text-dark fs-6 {{ 'text-decoration-line-through text-muted' if t.completed }}">{{ t.title }}</span>
+                        {% if t.lead %}
+                            <br><small class="text-muted">Lead: <a href="/leads/{{ t.lead.id }}">{{ t.lead.name }}</a></small>
+                        {% endif %}
+                        <br><small class="text-muted">Assigned to: <strong>{{ t.assigned_to or 'Unassigned' }}</strong></small>
+                    </div>
+                    <div>
+                        {% if not t.completed %}
+                        <form method="POST" action="/tasks/{{ t.id }}/complete" class="d-inline">
+                            <button class="btn btn-sm btn-outline-success me-1"><i class="bi bi-check-lg"></i></button>
+                        </form>
+                        {% endif %}
+                        <form method="POST" action="/tasks/{{ t.id }}/delete" class="d-inline">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">No tasks found. Click "Add New Task" above.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Task -->
+<div class="modal fade" id="addTaskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="/tasks/add" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Add New Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Task Title <span class="text-danger">*</span></label>
+                    <input type="text" name="title" class="form-control" placeholder="e.g. Prepare property valuation report" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Link to Lead (Optional)</label>
+                    <select name="lead_id" class="form-select">
+                        <option value="">-- None --</option>
+                        {% for l in leads %}
+                        <option value="{{ l.id }}">{{ l.name }} ({{ l.phone or l.email }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Assign To</label>
+                    <select name="assigned_to" class="form-select">
+                        <option value="">-- Select Member --</option>
+                        {% for u in users %}
+                        <option value="{{ u.name }}">{{ u.name }} ({{ u.role }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Due Date</label>
+                    <input type="date" name="due_date" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">Save Task</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

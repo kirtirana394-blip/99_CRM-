@@ -4,65 +4,209 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Yayath 99Acres CRM{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
-        body { background: #f4f6f9; }
-        .sidebar { min-height: 100vh; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
-        .sidebar a { color: #ccc; text-decoration: none; padding: 12px 20px; display: block; border-radius: 8px; margin: 4px 10px; transition: all 0.2s; }
-        .sidebar a:hover, .sidebar a.active { background: rgba(255,255,255,0.1); color: #fff; }
-        .sidebar .brand { color: #fff; font-size: 1.4rem; font-weight: 700; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .stat-card { border: none; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: transform 0.2s; }
-        .stat-card:hover { transform: translateY(-3px); }
-        .stat-card .icon { font-size: 2rem; }
-        .badge-new { background: #0d6efd; }
-        .badge-contacted { background: #ffc107; color: #000; }
-        .badge-qualified { background: #198754; }
-        .badge-converted { background: #20c997; }
-        .badge-lost { background: #dc3545; }
-        .priority-high { color: #dc3545; font-weight: 600; }
-        .priority-medium { color: #ffc107; font-weight: 600; }
-        .priority-low { color: #198754; font-weight: 600; }
-        .table th { font-weight: 600; font-size: 0.85rem; text-transform: uppercase; color: #666; }
+        :root {
+            --primary-bg: #f8fafc;
+            --sidebar-bg: #1e293b;
+            --sidebar-accent: #334155;
+            --text-dark: #0f172a;
+            --card-radius: 16px;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-dark);
+        }
+
+        .sidebar {
+            min-height: 100vh;
+            background: var(--sidebar-bg);
+            color: #94a3b8;
+        }
+        .sidebar .brand {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #ffffff;
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            letter-spacing: -0.3px;
+        }
+        .sidebar a {
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            border-radius: 10px;
+            margin: 4px 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+        .sidebar a:hover, .sidebar a.active {
+            background: #3b82f6;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Reference UI Card Styling */
+        .metric-card {
+            border: none;
+            border-radius: 14px;
+            padding: 18px 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            height: 100%;
+        }
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+        }
+        .metric-card .card-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+        .metric-card .card-value {
+            font-size: 1.85rem;
+            font-weight: 800;
+            margin: 0;
+            line-height: 1;
+        }
+
+        /* 7 Pastel Themes matching screenshot */
+        .card-blue { background-color: #ebf5ff; }
+        .card-blue .card-value { color: #1e40af; }
+        .card-blue .icon { color: #3b82f6; }
+
+        .card-green { background-color: #e6f9f0; }
+        .card-green .card-value { color: #065f46; }
+        .card-green .icon { color: #10b981; }
+
+        .card-yellow { background-color: #fef9c3; }
+        .card-yellow .card-value { color: #854d0e; }
+        .card-yellow .icon { color: #eab308; }
+
+        .card-purple { background-color: #f3e8ff; }
+        .card-purple .card-value { color: #6b21a8; }
+        .card-purple .icon { color: #a855f7; }
+
+        .card-pink { background-color: #ffe4e6; }
+        .card-pink .card-value { color: #9f1239; }
+        .card-pink .icon { color: #f43f5e; }
+
+        .card-teal { background-color: #e0f2fe; }
+        .card-teal .card-value { color: #075985; }
+        .card-teal .icon { color: #0284c7; }
+
+        .card-orange { background-color: #ffedd5; }
+        .card-orange .card-value { color: #9a3412; }
+        .card-orange .icon { color: #f97316; }
+
+        .card-custom {
+            border: none;
+            border-radius: var(--card-radius);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 15px -3px rgba(0,0,0,0.03);
+            background: #ffffff;
+        }
+
+        /* Quick Action Buttons */
+        .quick-action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #334155;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+        .quick-action-btn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            background: #f8fafc;
+            transform: translateX(2px);
+        }
+        .quick-action-btn .icon-box {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            margin-right: 12px;
+        }
+
+        .badge-status {
+            font-weight: 700;
+            font-size: 0.75rem;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+        .status-new { background-color: #dbeafe; color: #1e40af; }
+        .status-contacted { background-color: #fef3c7; color: #92400e; }
+        .status-qualified { background-color: #fef08a; color: #713f12; }
+        .status-meeting { background-color: #f3e8ff; color: #6b21a8; }
+        .status-proposal { background-color: #ffe4e6; color: #9f1239; }
+        .status-active { background-color: #e0f2fe; color: #075985; }
+        .status-converted { background-color: #dcfce7; color: #166534; }
+        .status-lost { background-color: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
+
 <div class="container-fluid">
     <div class="row">
-        <!-- Sidebar -->
-        <div class="col-md-2 sidebar p-0">
-            <div class="brand"><i class="bi bi-building"></i> Yayath 99Acres CRM</div>
-            <nav class="mt-3">
+        <!-- Sidebar Navigation -->
+        <div class="col-md-2 sidebar p-0 d-flex flex-column">
+            <div class="brand">
+                <i class="bi bi-building-fill text-primary me-2"></i>Yayath 99Acres
+            </div>
+            <nav class="mt-3 flex-grow-1">
                 <a href="/" class="{{ 'active' if request.endpoint == 'web.dashboard' }}">
-                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                    <i class="bi bi-grid-1x2-fill me-3"></i>Dashboard
                 </a>
                 <a href="/leads" class="{{ 'active' if request.endpoint in ('web.leads_list','web.lead_detail') }}">
-                    <i class="bi bi-people me-2"></i>All Leads
+                    <i class="bi bi-people-fill me-3"></i>All Leads
                 </a>
-                <a href="/leads/add" class="{{ 'active' if request.endpoint == 'web.add_lead' }}">
-                    <i class="bi bi-person-plus me-2"></i>Add Lead
+                <a href="/tasks" class="{{ 'active' if request.endpoint == 'web.tasks_list' }}">
+                    <i class="bi bi-check2-square me-3"></i>Tasks & Follow-ups
                 </a>
-                <a href="/leads?status=New">
-                    <i class="bi bi-star me-2"></i>New Leads
+                <a href="/users" class="{{ 'active' if request.endpoint == 'web.users_list' }}">
+                    <i class="bi bi-shield-lock-fill me-3"></i>User Management
                 </a>
-                <a href="/leads?status=Contacted">
-                    <i class="bi bi-telephone me-2"></i>Contacted
-                </a>
-                <a href="/leads?status=Qualified">
-                    <i class="bi bi-check-circle me-2"></i>Qualified
-                </a>
-                <a href="/leads?status=Converted">
-                    <i class="bi bi-trophy me-2"></i>Converted
+                <a href="/import" class="{{ 'active' if request.endpoint == 'web.import_csv' }}">
+                    <i class="bi bi-file-earmark-spreadsheet-fill me-3"></i>Import / Export
                 </a>
             </nav>
+            <div class="p-3 border-top border-secondary text-center small text-muted">
+                Yayath CRM v2.0 &copy; 2026
+            </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="col-md-10 p-4">
+        <!-- Main Content Area -->
+        <div class="col-md-10 p-4" style="min-height: 100vh;">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for cat, msg in messages %}
-                        <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+                        <div class="alert alert-{{ cat }} alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
                             {{ msg }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
@@ -74,6 +218,7 @@
         </div>
     </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

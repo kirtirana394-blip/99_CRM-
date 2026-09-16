@@ -1,50 +1,55 @@
 {% extends "base.html" %}
 {% block title %}All Leads - Yayath 99Acres CRM{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3><i class="bi bi-people me-2"></i>All Leads</h3>
-    <a href="/leads/add" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Add New Lead</a>
-</div>
 
-<!-- Filters -->
-<div class="card border-0 shadow-sm mb-3">
-    <div class="card-body py-2">
-        <form method="GET" class="row g-2 align-items-center">
-            <div class="col-auto">
-                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search name, email, phone..." value="{{ search }}">
-            </div>
-            <div class="col-auto">
-                <select name="status" class="form-select form-select-sm">
-                    <option value="">All Status</option>
-                    {% for s in ['New','Contacted','Qualified','Converted','Lost'] %}
-                    <option value="{{ s }}" {{ 'selected' if status_filter == s }}>{{ s }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-auto">
-                <button class="btn btn-sm btn-outline-primary">Filter</button>
-                <a href="/leads" class="btn btn-sm btn-outline-secondary">Clear</a>
-            </div>
-        </form>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-people-fill text-primary me-2"></i>All Leads</h3>
+        <small class="text-muted">View, search, filter, and manage your property leads.</small>
+    </div>
+    <div>
+        <a href="/import" class="btn btn-outline-success me-2"><i class="bi bi-file-earmark-arrow-up me-1"></i>Import CSV</a>
+        <a href="/leads/add" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Add New Lead</a>
     </div>
 </div>
 
+<!-- Filters -->
+<div class="card card-custom p-3 mb-4">
+    <form method="GET" class="row g-2 align-items-center">
+        <div class="col-md-5">
+            <input type="text" name="search" class="form-control form-control-sm" placeholder="Search name, email, phone, location, property..." value="{{ search }}">
+        </div>
+        <div class="col-md-4">
+            <select name="status" class="form-select form-select-sm">
+                <option value="">All Pipeline Stages</option>
+                {% for s in ['New','Contacted','Qualified','Meeting Done','Proposal Sent','Active Pipeline','Deal Close','Lost'] %}
+                <option value="{{ s }}" {{ 'selected' if status_filter == s }}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button class="btn btn-sm btn-primary px-3">Filter</button>
+            <a href="/leads" class="btn btn-sm btn-outline-secondary px-3">Clear</a>
+        </div>
+    </form>
+</div>
+
 <!-- Leads Table -->
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-0">
-        <table class="table table-hover mb-0">
+<div class="card card-custom p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
                 <tr>
                     <th>#</th>
                     <th>Name</th>
                     <th>Phone</th>
                     <th>Location</th>
-                    <th>Property</th>
+                    <th>Property Type</th>
                     <th>Budget</th>
                     <th>Status</th>
                     <th>Priority</th>
                     <th>Assigned To</th>
-                    <th>Date</th>
+                    <th>Created Date</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -53,7 +58,7 @@
                 <tr>
                     <td>{{ lead.id }}</td>
                     <td>
-                        <a href="/leads/{{ lead.id }}" class="text-decoration-none fw-bold">{{ lead.name }}</a>
+                        <a href="/leads/{{ lead.id }}" class="text-decoration-none fw-bold text-dark">{{ lead.name }}</a>
                         <br><small class="text-muted">{{ lead.email }}</small>
                     </td>
                     <td>{{ lead.phone or '-' }}</td>
@@ -61,27 +66,35 @@
                     <td>{{ lead.property_type or '-' }}</td>
                     <td>{{ lead.budget or '-' }}</td>
                     <td>
-                        {% set sc = {'New':'badge-new','Contacted':'badge-contacted','Qualified':'badge-qualified','Converted':'badge-converted','Lost':'badge-lost'} %}
-                        <span class="badge {{ sc.get(lead.status, 'bg-secondary') }}">{{ lead.status }}</span>
+                        {% set status_class = {
+                            'New':'status-new', 'Contacted':'status-contacted',
+                            'Qualified':'status-qualified', 'Meeting Done':'status-meeting',
+                            'Proposal Sent':'status-proposal', 'Active Pipeline':'status-active',
+                            'Deal Close':'status-converted', 'Lost':'status-lost'
+                        } %}
+                        <span class="badge-status {{ status_class.get(lead.status, 'bg-secondary text-white') }}">{{ lead.status }}</span>
                     </td>
                     <td>
-                        <span class="priority-{{ lead.priority|lower }}">{{ lead.priority }}</span>
+                        <span class="fw-semibold {{ 'text-danger' if lead.priority == 'High' else ('text-warning' if lead.priority == 'Medium' else 'text-success') }}">
+                            {{ lead.priority }}
+                        </span>
                     </td>
-                    <td>{{ lead.assigned_to or '-' }}</td>
-                    <td><small>{{ lead.created_at.strftime('%d %b') if lead.created_at else '' }}</small></td>
+                    <td><small>{{ lead.assigned_to or 'Unassigned' }}</small></td>
+                    <td><small>{{ lead.created_at.strftime('%Y-%m-%d') if lead.created_at else '' }}</small></td>
                     <td>
-                        <a href="/leads/{{ lead.id }}/edit" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
+                        <a href="/leads/{{ lead.id }}/edit" class="btn btn-sm btn-light border me-1" title="Edit"><i class="bi bi-pencil"></i></a>
                         <form method="POST" action="/leads/{{ lead.id }}/delete" class="d-inline" onsubmit="return confirm('Delete this lead?')">
-                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
                         </form>
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="11" class="text-center text-muted py-4">No leads found. <a href="/leads/add">Add one!</a></td></tr>
+                <tr><td colspan="11" class="text-center text-muted py-4">No leads found. <a href="/leads/add">Add lead</a> or <a href="/import">Import CSV</a></td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
-<div class="mt-2 text-muted"><small>Showing {{ leads|length }} leads</small></div>
+<div class="mt-3 text-muted small">Showing {{ leads|length }} leads</div>
+
 {% endblock %}

@@ -1,101 +1,108 @@
 {% extends "base.html" %}
 {% block title %}{{ lead.name }} - Yayath 99Acres CRM{% endblock %}
 {% block content %}
+
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3><i class="bi bi-person me-2"></i>{{ lead.name }}</h3>
     <div>
-        <a href="/leads/{{ lead.id }}/edit" class="btn btn-outline-primary"><i class="bi bi-pencil me-1"></i>Edit</a>
+        <h3 class="fw-bold mb-1"><i class="bi bi-person-fill text-primary me-2"></i>{{ lead.name }}</h3>
+        <small class="text-muted">Lead ID #{{ lead.id }} &bull; Source: {{ lead.source or '99acres' }}</small>
+    </div>
+    <div>
+        <a href="/leads/{{ lead.id }}/edit" class="btn btn-outline-primary rounded-3 me-2"><i class="bi bi-pencil me-1"></i>Edit Lead</a>
         <form method="POST" action="/leads/{{ lead.id }}/delete" class="d-inline" onsubmit="return confirm('Delete this lead?')">
-            <button class="btn btn-outline-danger"><i class="bi bi-trash me-1"></i>Delete</button>
+            <button class="btn btn-outline-danger rounded-3"><i class="bi bi-trash me-1"></i>Delete</button>
         </form>
     </div>
 </div>
 
-<div class="row">
-    <!-- Lead Info -->
-    <div class="col-md-5">
-        <div class="card border-0 shadow-sm mb-3">
-            <div class="card-header bg-white"><h5 class="mb-0">Lead Details</h5></div>
-            <div class="card-body">
-                <table class="table table-borderless mb-0">
-                    <tr><td class="text-muted" width="40%">Email</td><td><a href="mailto:{{ lead.email }}">{{ lead.email }}</a></td></tr>
-                    <tr><td class="text-muted">Phone</td><td><a href="tel:{{ lead.phone }}">{{ lead.phone or '-' }}</a></td></tr>
-                    <tr><td class="text-muted">Source</td><td>{{ lead.source or '-' }}</td></tr>
-                    <tr><td class="text-muted">Property Type</td><td>{{ lead.property_type or '-' }}</td></tr>
-                    <tr><td class="text-muted">Budget</td><td>{{ lead.budget or '-' }}</td></tr>
-                    <tr><td class="text-muted">Location</td><td>{{ lead.location or '-' }}</td></tr>
-                    <tr><td class="text-muted">Status</td><td>
-                        {% set sc = {'New':'badge-new','Contacted':'badge-contacted','Qualified':'badge-qualified','Converted':'badge-converted','Lost':'badge-lost'} %}
-                        <span class="badge {{ sc.get(lead.status, 'bg-secondary') }}">{{ lead.status }}</span>
-                    </td></tr>
-                    <tr><td class="text-muted">Priority</td><td><span class="priority-{{ lead.priority|lower }}">{{ lead.priority }}</span></td></tr>
-                    <tr><td class="text-muted">Assigned To</td><td>{{ lead.assigned_to or '-' }}</td></tr>
-                    <tr><td class="text-muted">Created</td><td>{{ lead.created_at.strftime('%d %b %Y, %H:%M') if lead.created_at else '-' }}</td></tr>
-                    <tr><td class="text-muted">Updated</td><td>{{ lead.updated_at.strftime('%d %b %Y, %H:%M') if lead.updated_at else '-' }}</td></tr>
-                </table>
-            </div>
+<div class="row g-4">
+    <!-- Left Column: Lead Info & Follow-up Scheduler -->
+    <div class="col-lg-5">
+        <div class="card card-custom p-4 mb-4">
+            <h5 class="fw-bold mb-3 border-bottom pb-2">Lead Information</h5>
+            <table class="table table-borderless align-middle mb-0">
+                <tr><td class="text-muted" width="40%">Email</td><td><a href="mailto:{{ lead.email }}" class="fw-bold text-decoration-none">{{ lead.email }}</a></td></tr>
+                <tr><td class="text-muted">Phone</td><td><a href="tel:{{ lead.phone }}" class="fw-bold text-decoration-none text-dark">{{ lead.phone or '-' }}</a></td></tr>
+                <tr><td class="text-muted">Property Type</td><td>{{ lead.property_type or '-' }}</td></tr>
+                <tr><td class="text-muted">Budget</td><td><span class="badge bg-light text-dark border">{{ lead.budget or '-' }}</span></td></tr>
+                <tr><td class="text-muted">Location</td><td>{{ lead.location or '-' }}</td></tr>
+                <tr><td class="text-muted">Status</td><td>
+                    {% set status_class = {
+                        'New':'status-new', 'Contacted':'status-contacted',
+                        'Qualified':'status-qualified', 'Meeting Done':'status-meeting',
+                        'Proposal Sent':'status-proposal', 'Active Pipeline':'status-active',
+                        'Deal Close':'status-converted', 'Lost':'status-lost'
+                    } %}
+                    <span class="badge-status {{ status_class.get(lead.status, 'bg-secondary text-white') }}">{{ lead.status }}</span>
+                </td></tr>
+                <tr><td class="text-muted">Priority</td><td>
+                    <span class="fw-bold {{ 'text-danger' if lead.priority == 'High' else ('text-warning' if lead.priority == 'Medium' else 'text-success') }}">{{ lead.priority }}</span>
+                </td></tr>
+                <tr><td class="text-muted">Assigned To</td><td><strong>{{ lead.assigned_to or 'Unassigned' }}</strong></td></tr>
+                <tr><td class="text-muted">Created Date</td><td><small>{{ lead.created_at.strftime('%Y-%m-%d %H:%M') if lead.created_at else '-' }}</small></td></tr>
+            </table>
         </div>
 
-        <!-- Schedule Follow-up -->
-        <div class="card border-0 shadow-sm mb-3">
-            <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-bell me-1"></i>Schedule Follow-up</h5></div>
-            <div class="card-body">
-                <form method="POST" action="/leads/{{ lead.id }}/followup">
-                    <div class="mb-2">
-                        <input type="datetime-local" name="scheduled_at" class="form-control form-control-sm" required>
-                    </div>
-                    <div class="mb-2">
-                        <input type="text" name="description" class="form-control form-control-sm" placeholder="Description (optional)">
-                    </div>
-                    <button class="btn btn-sm btn-warning"><i class="bi bi-plus me-1"></i>Add Follow-up</button>
-                </form>
-
-                {% if lead.followups %}
-                <hr>
-                {% for fu in lead.followups|sort(attribute='scheduled_at', reverse=True) %}
-                <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-                    <div>
-                        <small class="{{ 'text-decoration-line-through text-muted' if fu.completed else 'text-danger' }}">
-                            <i class="bi bi-clock me-1"></i>{{ fu.scheduled_at.strftime('%d %b %Y, %H:%M') }}
-                        </small>
-                        <br><small>{{ fu.description or '' }}</small>
-                    </div>
-                    {% if not fu.completed %}
-                    <form method="POST" action="/followups/{{ fu.id }}/complete">
-                        <button class="btn btn-sm btn-outline-success"><i class="bi bi-check2"></i></button>
-                    </form>
-                    {% else %}
-                    <span class="badge bg-success">Done</span>
-                    {% endif %}
+        <!-- Schedule Follow-up Card -->
+        <div class="card card-custom p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-bell-fill text-warning me-2"></i>Schedule Follow-up</h5>
+            <form method="POST" action="/leads/{{ lead.id }}/followup" class="mb-3">
+                <div class="mb-2">
+                    <label class="form-label small fw-bold">Date & Time</label>
+                    <input type="datetime-local" name="scheduled_at" class="form-control form-control-sm" required>
                 </div>
-                {% endfor %}
+                <div class="mb-2">
+                    <label class="form-label small fw-bold">Notes / Agenda</label>
+                    <input type="text" name="description" class="form-control form-control-sm" placeholder="e.g. Discuss site visit and price negotiation">
+                </div>
+                <button class="btn btn-sm btn-warning w-100 fw-bold mt-2"><i class="bi bi-plus-lg me-1"></i>Add Follow-up</button>
+            </form>
+
+            {% if lead.followups %}
+            <h6 class="fw-bold mt-3 mb-2 small text-muted">Follow-up History</h6>
+            {% for fu in lead.followups|sort(attribute='scheduled_at', reverse=True) %}
+            <div class="border-bottom py-2 d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="{{ 'text-decoration-line-through text-muted' if fu.completed else 'text-danger fw-semibold' }}">
+                        <i class="bi bi-clock me-1"></i>{{ fu.scheduled_at.strftime('%d %b %Y, %H:%M') }}
+                    </small>
+                    <br><small class="text-muted">{{ fu.description or '' }}</small>
+                </div>
+                {% if not fu.completed %}
+                <form method="POST" action="/followups/{{ fu.id }}/complete">
+                    <button class="btn btn-sm btn-outline-success"><i class="bi bi-check-lg"></i></button>
+                </form>
+                {% else %}
+                <span class="badge bg-success">Done</span>
                 {% endif %}
             </div>
+            {% endfor %}
+            {% endif %}
         </div>
     </div>
 
-    <!-- Notes -->
-    <div class="col-md-7">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-journal-text me-1"></i>Notes & Activity</h5></div>
-            <div class="card-body">
-                <form method="POST" action="/leads/{{ lead.id }}/note" class="mb-3">
-                    <div class="input-group">
-                        <textarea name="content" class="form-control" rows="2" placeholder="Add a note..." required></textarea>
-                        <button class="btn btn-primary"><i class="bi bi-send"></i></button>
-                    </div>
-                </form>
-
-                {% for note in lead.notes|sort(attribute='created_at', reverse=True) %}
-                <div class="border rounded p-3 mb-2" style="background:#fafafa">
-                    <p class="mb-1">{{ note.content }}</p>
-                    <small class="text-muted"><i class="bi bi-clock me-1"></i>{{ note.created_at.strftime('%d %b %Y, %H:%M') if note.created_at else '' }}</small>
+    <!-- Right Column: Notes & Activity Timeline -->
+    <div class="col-lg-7">
+        <div class="card card-custom p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-journal-text text-primary me-2"></i>Notes & Activity Timeline</h5>
+            
+            <form method="POST" action="/leads/{{ lead.id }}/note" class="mb-4">
+                <div class="input-group">
+                    <textarea name="content" class="form-control" rows="2" placeholder="Add a client note, call log, or status update..." required></textarea>
+                    <button class="btn btn-primary px-4"><i class="bi bi-send-fill me-1"></i>Add Note</button>
                 </div>
-                {% else %}
-                <p class="text-muted text-center">No notes yet. Add one above.</p>
-                {% endfor %}
+            </form>
+
+            {% for note in lead.notes|sort(attribute='created_at', reverse=True) %}
+            <div class="border-start border-3 border-primary ps-3 py-2 mb-3 bg-light rounded-2">
+                <p class="mb-1 text-dark">{{ note.content }}</p>
+                <small class="text-muted"><i class="bi bi-clock me-1"></i>{{ note.created_at.strftime('%d %b %Y, %H:%M') if note.created_at else '' }}</small>
             </div>
+            {% else %}
+            <div class="text-center text-muted py-4">No notes recorded yet. Use the box above to log calls or meetings.</div>
+            {% endfor %}
         </div>
     </div>
 </div>
+
 {% endblock %}
