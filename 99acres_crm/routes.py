@@ -169,10 +169,11 @@ def login():
 
 @web_bp.route('/sync-google-sheet-now', methods=['GET', 'POST'])
 def sync_google_sheet_web():
-    """One-click sync: pulls leads from Google Sheet July-Aug & Sep tabs using fixed column positions and GIDs."""
+    """One-click sync: pulls leads from Google Sheet July-Aug, Sep, and Interested Client tabs."""
     sheet_gids = [
         {'name': 'July - Aug', 'gid': '0'},
-        {'name': 'Sep', 'gid': '1120309224'}
+        {'name': 'Sep', 'gid': '1120309224'},
+        {'name': 'Interested client', 'gid': '937006042'}
     ]
     sheet_id = '1VfFPHNkZ3ljCx_iT-GIRMZpxqgAVP4kdZptXlR6u7qc'
     added_count = 0
@@ -199,7 +200,84 @@ def sync_google_sheet_web():
                 errors.append(f"{tab_name}: No data rows found")
                 continue
 
-            # Dynamically find header row containing 'S No' or 'Date' or 'Name'
+            if gid == '937006042':
+                # Interested Client tab structure: S NO | NAME | NUMBER | Loction | BUDGET | Requirement | Remarks
+                start_idx = 0
+                for idx, r in enumerate(rows):
+                    if r and len(r) > 1 and ('S NO' in r[0] or 'NAME' in r[1] or 'NUMBER' in r[2]):
+                        start_idx = idx
+                        break
+
+                for r in rows[start_idx + 1:]:
+                    if not r or len(r) < 3:
+                        continue
+                    name = r[1].strip() if len(r) > 1 else ''
+                    phone = r[2].strip() if len(r) > 2 else ''
+                    if not name and not phone:
+                        continue
+                    if not name:
+                        name = f"Client {phone[-10:]}"
+
+                    location = r[3].strip() if len(r) > 3 else ''
+                    budget = r[4].strip() if len(r) > 4 else ''
+                    requirement = r[5].strip() if len(r) > 5 else ''
+                    remarks = r[6].strip() if len(r) > 6 else ''
+
+                    source_val = 'Himmat Data' if ('Himmat' in remarks or 'Himmat' in requirement) else '99acres'
+
+                    rem_lower = remarks.lower()
+                    req_lower = requirement.lower()
+                    status = 'Contacted'
+                    if 'proposal' in rem_lower or 'proposal' in req_lower:
+                        status = 'Proposal Sent'
+                    elif 'visit' in rem_lower or 'site' in rem_lower:
+                        status = 'Meeting Done'
+                    elif 'hot' in rem_lower or 'hot' in req_lower:
+                        status = 'Qualified'
+
+                    priority = 'High' if ('hot' in rem_lower or 'hot' in req_lower or 'urgent' in req_lower) else 'Medium'
+
+                    existing = None
+                    if phone and phone != '-':
+                        existing = Lead.query.filter(Lead.phone == phone).first()
+                    if not existing and name:
+                        existing = Lead.query.filter(Lead.name == name).first()
+
+                    clean_name = name.lower().replace(' ', '.').replace('/', '')
+                    email = f"{clean_name}@lead99.com"
+
+                    if existing:
+                        if location: existing.location = location
+                        if budget: existing.budget = budget
+                        if remarks: existing.sunil_remarks = remarks
+                        if status != 'Contacted': existing.status = status
+                        if priority == 'High': existing.priority = priority
+                        if existing.source == 'Direct': existing.source = source_val
+                        updated_count += 1
+                        note_parts = []
+                        if requirement: note_parts.append(f"Requirement: {requirement}")
+                        if remarks: note_parts.append(f"Remarks: {remarks}")
+                        if note_parts:
+                            db.session.add(Note(lead_id=existing.id, content=" | ".join(note_parts)))
+                    else:
+                        lead = Lead(
+                            name=name, email=email, phone=phone, source=source_val,
+                            property_type='Office Space', budget=budget,
+                            location=location, status=status, priority=priority,
+                            assigned_to='Admin Kiriti', is_imported=True,
+                            sunil_remarks=remarks, created_at=datetime.utcnow()
+                        )
+                        db.session.add(lead)
+                        db.session.flush()
+                        note_parts = []
+                        if requirement: note_parts.append(f"Requirement: {requirement}")
+                        if remarks: note_parts.append(f"Remarks: {remarks}")
+                        if note_parts:
+                            db.session.add(Note(lead_id=lead.id, content=" | ".join(note_parts)))
+                        added_count += 1
+                continue
+
+            # Standard response tabs (July-Aug & Sep)
             start_idx = 0
             for idx, r in enumerate(rows):
                 if r and len(r) > 1 and ('S No' in r[0] or 'Date' in r[1] or 'Name' in r[2]):
