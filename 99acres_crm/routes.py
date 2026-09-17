@@ -169,10 +169,9 @@ def login():
 
 @web_bp.route('/sync-google-sheet-now', methods=['GET', 'POST'])
 def sync_google_sheet_web():
-    """One-click sync: pulls leads from Google Sheet July-Aug, Sep, and Interested Client tabs."""
+    """One-click sync: pulls leads from Google Sheet July-Aug & Interested Client tabs ONLY (Sep tab excluded)."""
     sheet_gids = [
         {'name': 'July - Aug', 'gid': '0'},
-        {'name': 'Sep', 'gid': '1120309224'},
         {'name': 'Interested client', 'gid': '937006042'}
     ]
     sheet_id = '1VfFPHNkZ3ljCx_iT-GIRMZpxqgAVP4kdZptXlR6u7qc'
@@ -180,9 +179,15 @@ def sync_google_sheet_web():
     updated_count = 0
     errors = []
 
-    # Clean up legacy 'Direct' sources to '99acres'
+    # Clean up legacy 'Direct' sources to '99acres' and purge imported leads to remove Sep tab entries
     try:
         Lead.query.filter(Lead.source == 'Direct').update({Lead.source: '99acres'}, synchronize_session=False)
+        # Purge previously imported leads to ensure Sep tab leads are completely excluded
+        imported_ids = [l.id for l in Lead.query.filter_by(is_imported=True).all()]
+        if imported_ids:
+            Note.query.filter(Note.lead_id.in_(imported_ids)).delete(synchronize_session=False)
+            FollowUp.query.filter(FollowUp.lead_id.in_(imported_ids)).delete(synchronize_session=False)
+            Lead.query.filter_by(is_imported=True).delete(synchronize_session=False)
         db.session.commit()
     except Exception:
         db.session.rollback()

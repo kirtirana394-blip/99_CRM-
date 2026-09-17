@@ -165,7 +165,6 @@ def create_app():
                 import urllib.request, urllib.parse, csv, io
                 sheet_gids = [
                     {'name': 'July - Aug', 'gid': '0'},
-                    {'name': 'Sep', 'gid': '1120309224'},
                     {'name': 'Interested client', 'gid': '937006042'}
                 ]
                 sheet_id = '1VfFPHNkZ3ljCx_iT-GIRMZpxqgAVP4kdZptXlR6u7qc'
