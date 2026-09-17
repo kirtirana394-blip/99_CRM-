@@ -164,10 +164,15 @@ def create_app():
                             requirement = r[5].strip() if len(r) > 5 else ''   # Property Type / Specs
                             remarks = r[6].strip() if len(r) > 6 else ''       # Sunil Remarks
 
-                            source_val = 'Himmat Data' if ('Himmat' in remarks or 'Himmat' in requirement) else '99acres'
-
                             rem_lower = remarks.lower()
                             req_lower = requirement.lower()
+
+                            if 'sunil' in rem_lower or 'sunil' in req_lower:
+                                source_val = 'Sunil Data'
+                            elif 'himmat' in rem_lower or 'himmat' in req_lower:
+                                source_val = 'Himmat Data'
+                            else:
+                                source_val = '99acres'
                             status = 'Contacted'
                             if 'proposal' in rem_lower or 'proposal' in req_lower:
                                 status = 'Proposal Sent'
@@ -225,11 +230,18 @@ def create_app():
                         listing_id = r[4].strip() if len(r) > 4 else ''
                         property_type = r[5].strip() if len(r) > 5 else ''
                         raw_budget = r[6].strip() if len(r) > 6 else ''
-                        budget = '' if 'Himmat' in raw_budget else raw_budget
-                        source_val = 'Himmat Data' if 'Himmat' in raw_budget else '99acres'
+                        budget = '' if ('Himmat' in raw_budget or 'Sunil' in raw_budget) else raw_budget
                         response_from = r[9].strip() if len(r) > 9 else ''
                         sunil_remarks = r[10].strip() if len(r) > 10 else ''
                         telecaller_col = r[11].strip() if len(r) > 11 else ''
+
+                        r_text = ' '.join(r).lower()
+                        if 'sunil' in telecaller_col.lower() or 'sunil' in raw_budget.lower() or 'sunil data' in r_text:
+                            source_val = 'Sunil Data'
+                        elif 'himmat' in raw_budget or 'himmat' in r_text:
+                            source_val = 'Himmat Data'
+                        else:
+                            source_val = '99acres'
 
                         created_at = None
                         if date_str:
