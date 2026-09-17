@@ -84,7 +84,7 @@ def create_app():
         except Exception:
             db.session.rollback()
 
-        # Auto-heal: Purge misaligned legacy leads so they are auto-refreshed cleanly
+        # Auto-heal: Purge misaligned legacy leads & ensure Rohit Joshi and Tarun Tiwari are assigned to Sunil Data
         try:
             from models import Lead, Note, FollowUp
             corrupted_count = Lead.query.filter(
@@ -100,6 +100,27 @@ def create_app():
                 FollowUp.query.delete(synchronize_session=False)
                 Lead.query.delete(synchronize_session=False)
                 db.session.commit()
+
+            # Ensure ROHIT JOSHI is assigned to Sunil Data
+            rohit = Lead.query.filter((Lead.name.ilike('%ROHIT JOSHI%')) | (Lead.phone.like('%7080173012%'))).first()
+            if rohit:
+                rohit.source = 'Sunil Data'
+
+            # Ensure Tarun Tiwari exists under Sunil Data
+            tarun = Lead.query.filter(Lead.name.ilike('%Tarun Tiwari%')).first()
+            if not tarun:
+                tarun = Lead(
+                    name='Tarun Tiwari', email='tarun.tiwari@lead99.com', phone='-',
+                    source='Sunil Data', property_type='Office Space', budget='',
+                    location='Gurgaon', status='New', priority='Medium',
+                    assigned_to='Admin Kiriti', is_imported=True,
+                    created_at=datetime(2026, 9, 11)
+                )
+                db.session.add(tarun)
+            else:
+                tarun.source = 'Sunil Data'
+            
+            db.session.commit()
         except Exception as e:
             print("Auto-heal error:", e)
             db.session.rollback()
@@ -236,7 +257,9 @@ def create_app():
                         telecaller_col = r[11].strip() if len(r) > 11 else ''
 
                         r_text = ' '.join(r).lower()
-                        if 'sunil' in telecaller_col.lower() or 'sunil' in raw_budget.lower() or 'sunil data' in r_text:
+                        if 'rohit joshi' in name.lower() or '7080173012' in phone or 'tarun tiwari' in name.lower():
+                            source_val = 'Sunil Data'
+                        elif 'sunil' in telecaller_col.lower() or 'sunil' in raw_budget.lower() or 'sunil data' in r_text:
                             source_val = 'Sunil Data'
                         elif 'himmat' in raw_budget or 'himmat' in r_text:
                             source_val = 'Himmat Data'
@@ -269,6 +292,21 @@ def create_app():
                             created_at=created_at
                         )
                         db.session.add(lead)
+
+                # Ensure Tarun Tiwari lead exists under Sunil Data
+                tarun = Lead.query.filter(Lead.name.ilike('%Tarun Tiwari%')).first()
+                if not tarun:
+                    tarun = Lead(
+                        name='Tarun Tiwari', email='tarun.tiwari@lead99.com', phone='-',
+                        source='Sunil Data', property_type='Office Space', budget='',
+                        location='Gurgaon', status='New', priority='Medium',
+                        assigned_to='Admin Kiriti', is_imported=True,
+                        created_at=datetime(2026, 9, 11)
+                    )
+                    db.session.add(tarun)
+                else:
+                    tarun.source = 'Sunil Data'
+
                 db.session.commit()
             except Exception as e:
                 print("Auto sync on startup error:", e)
