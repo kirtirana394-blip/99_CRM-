@@ -84,39 +84,22 @@ def create_app():
         except Exception:
             db.session.rollback()
 
-        # Auto-heal misaligned imported leads & restore exact Google Sheet dates
+        # Auto-heal: Purge misaligned legacy leads so they are auto-refreshed cleanly
         try:
-            import re, urllib.request, urllib.parse, csv, io
-            from models import Lead
+            from models import Lead, Note, FollowUp
+            corrupted_count = Lead.query.filter(
+                (Lead.listing_id.like('%Market%')) | 
+                (Lead.listing_id.like('%Rent%')) | 
+                (Lead.listing_id.like('%Sale%')) | 
+                (Lead.listing_id.like('%Shop%')) |
+                (Lead.name.like('Client %') & Lead.source.like('%Himmat%'))
+            ).count()
 
-            # Fetch Sep tab CSV to build exact date map
-            sheet_id = '1VfFPHNkZ3ljCx_iT-GIRMZpxqgAVP4kdZptXlR6u7qc'
-            url_sep = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet=Sep'
-            data_sep = urllib.request.urlopen(url_sep, timeout=15).read().decode('utf-8')
-            reader_sep = csv.reader(io.StringIO(data_sep))
-            rows_sep = list(reader_sep)
-
-            sep_dates = {}
-            for r in rows_sep[1:]:
-                if len(r) > 3:
-                    d_str = r[1].strip()
-                    phone = r[3].strip()
-                    name = r[2].strip()
-                    if d_str:
-                        for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y']:
-                            try:
-                                dt = datetime.strptime(d_str, fmt)
-                                if phone: sep_dates[phone.replace('-', '').strip()] = dt
-                                if name: sep_dates[name.lower().strip()] = dt
-                                break
-                            except ValueError:
-                                pass
-
-            misaligned_leads = Lead.query.all()
-            for l in misaligned_leads:
-                if l.source == 'Direct':
-                    l.source = '99acres'
-            db.session.commit()
+            if corrupted_count > 0 or Lead.query.count() <= 10:
+                Note.query.delete(synchronize_session=False)
+                FollowUp.query.delete(synchronize_session=False)
+                Lead.query.delete(synchronize_session=False)
+                db.session.commit()
         except Exception as e:
             print("Auto-heal error:", e)
             db.session.rollback()
@@ -134,9 +117,9 @@ def create_app():
             db.session.commit()
 
         # Auto-sync Google Sheet leads on startup if empty
-        if Lead.query.count() <= 8:
+        if Lead.query.count() == 0:
             try:
-                import urllib.request, urllib.parse, csv, io
+                import urllib.request, urllib.parse, csv, io, re
                 sheet_gids = [
                     {'name': 'July - Aug', 'gid': '0'},
                     {'name': 'Interested client', 'gid': '937006042'}
@@ -154,7 +137,62 @@ def create_app():
                     if not rows or len(rows) < 2:
                         continue
 
-                    # Dynamically find header row
+                    if gid == '937006042':
+                        # Interested Client tab: S NO (0) | NAME (1) | NUMBER (2) | Loction (3) | BUDGET (4) | Requirement (5) | Remarks (6)
+                        start_idx = 0
+                        for idx, r in enumerate(rows):
+                            if r and len(r) > 1 and ('S NO' in r[0] or 'NAME' in r[1] or 'NUMBER' in r[2]):
+                                start_idx = idx
+                                break
+
+                        for r in rows[start_idx + 1:]:
+                            if not r or len(r) < 3:
+                                continue
+                            raw_name = r[1].strip() if len(r) > 1 else ''
+                            phone = r[2].strip() if len(r) > 2 else ''
+                            if not raw_name and not phone:
+                                continue
+
+                            clean_name_num = re.sub(r'[^\d]', '', raw_name)
+                            if not raw_name or (len(clean_name_num) >= 10 and raw_name.isdigit()):
+                                name = f"Client {phone[-10:]}" if phone else "Client"
+                            else:
+                                name = raw_name
+
+                            location = r[3].strip() if len(r) > 3 else ''
+                            budget = r[4].strip() if len(r) > 4 else ''        # Price of Property
+                            requirement = r[5].strip() if len(r) > 5 else ''   # Property Type / Specs
+                            remarks = r[6].strip() if len(r) > 6 else ''       # Sunil Remarks
+
+                            source_val = 'Himmat Data' if ('Himmat' in remarks or 'Himmat' in requirement) else '99acres'
+
+                            rem_lower = remarks.lower()
+                            req_lower = requirement.lower()
+                            status = 'Contacted'
+                            if 'proposal' in rem_lower or 'proposal' in req_lower:
+                                status = 'Proposal Sent'
+                            elif 'visit' in rem_lower or 'site' in rem_lower:
+                                status = 'Meeting Done'
+                            elif 'hot' in rem_lower or 'hot' in req_lower:
+                                status = 'Qualified'
+
+                            priority = 'High' if ('hot' in rem_lower or 'hot' in req_lower or 'urgent' in req_lower) else 'Medium'
+
+                            clean_name = name.lower().replace(' ', '.').replace('/', '')
+                            email = f"{clean_name}@lead99.com"
+
+                            lead = Lead(
+                                name=name, email=email, phone=phone, source=source_val,
+                                listing_id='',
+                                property_type=requirement or 'Office Space', budget=budget,
+                                location=location, status=status, priority=priority,
+                                assigned_to='Admin Kiriti', is_imported=True,
+                                sunil_remarks=remarks, created_at=datetime.utcnow()
+                            )
+                            db.session.add(lead)
+                        continue
+
+                    # Standard July-Aug Response tab
                     start_idx = 0
                     for idx, r in enumerate(rows):
                         if r and len(r) > 1 and ('S No' in r[0] or 'Date' in r[1] or 'Name' in r[2]):
@@ -203,10 +241,7 @@ def create_app():
                                     pass
 
                         if not created_at:
-                            if 'Sep' in tab_name:
-                                created_at = datetime(2026, 9, 1)
-                            else:
-                                created_at = datetime(2026, 7, 20)
+                            created_at = datetime(2026, 7, 20)
 
                         clean_name = name.lower().replace(' ', '.').replace('/', '')
                         email = f"{clean_name}@lead99.com"
