@@ -79,6 +79,19 @@
                 <label class="form-label fw-bold small">Created Date (Editable)</label>
                 <input type="date" name="created_date" class="form-control form-control-sm" value="{{ lead.created_at.strftime('%Y-%m-%d') if lead and lead.created_at else '' }}">
             </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold small">Listing ID</label>
+                <input type="text" name="listing_id" class="form-control form-control-sm" value="{{ lead.listing_id if lead else '' }}" placeholder="e.g. 81923041">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold small">Response From</label>
+                <select name="response_from" class="form-select form-select-sm">
+                    <option value="">-- Select --</option>
+                    {% for rf in ['Dealer', 'Owner', 'Agent', 'Direct Client', 'Builder', 'Other'] %}
+                    <option value="{{ rf }}" {{ 'selected' if lead and lead.response_from == rf }}>{{ rf }}</option>
+                    {% endfor %}
+                </select>
+            </div>
             <div class="col-md-6">
                 <label class="form-label fw-bold small">Sunil Remarks</label>
                 <textarea name="sunil_remarks" class="form-control form-control-sm" rows="2" placeholder="e.g. Client Meeting Done / Big Boss Test Query">{{ lead.sunil_remarks if lead else '' }}</textarea>

@@ -589,6 +589,8 @@ def add_lead():
             assigned_to=request.form.get('assigned_to', ''),
             sunil_remarks=request.form.get('sunil_remarks', ''),
             telecaller_remarks=request.form.get('telecaller_remarks', ''),
+            listing_id=request.form.get('listing_id', ''),
+            response_from=request.form.get('response_from', ''),
             created_at=created_at
         )
         db.session.add(lead)
@@ -626,6 +628,8 @@ def edit_lead(lid):
         lead.assigned_to = request.form.get('assigned_to', '')
         lead.sunil_remarks = request.form.get('sunil_remarks', '')
         lead.telecaller_remarks = request.form.get('telecaller_remarks', '')
+        lead.listing_id = request.form.get('listing_id', '')
+        lead.response_from = request.form.get('response_from', '')
         
         created_at_str = request.form.get('created_date', '')
         if created_at_str:
@@ -638,6 +642,31 @@ def edit_lead(lid):
         flash('Lead updated successfully!', 'success')
         return redirect(url_for('web.lead_detail', lid=lead.id))
     return render_template('lead_form.html', lead=lead, action='Edit', users=users)
+
+
+@web_bp.route('/leads/<int:lid>/quick-edit', methods=['POST'])
+def quick_edit_lead(lid):
+    if session.get('user_role') == 'Viewer':
+        flash('Permission denied: Viewer role has read-only access.', 'danger')
+        return redirect(request.referrer or url_for('web.leads_list'))
+
+    lead = Lead.query.get_or_404(lid)
+    if 'sunil_remarks' in request.form:
+        lead.sunil_remarks = request.form.get('sunil_remarks', '').strip()
+    if 'telecaller_remarks' in request.form:
+        lead.telecaller_remarks = request.form.get('telecaller_remarks', '').strip()
+    if 'response_from' in request.form:
+        lead.response_from = request.form.get('response_from', '').strip()
+    if 'listing_id' in request.form:
+        lead.listing_id = request.form.get('listing_id', '').strip()
+    if 'status' in request.form:
+        lead.status = request.form.get('status', '').strip()
+    if 'source' in request.form:
+        lead.source = request.form.get('source', '').strip()
+
+    db.session.commit()
+    flash(f'Remarks updated for "{lead.name}"!', 'success')
+    return redirect(request.referrer or url_for('web.leads_list'))
 
 
 @web_bp.route('/leads/<int:lid>/delete', methods=['POST'])
