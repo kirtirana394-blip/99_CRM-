@@ -206,7 +206,7 @@ def sync_google_sheet_web():
                 continue
 
             if gid == '937006042':
-                # Interested Client tab structure: S NO | NAME | NUMBER | Loction | BUDGET | Requirement | Remarks
+                # Interested Client tab structure: S NO (0) | NAME (1) | NUMBER (2) | Loction (3) | BUDGET (4) | Requirement (5) | Remarks (6)
                 start_idx = 0
                 for idx, r in enumerate(rows):
                     if r and len(r) > 1 and ('S NO' in r[0] or 'NAME' in r[1] or 'NUMBER' in r[2]):
@@ -216,17 +216,22 @@ def sync_google_sheet_web():
                 for r in rows[start_idx + 1:]:
                     if not r or len(r) < 3:
                         continue
-                    name = r[1].strip() if len(r) > 1 else ''
+                    raw_name = r[1].strip() if len(r) > 1 else ''
                     phone = r[2].strip() if len(r) > 2 else ''
-                    if not name and not phone:
+                    if not raw_name and not phone:
                         continue
-                    if not name:
-                        name = f"Client {phone[-10:]}"
+
+                    # Preserve real name if present (e.g. kumi, Sahil Mehta, Chaitanya Gaba)
+                    clean_name_num = re.sub(r'[^\d]', '', raw_name)
+                    if not raw_name or (len(clean_name_num) >= 10 and raw_name.isdigit()):
+                        name = f"Client {phone[-10:]}" if phone else "Client"
+                    else:
+                        name = raw_name
 
                     location = r[3].strip() if len(r) > 3 else ''
-                    budget = r[4].strip() if len(r) > 4 else ''
-                    requirement = r[5].strip() if len(r) > 5 else ''
-                    remarks = r[6].strip() if len(r) > 6 else ''
+                    budget = r[4].strip() if len(r) > 4 else ''        # Price of Property
+                    requirement = r[5].strip() if len(r) > 5 else ''   # Property Type / Specs
+                    remarks = r[6].strip() if len(r) > 6 else ''       # Sunil Remarks
 
                     source_val = 'Himmat Data' if ('Himmat' in remarks or 'Himmat' in requirement) else '99acres'
 
@@ -252,8 +257,11 @@ def sync_google_sheet_web():
                     email = f"{clean_name}@lead99.com"
 
                     if existing:
+                        existing.name = name
+                        existing.listing_id = ''
                         if location: existing.location = location
                         if budget: existing.budget = budget
+                        if requirement: existing.property_type = requirement
                         if remarks: existing.sunil_remarks = remarks
                         if status != 'Contacted': existing.status = status
                         if priority == 'High': existing.priority = priority
@@ -267,7 +275,8 @@ def sync_google_sheet_web():
                     else:
                         lead = Lead(
                             name=name, email=email, phone=phone, source=source_val,
-                            property_type='Office Space', budget=budget,
+                            listing_id='',
+                            property_type=requirement or 'Office Space', budget=budget,
                             location=location, status=status, priority=priority,
                             assigned_to='Admin Kiriti', is_imported=True,
                             sunil_remarks=remarks, created_at=datetime.utcnow()

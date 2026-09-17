@@ -116,32 +116,6 @@ def create_app():
             for l in misaligned_leads:
                 if l.source == 'Direct':
                     l.source = '99acres'
-                if not l.name:
-                    continue
-
-                # Realign misaligned fields
-                clean_num = re.sub(r'[^\d]', '', l.name)
-                if len(clean_num) >= 10 and (l.name.isdigit() or l.name.startswith('91-') or clean_num in l.name.replace('-', '')):
-                    real_phone = l.name.strip()
-                    real_loc = l.phone.strip() if (l.phone and not re.sub(r'[^\d]', '', l.phone).isdigit()) else (l.location or '')
-                    l.phone = real_phone
-                    l.location = real_loc
-                    l.name = f"Client {real_phone[-10:]}"
-                    if l.budget and 'Himmat' in l.budget:
-                        l.source = 'Himmat Data'
-                        l.budget = ''
-
-                # Restore exact date
-                phone_key = (l.phone or '').replace('-', '').strip()
-                name_key = (l.name or '').lower().strip()
-                if phone_key in sep_dates:
-                    l.created_at = sep_dates[phone_key]
-                elif name_key in sep_dates:
-                    l.created_at = sep_dates[name_key]
-                elif l.is_imported and l.created_at.date() == datetime.utcnow().date():
-                    # Default July/August leads to July 2026
-                    l.created_at = datetime(2026, 7, 20)
-
             db.session.commit()
         except Exception as e:
             print("Auto-heal error:", e)
