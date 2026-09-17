@@ -114,6 +114,8 @@ def create_app():
 
             misaligned_leads = Lead.query.all()
             for l in misaligned_leads:
+                if l.source == 'Direct':
+                    l.source = '99acres'
                 if not l.name:
                     continue
 
@@ -161,19 +163,31 @@ def create_app():
         if Lead.query.count() <= 8:
             try:
                 import urllib.request, urllib.parse, csv, io
-                sheet_tabs = ['July - Aug', 'Sep']
+                sheet_gids = [
+                    {'name': 'July - Aug', 'gid': '0'},
+                    {'name': 'Sep', 'gid': '1120309224'}
+                ]
                 sheet_id = '1VfFPHNkZ3ljCx_iT-GIRMZpxqgAVP4kdZptXlR6u7qc'
 
-                for tab_name in sheet_tabs:
-                    url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={urllib.parse.quote(tab_name)}'
+                for item in sheet_gids:
+                    tab_name = item['name']
+                    gid = item['gid']
+                    url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}'
                     csv_bytes = urllib.request.urlopen(url, timeout=30).read()
-                    csv_text = csv_bytes.decode('utf-8')
+                    csv_text = csv_bytes.decode('utf-8', errors='ignore')
                     reader = csv.reader(io.StringIO(csv_text))
                     rows = list(reader)
                     if not rows or len(rows) < 2:
                         continue
 
-                    for r in rows[1:]:
+                    # Dynamically find header row
+                    start_idx = 0
+                    for idx, r in enumerate(rows):
+                        if r and len(r) > 1 and ('S No' in r[0] or 'Date' in r[1] or 'Name' in r[2]):
+                            start_idx = idx
+                            break
+
+                    for r in rows[start_idx + 1:]:
                         if not r or len(r) < 3:
                             continue
 
@@ -248,19 +262,19 @@ def create_app():
                      source="99acres", property_type="House/Villa", budget="1Cr - 1.5Cr",
                      location="DLF Phase 3, Gurgaon", status="Contacted", priority="High", assigned_to="Admin Kiriti"),
                 Lead(name="Amit Verma", email="amit.verma@hotmail.com", phone="9988776655",
-                     source="Direct", property_type="Plot/Land", budget="30L - 50L",
+                     source="99acres", property_type="Plot/Land", budget="30L - 50L",
                      location="Greater Noida West", status="Qualified", priority="Medium", assigned_to="Ravi Kumar"),
                 Lead(name="Sneha Patel", email="sneha.patel@gmail.com", phone="8877665544",
                      source="99acres", property_type="Flat/Apartment", budget="75L - 1Cr",
                      location="Indirapuram, Ghaziabad", status="Meeting Done", priority="Medium", assigned_to="Neha Sharma"),
                 Lead(name="Vikram Singh", email="vikram.singh@outlook.com", phone="7766554433",
-                     source="Direct", property_type="Office Space", budget="1.5Cr - 2Cr",
+                     source="99acres", property_type="Office Space", budget="1.5Cr - 2Cr",
                      location="Connaught Place, Delhi", status="Proposal Sent", priority="High", assigned_to="Ravi Kumar"),
                 Lead(name="Anita Mehra", email="anita.mehra@gmail.com", phone="9654321098",
                      source="99acres", property_type="Flat/Apartment", budget="40L - 60L",
                      location="Vaishali, Ghaziabad", status="Deal Close", priority="Low", assigned_to="Admin Kiriti"),
                 Lead(name="Deepak Kumar", email="deepak.kumar@gmail.com", phone="9012345678",
-                     source="Direct", property_type="Shop/Showroom", budget="80L - 1Cr",
+                     source="99acres", property_type="Shop/Showroom", budget="80L - 1Cr",
                      location="Karol Bagh, Delhi", status="Lost", priority="Medium", assigned_to="Suresh Verma"),
                 Lead(name="Kavita Rani", email="kavita.rani@yahoo.com", phone="8901234567",
                      source="99acres", property_type="Flat/Apartment", budget="25L - 40L",

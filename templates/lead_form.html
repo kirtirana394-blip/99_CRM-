@@ -23,12 +23,11 @@
                 <input type="text" name="phone" class="form-control form-control-sm" value="{{ lead.phone if lead else '' }}" placeholder="e.g. 9876543210">
             </div>
             
-            <!-- Source dropdown restricted strictly to 99acres and Direct -->
+            <!-- Source dropdown -->
             <div class="col-md-4">
                 <label class="form-label fw-bold small">Source</label>
                 <select name="source" class="form-select form-select-sm">
                     <option value="99acres" {{ 'selected' if not lead or lead.source == '99acres' }}>99acres</option>
-                    <option value="Direct" {{ 'selected' if lead and lead.source == 'Direct' }}>Direct</option>
                     <option value="Himmat Data" {{ 'selected' if lead and lead.source == 'Himmat Data' }}>Himmat Data</option>
                     <option value="Sunil Data" {{ 'selected' if lead and lead.source == 'Sunil Data' }}>Sunil Data</option>
                 </select>

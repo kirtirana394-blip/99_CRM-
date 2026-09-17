@@ -98,7 +98,7 @@
 
 <!-- Source Breakdown Cards Row -->
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-4">
         <a href="/leads?source=99acres" class="text-decoration-none">
             <div class="card card-custom p-3 border-start border-4 border-primary shadow-sm">
                 <div class="d-flex justify-content-between align-items-center">
@@ -111,20 +111,7 @@
             </div>
         </a>
     </div>
-    <div class="col-md-3">
-        <a href="/leads?source=Direct" class="text-decoration-none">
-            <div class="card card-custom p-3 border-start border-4 border-success shadow-sm">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="text-muted small fw-bold">Direct Source</div>
-                        <div class="fs-5 fw-bold text-dark">{{ source_direct }}</div>
-                    </div>
-                    <i class="bi bi-person-check-fill fs-3 text-success"></i>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <a href="/leads?source=Himmat+Data" class="text-decoration-none">
             <div class="card card-custom p-3 border-start border-4 border-warning shadow-sm">
                 <div class="d-flex justify-content-between align-items-center">
@@ -137,7 +124,7 @@
             </div>
         </a>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <a href="/leads?source=Sunil+Data" class="text-decoration-none">
             <div class="card card-custom p-3 border-start border-4 border-info shadow-sm">
                 <div class="d-flex justify-content-between align-items-center">
@@ -285,7 +272,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <span class="badge {{ 'bg-primary' if lead.source == '99acres' else ('bg-success' if lead.source == 'Direct' else 'bg-warning text-dark') }} px-2 py-1">
+                        <span class="badge {{ 'bg-primary' if lead.source == '99acres' else ('bg-info text-dark' if lead.source == 'Sunil Data' else 'bg-warning text-dark') }} px-2 py-1">
                             {{ lead.source or '99acres' }}
                         </span>
                     </td>

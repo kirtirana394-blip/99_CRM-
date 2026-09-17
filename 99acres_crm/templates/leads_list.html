@@ -30,7 +30,7 @@
         <div class="col-md-3">
             <select name="source" class="form-select form-select-sm">
                 <option value="">All Sources</option>
-                {% for src in ['99acres','Direct','Himmat Data','Sunil Data'] %}
+                {% for src in ['99acres','Himmat Data','Sunil Data'] %}
                 <option value="{{ src }}" {{ 'selected' if source_filter == src }}>{{ src }}</option>
                 {% endfor %}
             </select>
@@ -75,7 +75,7 @@
                     <td><small class="text-muted fw-semibold" style="white-space:nowrap;">{{ lead.created_at.strftime('%d/%m/%Y') if lead.created_at else '-' }}</small></td>
                     <td>
                         <a href="/leads/{{ lead.id }}" class="text-decoration-none fw-bold text-dark" style="white-space:nowrap;">{{ lead.name }}</a>
-                        <br><span class="badge {{ 'bg-primary' if lead.source == '99acres' else ('bg-success' if lead.source == 'Direct' else 'bg-warning text-dark') }}" style="font-size:0.65rem;">
+                        <br><span class="badge {{ 'bg-primary' if lead.source == '99acres' else ('bg-info text-dark' if lead.source == 'Sunil Data' else 'bg-warning text-dark') }}" style="font-size:0.65rem;">
                             {{ lead.source or '99acres' }}
                         </span>
                     </td>

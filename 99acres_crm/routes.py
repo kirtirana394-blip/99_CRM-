@@ -169,30 +169,44 @@ def login():
 
 @web_bp.route('/sync-google-sheet-now', methods=['GET', 'POST'])
 def sync_google_sheet_web():
-    """One-click sync: pulls leads from Google Sheet July-Aug & Sep tabs using fixed column positions."""
-    sheet_tabs = ['July - Aug', 'Sep']
+    """One-click sync: pulls leads from Google Sheet July-Aug & Sep tabs using fixed column positions and GIDs."""
+    sheet_gids = [
+        {'name': 'July - Aug', 'gid': '0'},
+        {'name': 'Sep', 'gid': '1120309224'}
+    ]
     sheet_id = '1VfFPHNkZ3ljCx_iT-GIRMZpxqgAVP4kdZptXlR6u7qc'
     added_count = 0
     updated_count = 0
     errors = []
 
-    # Column positions (verified from actual sheet):
-    # [0]=S No | [1]=Date | [2]=Name | [3]=Phone No. | [4]=Listing ID
-    # [5]=Property Type | [6]=Price of Property | [7]=Locality | [8]=Project
-    # [9]=Response From | [10]=Sunil Remarks | [11]=Telecaller/Simmy remarks
+    # Clean up legacy 'Direct' sources to '99acres'
+    try:
+        Lead.query.filter(Lead.source == 'Direct').update({Lead.source: '99acres'}, synchronize_session=False)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
-    for tab_name in sheet_tabs:
+    for item in sheet_gids:
+        tab_name = item['name']
+        gid = item['gid']
         try:
-            url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={urllib.parse.quote(tab_name)}'
+            url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}'
             csv_bytes = urllib.request.urlopen(url, timeout=30).read()
-            csv_text = csv_bytes.decode('utf-8')
+            csv_text = csv_bytes.decode('utf-8', errors='ignore')
             reader = csv.reader(io.StringIO(csv_text))
             rows = list(reader)
             if not rows or len(rows) < 2:
                 errors.append(f"{tab_name}: No data rows found")
                 continue
 
-            for r in rows[1:]:  # Skip header row
+            # Dynamically find header row containing 'S No' or 'Date' or 'Name'
+            start_idx = 0
+            for idx, r in enumerate(rows):
+                if r and len(r) > 1 and ('S No' in r[0] or 'Date' in r[1] or 'Name' in r[2]):
+                    start_idx = idx
+                    break
+
+            for r in rows[start_idx + 1:]:
                 if not r or len(r) < 3:
                     continue
 
@@ -266,6 +280,7 @@ def sync_google_sheet_web():
                     if telecaller_col and telecaller_col != 'NA': existing.telecaller_remarks = telecaller_col
                     if listing_id: existing.listing_id = listing_id
                     if response_from: existing.response_from = response_from
+                    if existing.source == 'Direct': existing.source = '99acres'
                     updated_count += 1
                 else:
                     # Insert new lead
@@ -381,7 +396,6 @@ def dashboard():
 
     # Source breakdown metrics
     source_99acres = sum(1 for l in all_filtered_leads if l.source == '99acres')
-    source_direct = sum(1 for l in all_filtered_leads if l.source == 'Direct')
     source_himmat = sum(1 for l in all_filtered_leads if l.source == 'Himmat Data')
     source_sunil = sum(1 for l in all_filtered_leads if l.source == 'Sunil Data')
     trash_count = Lead.query.filter_by(is_deleted=True).count()
@@ -394,7 +408,7 @@ def dashboard():
         total_leads=total_leads, new_leads=new_leads, qualified=qualified,
         meeting_done=meeting_done, proposal_sent=proposal_sent,
         active_pipeline=active_pipeline, deal_close=deal_close,
-        source_99acres=source_99acres, source_direct=source_direct,
+        source_99acres=source_99acres,
         source_himmat=source_himmat, source_sunil=source_sunil, trash_count=trash_count,
         recent_leads=recent_leads, today_followups=today_followups,
         time_filter=time_filter, start_date=start_date_str, end_date=end_date_str,
