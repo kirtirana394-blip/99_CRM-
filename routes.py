@@ -884,10 +884,19 @@ def settings():
         flash('Permission denied: Only Admin or Manager can change settings.', 'danger')
         return redirect(url_for('web.dashboard'))
 
+    from config import Config
+    db_uri = Config.SQLALCHEMY_DATABASE_URI
+    if 'postgresql' in db_uri:
+        active_db = 'PostgreSQL (Cloud Database)'
+    elif 'mysql' in db_uri:
+        active_db = 'MySQL (Local Database)'
+    else:
+        active_db = 'SQLite (crm.sqlite)'
+
     if request.method == 'POST':
         flash('Settings saved successfully!', 'success')
         return redirect(url_for('web.settings'))
-    return render_template('settings.html')
+    return render_template('settings.html', active_db=active_db)
 
 # ── Import & Export Data & Clear Imported Data ────────────────
 @web_bp.route('/import', methods=['GET', 'POST'])
