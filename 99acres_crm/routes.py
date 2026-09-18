@@ -173,7 +173,8 @@ def sync_google_sheet_web():
     sheet_gids = [
         {'name': 'July - Aug', 'gid': '0'},
         {'name': 'Interested client', 'gid': '937006042'},
-        {'name': 'Sep', 'gid': '1120309224'}
+        {'name': 'Sep', 'gid': '1120309224'},
+        {'name': 'Sunil Data', 'gid': '1012918450'}
     ]
     sheet_id = '1VfFPHNkZ3ljCx_iT-GIRMZpxqgAVP4kdZptXlR6u7qc'
     added_count = 0
@@ -200,6 +201,86 @@ def sync_google_sheet_web():
             rows = list(reader)
             if not rows or len(rows) < 2:
                 errors.append(f"{tab_name}: No data rows found")
+                continue
+
+            if gid == '1012918450':
+                # Sunil Data tab structure: Sr.No (0) | Name (1) | Contact Number (2) | Company Name (3) | Designation (4) | Source (5) | Active pipeline (6) | Area in sqft (7) | Requirement (8) | Proposal (9) | Next Followups (10) | Remarks (11) | Additional Remarks (12)
+                start_idx = 0
+                for idx, r in enumerate(rows):
+                    if r and len(r) > 1 and ('Sr.No' in r[0] or 'Name' in r[1] or 'Contact' in r[2]):
+                        start_idx = idx
+                        break
+
+                for r in rows[start_idx + 1:]:
+                    if not r or len(r) < 2:
+                        continue
+                    name = r[1].strip() if len(r) > 1 else ''
+                    if not name or name.lower() in ('-', '', 'name', 'sr.no'):
+                        continue
+                    phone = r[2].strip() if len(r) > 2 else ''
+                    company = r[3].strip() if len(r) > 3 else ''
+                    designation = r[4].strip() if len(r) > 4 else ''
+                    active_col = r[6].strip() if len(r) > 6 else ''
+                    area = r[7].strip() if len(r) > 7 else ''
+                    requirement = r[8].strip() if len(r) > 8 else ''
+                    proposal = r[9].strip() if len(r) > 9 else ''
+                    next_followup = r[10].strip() if len(r) > 10 else ''
+                    remarks = r[11].strip() if len(r) > 11 else ''
+                    add_remarks = r[12].strip() if len(r) > 12 else ''
+
+                    is_active_pipeline = (active_col.lower() in ('active', 'active pipeline'))
+
+                    rem_parts = []
+                    if company and company != 'BROKER': rem_parts.append(f"Company: {company}")
+                    if designation: rem_parts.append(f"Designation: {designation}")
+                    if remarks: rem_parts.append(remarks)
+                    if add_remarks: rem_parts.append(add_remarks)
+                    sunil_remarks = " | ".join(rem_parts)
+
+                    if is_active_pipeline:
+                        status = 'Active Pipeline'
+                    elif 'proposal' in proposal.lower() or 'proposal' in sunil_remarks.lower():
+                        status = 'Proposal Sent'
+                    elif 'meeting' in proposal.lower() or 'meeting' in sunil_remarks.lower() or 'visit' in sunil_remarks.lower():
+                        status = 'Meeting Done'
+                    else:
+                        status = 'Contacted' if active_col else 'New'
+
+                    priority = 'High' if is_active_pipeline else 'Medium'
+                    location = area if area else (company if company != 'BROKER' else 'Gurgaon')
+
+                    existing = None
+                    clean_phone = re.sub(r'\D', '', phone)[-10:] if len(re.sub(r'\D', '', phone or '')) >= 10 else ''
+                    if clean_phone:
+                        existing = Lead.query.filter(Lead.phone.like(f'%{clean_phone}')).first()
+                    if not existing and name:
+                        existing = Lead.query.filter(Lead.name.ilike(name.strip())).first()
+
+                    clean_name = name.lower().replace(' ', '.').replace('/', '')
+                    email = f"{clean_name}@lead99.com"
+
+                    if existing:
+                        existing.name = name
+                        if location: existing.location = location
+                        if requirement: existing.property_type = requirement
+                        if sunil_remarks: existing.sunil_remarks = sunil_remarks
+                        existing.source = 'Sunil Data'
+                        if is_active_pipeline or existing.status == 'Active Pipeline':
+                            existing.status = 'Active Pipeline'
+                        elif status in ('Proposal Sent', 'Meeting Done', 'Qualified') and existing.status in ('New', 'Contacted'):
+                            existing.status = status
+                        updated_count += 1
+                    else:
+                        lead = Lead(
+                            name=name, email=email, phone=phone, source='Sunil Data',
+                            listing_id='', property_type=requirement or 'Office Space',
+                            budget='', location=location, status=status, priority=priority,
+                            assigned_to='Admin Kiriti', is_imported=True,
+                            sunil_remarks=sunil_remarks, created_at=datetime.utcnow()
+                        )
+                        db.session.add(lead)
+                        db.session.flush()
+                        added_count += 1
                 continue
 
             if gid == '937006042':
