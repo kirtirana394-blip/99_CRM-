@@ -1170,17 +1170,57 @@ def clear_imported_leads():
 
 @web_bp.route('/export')
 def export_csv():
-    leads = Lead.query.order_by(Lead.created_at.desc()).all()
+    status_filter = request.args.get('status', '')
+    priority_filter = request.args.get('priority', '')
+    source_filter = request.args.get('source', '')
+    search = request.args.get('search', '')
+
+    query = Lead.query
+    query, time_filter, start_date_str, end_date_str = apply_date_filter(query)
+
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+    if priority_filter:
+        query = query.filter_by(priority=priority_filter)
+    if source_filter:
+        query = query.filter_by(source=source_filter)
+    if search:
+        query = query.filter(
+            (Lead.name.ilike(f'%{search}%')) |
+            (Lead.email.ilike(f'%{search}%')) |
+            (Lead.phone.ilike(f'%{search}%')) |
+            (Lead.location.ilike(f'%{search}%')) |
+            (Lead.property_type.ilike(f'%{search}%'))
+        )
+
+    leads = query.order_by(Lead.created_at.desc()).all()
     output = io.StringIO()
     writer = csv.writer(output)
     
-    writer.writerow(['ID', 'Name', 'Email', 'Phone', 'Source', 'Property Type', 'Budget', 'Location', 'Status', 'Priority', 'Assigned To', 'Created Date'])
+    writer.writerow([
+        'ID', 'Date', 'Name', 'Phone', 'Listing ID', 'Property Type',
+        'Price / Budget', 'Location / Locality', 'Response From',
+        'Sunil Remarks', 'Telecaller Remarks', 'Source', 'Status', 'Priority'
+    ])
     for l in leads:
-        writer.writerow([l.id, l.name, l.email, l.phone, l.source, l.property_type, l.budget, l.location, l.status, l.priority, l.assigned_to, l.created_at.strftime('%Y-%m-%d')])
+        created_str = l.created_at.strftime('%d/%m/%Y') if l.created_at else '-'
+        writer.writerow([
+            l.id, created_str, l.name, l.phone or '-', l.listing_id or '-',
+            l.property_type or '-', l.budget or '-', l.location or '-',
+            l.response_from or '-', l.sunil_remarks or '-', l.telecaller_remarks or '-',
+            l.source or '-', l.status or 'New', l.priority or 'Medium'
+        ])
 
     output.seek(0)
+    
+    filename_parts = []
+    if source_filter: filename_parts.append(source_filter.replace(' ', '_'))
+    if status_filter: filename_parts.append(status_filter.replace(' ', '_'))
+    if not filename_parts: filename_parts.append('Filtered_Leads')
+    filename = "_".join(filename_parts) + ".csv"
+
     return Response(
         output.getvalue(),
         mimetype="text/csv",
-        headers={"Content-disposition": "attachment; filename=leads_export.csv"}
+        headers={"Content-disposition": f"attachment; filename={filename}"}
     )
