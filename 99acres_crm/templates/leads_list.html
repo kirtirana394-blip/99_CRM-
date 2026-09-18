@@ -2,25 +2,25 @@
 {% block title %}All Leads - Yayath 99Acres CRM{% endblock %}
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h3 class="fw-bold mb-1"><i class="bi bi-people-fill text-primary me-2"></i>All Leads</h3>
-        <small class="text-muted">View, search, filter, and export your property leads smoothly.</small>
+        <h3 class="fw-bold mb-0 text-dark"><i class="bi bi-people-fill text-primary me-2"></i>Leads Directory</h3>
+        <small class="text-muted">Manage, filter, search, and export property leads.</small>
     </div>
-    <div>
-        <a href="/export?status={{ status_filter }}&source={{ source_filter }}&search={{ search }}&time_filter={{ time_filter }}&start_date={{ start_date }}&end_date={{ end_date }}" class="btn btn-outline-primary me-2 fw-semibold" title="Download current filtered leads as CSV">
-            <i class="bi bi-download me-1"></i>Download {{ status_filter or source_filter or 'Filtered' }} CSV
-        </a>
-        <a href="/import" class="btn btn-outline-success me-2"><i class="bi bi-file-earmark-arrow-up me-1"></i>Import CSV</a>
-        <a href="/leads/add" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Add New Lead</a>
+    <div class="d-flex gap-2">
+        <a href="/import" class="btn btn-sm btn-outline-secondary px-3 fw-semibold"><i class="bi bi-file-earmark-arrow-up me-1"></i>Import CSV</a>
+        <a href="/leads/add" class="btn btn-sm btn-primary px-3 fw-semibold"><i class="bi bi-plus-lg me-1"></i>Add Lead</a>
     </div>
 </div>
 
-<!-- Filters -->
-<div class="card card-custom p-3 mb-4">
+<!-- Clean Filter Card -->
+<div class="card card-custom p-3 mb-3 border shadow-sm">
     <form method="GET" class="row g-2 align-items-center">
         <div class="col-md-3">
-            <input type="text" name="search" class="form-control form-control-sm" placeholder="Search name, email, phone, location, property..." value="{{ search }}">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="search" class="form-control" placeholder="Search name, phone, location..." value="{{ search }}">
+            </div>
         </div>
         <div class="col-md-3">
             <select name="status" class="form-select form-select-sm">
@@ -38,39 +38,42 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="col-md-3 d-flex gap-1">
-            <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold">Filter</button>
-            <a href="/leads" class="btn btn-sm btn-outline-secondary px-2">Clear</a>
-            <a href="/export?status={{ status_filter }}&source={{ source_filter }}&search={{ search }}&time_filter={{ time_filter }}&start_date={{ start_date }}&end_date={{ end_date }}" class="btn btn-sm btn-success px-2 fw-semibold" title="Export matching filtered leads to CSV">
-                <i class="bi bi-file-earmark-excel me-1"></i>Download CSV
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold flex-fill">
+                <i class="bi bi-funnel-fill me-1"></i>Filter
+            </button>
+            <a href="/export?status={{ status_filter }}&source={{ source_filter }}&search={{ search }}&time_filter={{ time_filter }}&start_date={{ start_date }}&end_date={{ end_date }}" class="btn btn-sm btn-success px-3 fw-semibold flex-fill text-nowrap" title="Download matching filtered leads to CSV">
+                <i class="bi bi-download me-1"></i>Download CSV
             </a>
+            {% if status_filter or source_filter or search %}
+            <a href="/leads" class="btn btn-sm btn-outline-secondary px-2" title="Clear Filters"><i class="bi bi-x-lg"></i></a>
+            {% endif %}
         </div>
     </form>
 </div>
 
-<!-- Quick Stage & Source-Wise Filter & Download Badges -->
+<!-- Sleek Filter Pills Bar -->
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-    <span class="small text-muted fw-bold me-1"><i class="bi bi-funnel-fill text-primary me-1"></i>Quick Downloads & Filters:</span>
-    <a href="/leads?status=Active+Pipeline" class="badge {{ 'bg-teal text-white' if status_filter == 'Active Pipeline' and not source_filter else 'bg-light text-dark border' }} text-decoration-none py-1.5 px-2.5">
-        <i class="bi bi-lightning-fill text-warning me-1"></i>All Active Pipeline
+    <a href="/leads" class="btn btn-xs rounded-pill px-3 py-1 {{ 'btn-dark' if not status_filter and not source_filter else 'btn-light border text-dark' }}" style="font-size:0.78rem;">
+        All Leads ({{ total_count }})
     </a>
-    <a href="/leads?status=Meeting+Done" class="badge {{ 'bg-purple text-white' if status_filter == 'Meeting Done' else 'bg-light text-dark border' }} text-decoration-none py-1.5 px-2.5">
-        <i class="bi bi-calendar-check me-1"></i>Meeting Done
+    <a href="/leads?status=Active+Pipeline" class="btn btn-xs rounded-pill px-3 py-1 {{ 'btn-teal text-white' if status_filter == 'Active Pipeline' and not source_filter else 'btn-light border text-dark' }}" style="font-size:0.78rem;">
+        <i class="bi bi-lightning-fill text-warning me-1"></i>Active Pipeline
     </a>
-    <a href="/leads?status=Proposal+Sent" class="badge {{ 'bg-pink text-white' if status_filter == 'Proposal Sent' else 'bg-light text-dark border' }} text-decoration-none py-1.5 px-2.5">
-        <i class="bi bi-file-earmark-text me-1"></i>Proposal Sent
+    <a href="/leads?status=Meeting+Done" class="btn btn-xs rounded-pill px-3 py-1 {{ 'btn-purple text-white' if status_filter == 'Meeting Done' else 'btn-light border text-dark' }}" style="font-size:0.78rem;">
+        Meeting Done
     </a>
-    <a href="/leads?status=Active+Pipeline&source=99acres" class="badge {{ 'bg-primary text-white' if status_filter == 'Active Pipeline' and source_filter == '99acres' else 'bg-light text-dark border' }} text-decoration-none py-1.5 px-2.5">
+    <a href="/leads?status=Proposal+Sent" class="btn btn-xs rounded-pill px-3 py-1 {{ 'btn-pink text-white' if status_filter == 'Proposal Sent' else 'btn-light border text-dark' }}" style="font-size:0.78rem;">
+        Proposal Sent
+    </a>
+    <a href="/leads?status=Active+Pipeline&source=99acres" class="btn btn-xs rounded-pill px-3 py-1 {{ 'btn-primary' if status_filter == 'Active Pipeline' and source_filter == '99acres' else 'btn-light border text-dark' }}" style="font-size:0.78rem;">
         99acres Active ({{ active_99acres }})
     </a>
-    <a href="/leads?status=Active+Pipeline&source=Himmat+Data" class="badge {{ 'bg-warning text-dark' if status_filter == 'Active Pipeline' and source_filter == 'Himmat Data' else 'bg-light text-dark border' }} text-decoration-none py-1.5 px-2.5">
-        Himmat Data Active ({{ active_himmat }})
+    <a href="/leads?status=Active+Pipeline&source=Himmat+Data" class="btn btn-xs rounded-pill px-3 py-1 {{ 'btn-warning text-dark' if status_filter == 'Active Pipeline' and source_filter == 'Himmat Data' else 'btn-light border text-dark' }}" style="font-size:0.78rem;">
+        Himmat Active ({{ active_himmat }})
     </a>
-    <a href="/leads?status=Active+Pipeline&source=Sunil+Data" class="badge {{ 'bg-info text-dark' if status_filter == 'Active Pipeline' and source_filter == 'Sunil Data' else 'bg-light text-dark border' }} text-decoration-none py-1.5 px-2.5">
-        Sunil Data Active ({{ active_sunil }})
-    </a>
-    <a href="/export?status={{ status_filter }}&source={{ source_filter }}&search={{ search }}" class="badge bg-success text-white text-decoration-none py-1.5 px-2.5 ms-auto" title="Click to download CSV of currently selected filter">
-        <i class="bi bi-download me-1"></i>Download Selected CSV
+    <a href="/leads?status=Active+Pipeline&source=Sunil+Data" class="btn btn-xs rounded-pill px-3 py-1 {{ 'btn-info text-dark' if status_filter == 'Active Pipeline' and source_filter == 'Sunil Data' else 'btn-light border text-dark' }}" style="font-size:0.78rem;">
+        Sunil Active ({{ active_sunil }})
     </a>
 </div>
 
