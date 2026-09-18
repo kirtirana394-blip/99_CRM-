@@ -173,7 +173,6 @@ def sync_google_sheet_web():
     sheet_gids = [
         {'name': 'July - Aug', 'gid': '0'},
         {'name': 'Interested client', 'gid': '937006042'},
-        {'name': 'Sep', 'gid': '1120309224'},
         {'name': 'Sunil Data', 'gid': '1012918450'}
     ]
     sheet_id = '1VfFPHNkZ3ljCx_iT-GIRMZpxqgAVP4kdZptXlR6u7qc'
