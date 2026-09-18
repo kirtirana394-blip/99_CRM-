@@ -14,15 +14,15 @@
 </div>
 
 <!-- Clean Filter Card -->
-<div class="card card-custom p-3 mb-3 border shadow-sm">
+<div class="card card-custom p-3 mb-3 border shadow-sm style-overflow-hidden">
     <form method="GET" class="row g-2 align-items-center">
-        <div class="col-md-3">
+        <div class="col-xl-4 col-lg-3 col-md-6">
             <div class="input-group input-group-sm">
                 <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
                 <input type="text" name="search" class="form-control" placeholder="Search name, phone, location..." value="{{ search }}">
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-xl-2 col-lg-3 col-md-6">
             <select name="status" class="form-select form-select-sm">
                 <option value="">All Pipeline Stages</option>
                 {% for s in ['New','Contacted','Qualified','Meeting Done','Proposal Sent','Active Pipeline','Deal Close','Lost'] %}
@@ -30,7 +30,7 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-xl-2 col-lg-3 col-md-6">
             <select name="source" class="form-select form-select-sm">
                 <option value="">All Sources</option>
                 {% for src in ['99acres','Himmat Data','Sunil Data'] %}
@@ -38,15 +38,15 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="col-md-3 d-flex gap-2">
-            <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold flex-fill">
+        <div class="col-xl-4 col-lg-3 col-md-6 d-flex gap-2 align-items-center justify-content-end">
+            <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold text-nowrap">
                 <i class="bi bi-funnel-fill me-1"></i>Filter
             </button>
-            <a href="/export?status={{ status_filter }}&source={{ source_filter }}&search={{ search }}&time_filter={{ time_filter }}&start_date={{ start_date }}&end_date={{ end_date }}" class="btn btn-sm btn-success px-3 fw-semibold flex-fill text-nowrap" title="Download matching filtered leads to CSV">
+            <a href="/export?status={{ status_filter }}&source={{ source_filter }}&search={{ search }}&time_filter={{ time_filter }}&start_date={{ start_date }}&end_date={{ end_date }}" class="btn btn-sm btn-success px-3 fw-semibold text-nowrap" title="Download matching filtered leads to CSV">
                 <i class="bi bi-download me-1"></i>Download CSV
             </a>
             {% if status_filter or source_filter or search %}
-            <a href="/leads" class="btn btn-sm btn-outline-secondary px-2" title="Clear Filters"><i class="bi bi-x-lg"></i></a>
+            <a href="/leads" class="btn btn-sm btn-outline-secondary px-2 text-nowrap" title="Clear Filters"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset</a>
             {% endif %}
         </div>
     </form>
