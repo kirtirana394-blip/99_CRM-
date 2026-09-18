@@ -365,6 +365,12 @@ def sync_google_sheet_web():
 
                 if is_active_pipeline:
                     status = 'Active Pipeline'
+                elif 'proposal' in sunil_remarks.lower() or 'proposal' in telecaller_col.lower():
+                    status = 'Proposal Sent'
+                elif 'visit' in sunil_remarks.lower() or 'visit' in telecaller_col.lower() or 'meeting' in sunil_remarks.lower() or 'meeting' in telecaller_col.lower():
+                    status = 'Meeting Done'
+                elif 'hot' in sunil_remarks.lower() or 'hot' in telecaller_col.lower():
+                    status = 'Qualified'
                 else:
                     status = 'New'
 
@@ -404,7 +410,10 @@ def sync_google_sheet_web():
                     if listing_id: existing.listing_id = listing_id
                     if response_from: existing.response_from = response_from
                     existing.source = source_val
-                    if is_active_pipeline: existing.status = 'Active Pipeline'
+                    if is_active_pipeline or existing.status == 'Active Pipeline':
+                        existing.status = 'Active Pipeline'
+                    elif status in ('Proposal Sent', 'Meeting Done', 'Qualified') and existing.status in ('New', 'Contacted'):
+                        existing.status = status
                     updated_count += 1
                 else:
                     lead = Lead(
