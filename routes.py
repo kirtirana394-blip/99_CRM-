@@ -172,7 +172,8 @@ def sync_google_sheet_web():
     """One-click sync: pulls leads from Google Sheet July-Aug & Interested Client tabs ONLY (Sep tab excluded)."""
     sheet_gids = [
         {'name': 'July - Aug', 'gid': '0'},
-        {'name': 'Interested client', 'gid': '937006042'}
+        {'name': 'Interested client', 'gid': '937006042'},
+        {'name': 'Sep', 'gid': '1120309224'}
     ]
     sheet_id = '1VfFPHNkZ3ljCx_iT-GIRMZpxqgAVP4kdZptXlR6u7qc'
     added_count = 0
@@ -202,7 +203,7 @@ def sync_google_sheet_web():
                 continue
 
             if gid == '937006042':
-                # Interested Client tab structure: S NO (0) | NAME (1) | NUMBER (2) | Loction (3) | BUDGET (4) | Requirement (5) | Remarks (6)
+                # Interested Client tab structure: S NO (0) | NAME (1) | NUMBER (2) | Active Pipeline (3) | Loction (4) | BUDGET (5) | Requirement (6) | Remarks (7)
                 start_idx = 0
                 for idx, r in enumerate(rows):
                     if r and len(r) > 1 and ('S NO' in r[0] or 'NAME' in r[1] or 'NUMBER' in r[2]):
@@ -217,6 +218,9 @@ def sync_google_sheet_web():
                     if not raw_name and not phone:
                         continue
 
+                    active_col = r[3].strip() if len(r) > 3 else ''
+                    is_active_pipeline = (active_col.lower() == 'active')
+
                     # Preserve real name if present (e.g. kumi, Sahil Mehta, Chaitanya Gaba)
                     clean_name_num = re.sub(r'[^\d]', '', raw_name)
                     if not raw_name or (len(clean_name_num) >= 10 and raw_name.isdigit()):
@@ -224,29 +228,33 @@ def sync_google_sheet_web():
                     else:
                         name = raw_name
 
-                    location = r[3].strip() if len(r) > 3 else ''
-                    budget = r[4].strip() if len(r) > 4 else ''        # Price of Property
-                    requirement = r[5].strip() if len(r) > 5 else ''   # Property Type / Specs
-                    remarks = r[6].strip() if len(r) > 6 else ''       # Sunil Remarks
+                    location = r[4].strip() if len(r) > 4 else ''
+                    budget = r[5].strip() if len(r) > 5 else ''        # Price of Property / Budget
+                    requirement = r[6].strip() if len(r) > 6 else ''   # Property Type / Specs
+                    remarks = r[7].strip() if len(r) > 7 else ''       # Sunil Remarks
 
                     rem_lower = remarks.lower()
                     req_lower = requirement.lower()
 
                     if 'sunil' in rem_lower or 'sunil' in req_lower:
                         source_val = 'Sunil Data'
-                    elif 'himmat' in rem_lower or 'himmat' in req_lower:
+                    elif 'himmat' in rem_lower or 'himmat' in req_lower or 'himmat data' in rem_lower:
                         source_val = 'Himmat Data'
                     else:
-                        source_val = '99acres'
-                    status = 'Contacted'
-                    if 'proposal' in rem_lower or 'proposal' in req_lower:
+                        source_val = 'Himmat Data'  # Default source for Interested Client tab is Himmat Data
+
+                    if is_active_pipeline:
+                        status = 'Active Pipeline'
+                    elif 'proposal' in rem_lower or 'proposal' in req_lower:
                         status = 'Proposal Sent'
                     elif 'visit' in rem_lower or 'site' in rem_lower:
                         status = 'Meeting Done'
                     elif 'hot' in rem_lower or 'hot' in req_lower:
                         status = 'Qualified'
+                    else:
+                        status = 'Contacted'
 
-                    priority = 'High' if ('hot' in rem_lower or 'hot' in req_lower or 'urgent' in req_lower) else 'Medium'
+                    priority = 'High' if ('hot' in rem_lower or 'hot' in req_lower or 'urgent' in rem_lower or is_active_pipeline) else 'Medium'
 
                     existing = None
                     if phone and phone != '-':
@@ -264,9 +272,9 @@ def sync_google_sheet_web():
                         if budget: existing.budget = budget
                         if requirement: existing.property_type = requirement
                         if remarks: existing.sunil_remarks = remarks
-                        if status != 'Contacted': existing.status = status
+                        existing.status = status
                         if priority == 'High': existing.priority = priority
-                        if existing.source == 'Direct': existing.source = source_val
+                        existing.source = source_val
                         updated_count += 1
                         note_parts = []
                         if requirement: note_parts.append(f"Requirement: {requirement}")
@@ -304,35 +312,46 @@ def sync_google_sheet_web():
                     continue
 
                 col2 = r[2].strip() if len(r) > 2 else ''
-                col3 = r[3].strip() if len(r) > 3 else ''
                 if not col2 or col2 in ('-', '', 'Name'):
                     continue
 
                 date_str = r[1].strip() if len(r) > 1 else ''
-                clean_col2 = re.sub(r'[^\d]', '', col2)
 
-                # Check if Column 2 is actually a phone number (e.g., 9818281199 or 91-8448919797)
-                if len(clean_col2) >= 10 and (col2.isdigit() or col2.startswith('91-') or clean_col2 in col2.replace('-', '')):
-                    phone = col2
-                    location = col3  # Column 3 has location like 'location 57'
-                    name = f"Client {clean_col2[-10:]}"
-                else:
+                if 'July' in tab_name or gid == '0':
+                    # July-Aug structure: S No (0) | Date (1) | Name (2) | Active Pipeline (3) | Phone No (4) | Listing ID (5) | Property Type (6) | Price (7) | Locality (8) | Project (9) | Response From (10) | Sunil Remarks (11) | Telecaller (12)
                     name = col2
-                    phone = col3
+                    active_col = r[3].strip() if len(r) > 3 else ''
+                    phone = r[4].strip() if len(r) > 4 else ''
+                    listing_id = r[5].strip() if len(r) > 5 else ''
+                    property_type = r[6].strip() if len(r) > 6 else ''
+                    raw_budget = r[7].strip() if len(r) > 7 else ''
+                    locality = r[8].strip() if len(r) > 8 else ''
+                    project = r[9].strip() if len(r) > 9 else ''
+                    response_from = r[10].strip() if len(r) > 10 else ''
+                    sunil_remarks = r[11].strip() if len(r) > 11 else ''
+                    telecaller_col = r[12].strip() if len(r) > 12 else ''
+                else:
+                    # Sep structure: S No (0) | Date (1) | Name (2) | Phone No (3) | Listing ID (4) | Property Type (5) | Price (6) | Locality (7) | Project (8) | Response From (9) | Sunil Remarks (10) | Simmy remarks (11)
+                    name = col2
+                    active_col = ''
+                    phone = r[3].strip() if len(r) > 3 else ''
+                    listing_id = r[4].strip() if len(r) > 4 else ''
+                    property_type = r[5].strip() if len(r) > 5 else ''
+                    raw_budget = r[6].strip() if len(r) > 6 else ''
                     locality = r[7].strip() if len(r) > 7 else ''
                     project = r[8].strip() if len(r) > 8 else ''
-                    if project and project != '-':
-                        location = f"{locality} ({project})" if locality else project
-                    else:
-                        location = locality
+                    response_from = r[9].strip() if len(r) > 9 else ''
+                    sunil_remarks = r[10].strip() if len(r) > 10 else ''
+                    telecaller_col = r[11].strip() if len(r) > 11 else ''
 
-                listing_id = r[4].strip() if len(r) > 4 else ''
-                property_type = r[5].strip() if len(r) > 5 else ''
-                raw_budget = r[6].strip() if len(r) > 6 else ''
+                is_active_pipeline = (active_col.lower() == 'active')
+
+                if project and project != '-':
+                    location = f"{locality} ({project})" if locality else project
+                else:
+                    location = locality
+
                 budget = '' if ('Himmat' in raw_budget or 'Sunil' in raw_budget) else raw_budget
-                response_from = r[9].strip() if len(r) > 9 else ''
-                sunil_remarks = r[10].strip() if len(r) > 10 else ''
-                telecaller_col = r[11].strip() if len(r) > 11 else ''
 
                 r_text = ' '.join(r).lower()
                 if 'rohit joshi' in name.lower() or '7080173012' in phone or 'tarun tiwari' in name.lower():
@@ -343,6 +362,11 @@ def sync_google_sheet_web():
                     source_val = 'Himmat Data'
                 else:
                     source_val = '99acres'
+
+                if is_active_pipeline:
+                    status = 'Active Pipeline'
+                else:
+                    status = 'New'
 
                 # Parse date
                 created_at = None
@@ -360,11 +384,9 @@ def sync_google_sheet_web():
                     else:
                         created_at = datetime(2026, 7, 20)
 
-                # Email fallback
                 clean_name = name.lower().replace(' ', '.').replace('/', '')
                 email = f"{clean_name}@lead99.com"
 
-                # Check duplicate by phone or name
                 existing = None
                 if phone and phone != '-':
                     existing = Lead.query.filter(Lead.phone == phone).first()
@@ -372,7 +394,6 @@ def sync_google_sheet_web():
                     existing = Lead.query.filter(Lead.name == name).first()
 
                 if existing:
-                    # Update existing lead fields and exact date
                     if created_at: existing.created_at = created_at
                     if location: existing.location = location
                     if budget: existing.budget = budget
@@ -382,11 +403,10 @@ def sync_google_sheet_web():
                     if telecaller_col and telecaller_col != 'NA': existing.telecaller_remarks = telecaller_col
                     if listing_id: existing.listing_id = listing_id
                     if response_from: existing.response_from = response_from
-                    if existing.source == 'Direct' or source_val in ('Sunil Data', 'Himmat Data'):
-                        existing.source = source_val
+                    existing.source = source_val
+                    if is_active_pipeline: existing.status = 'Active Pipeline'
                     updated_count += 1
                 else:
-                    # Insert new lead
                     lead = Lead(
                         name=name,
                         email=email,
@@ -395,8 +415,8 @@ def sync_google_sheet_web():
                         property_type=property_type or 'Office Space',
                         budget=budget,
                         location=location,
-                        status='New',
-                        priority='Medium',
+                        status=status,
+                        priority='High' if is_active_pipeline else 'Medium',
                         assigned_to='Admin Kiriti',
                         is_imported=True,
                         sunil_remarks=sunil_remarks if sunil_remarks and sunil_remarks != 'NA' else '',
@@ -408,7 +428,6 @@ def sync_google_sheet_web():
                     db.session.add(lead)
                     db.session.flush()
 
-                    # Add note with listing ID, response from, remarks
                     note_parts = []
                     if listing_id: note_parts.append(f"Listing ID: {listing_id}")
                     if response_from: note_parts.append(f"Response From: {response_from}")
@@ -514,12 +533,18 @@ def dashboard():
     meeting_done = sum(1 for l in all_filtered_leads if l.status == 'Meeting Done')
     proposal_sent = sum(1 for l in all_filtered_leads if l.status == 'Proposal Sent')
     deal_close = sum(1 for l in all_filtered_leads if l.status == 'Deal Close')
-    active_pipeline = sum(1 for l in all_filtered_leads if l.status not in ('Deal Close', 'Lost'))
+    active_pipeline = sum(1 for l in all_filtered_leads if l.status == 'Active Pipeline')
 
     # Source breakdown metrics
     source_99acres = sum(1 for l in all_filtered_leads if l.source == '99acres')
     source_himmat = sum(1 for l in all_filtered_leads if l.source == 'Himmat Data')
     source_sunil = sum(1 for l in all_filtered_leads if l.source == 'Sunil Data')
+
+    # Source-wise Active Pipeline metrics
+    active_99acres = sum(1 for l in all_filtered_leads if l.status == 'Active Pipeline' and l.source == '99acres')
+    active_himmat = sum(1 for l in all_filtered_leads if l.status == 'Active Pipeline' and l.source == 'Himmat Data')
+    active_sunil = sum(1 for l in all_filtered_leads if l.status == 'Active Pipeline' and l.source == 'Sunil Data')
+
     trash_count = Lead.query.filter_by(is_deleted=True).count()
 
     recent_leads = query.order_by(Lead.created_at.desc()).limit(7).all()
@@ -530,8 +555,9 @@ def dashboard():
         total_leads=total_leads, new_leads=new_leads, qualified=qualified,
         meeting_done=meeting_done, proposal_sent=proposal_sent,
         active_pipeline=active_pipeline, deal_close=deal_close,
-        source_99acres=source_99acres,
-        source_himmat=source_himmat, source_sunil=source_sunil, trash_count=trash_count,
+        source_99acres=source_99acres, source_himmat=source_himmat, source_sunil=source_sunil,
+        active_99acres=active_99acres, active_himmat=active_himmat, active_sunil=active_sunil,
+        trash_count=trash_count,
         recent_leads=recent_leads, today_followups=today_followups,
         time_filter=time_filter, start_date=start_date_str, end_date=end_date_str,
         users_list=users_list)
@@ -539,12 +565,15 @@ def dashboard():
 
 @web_bp.route('/leads')
 def leads_list():
+    import math
     status_filter = request.args.get('status', '')
     priority_filter = request.args.get('priority', '')
     source_filter = request.args.get('source', '')
     search = request.args.get('search', '')
-    query = Lead.query
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 15, type=int)
 
+    query = Lead.query
     query, time_filter, start_date_str, end_date_str = apply_date_filter(query)
 
     if status_filter:
@@ -561,9 +590,29 @@ def leads_list():
             (Lead.location.ilike(f'%{search}%')) |
             (Lead.property_type.ilike(f'%{search}%'))
         )
-    leads = query.order_by(Lead.created_at.desc()).all()
+
+    all_matching_leads = query.order_by(Lead.created_at.desc()).all()
+    total_count = len(all_matching_leads)
+    total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
+    page = max(1, min(page, total_pages))
+
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    leads = all_matching_leads[start_idx:end_idx]
+
+    # Source-wise Active Pipeline totals across all leads
+    all_unfiltered = Lead.query.filter((Lead.is_deleted == False) | (Lead.is_deleted == None)).all()
+    active_99acres = sum(1 for l in all_unfiltered if l.status == 'Active Pipeline' and l.source == '99acres')
+    active_himmat = sum(1 for l in all_unfiltered if l.status == 'Active Pipeline' and l.source == 'Himmat Data')
+    active_sunil = sum(1 for l in all_unfiltered if l.status == 'Active Pipeline' and l.source == 'Sunil Data')
+
     trash_count = Lead.query.filter_by(is_deleted=True).count()
-    return render_template('leads_list.html', leads=leads, status_filter=status_filter, priority_filter=priority_filter, source_filter=source_filter, search=search, time_filter=time_filter, start_date=start_date_str, end_date=end_date_str, trash_count=trash_count)
+    return render_template('leads_list.html',
+        leads=leads, total_count=total_count, page=page, total_pages=total_pages, per_page=per_page,
+        status_filter=status_filter, priority_filter=priority_filter, source_filter=source_filter,
+        search=search, time_filter=time_filter, start_date=start_date_str, end_date=end_date_str,
+        active_99acres=active_99acres, active_himmat=active_himmat, active_sunil=active_sunil,
+        trash_count=trash_count)
 
 
 @web_bp.route('/leads/add', methods=['GET', 'POST'])
