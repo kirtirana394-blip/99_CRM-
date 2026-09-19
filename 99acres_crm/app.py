@@ -84,22 +84,10 @@ def create_app():
         except Exception:
             db.session.rollback()
 
-        # Auto-heal: Purge misaligned legacy leads & ensure Rohit Joshi and Tarun Tiwari are assigned to Sunil Data
+        # Ensure Rohit Joshi and Tarun Tiwari are assigned to Sunil Data, and clean all phone numbers
         try:
-            from models import Lead, Note, FollowUp
-            corrupted_count = Lead.query.filter(
-                (Lead.listing_id.like('%Market%')) | 
-                (Lead.listing_id.like('%Rent%')) | 
-                (Lead.listing_id.like('%Sale%')) | 
-                (Lead.listing_id.like('%Shop%')) |
-                (Lead.name.like('Client %') & Lead.source.like('%Himmat%'))
-            ).count()
-
-            if corrupted_count > 0 or Lead.query.count() <= 10:
-                Note.query.delete(synchronize_session=False)
-                FollowUp.query.delete(synchronize_session=False)
-                Lead.query.delete(synchronize_session=False)
-                db.session.commit()
+            from models import Lead
+            from phone_utils import clean_phone_number
 
             # Ensure ROHIT JOSHI is assigned to Sunil Data
             rohit = Lead.query.filter((Lead.name.ilike('%ROHIT JOSHI%')) | (Lead.phone.like('%7080173012%'))).first()
@@ -119,10 +107,18 @@ def create_app():
                 db.session.add(tarun)
             else:
                 tarun.source = 'Sunil Data'
+
+            # Clean all existing phone numbers (remove 91 prefix)
+            all_leads = Lead.query.all()
+            for l in all_leads:
+                if l.phone:
+                    c = clean_phone_number(l.phone)
+                    if c != l.phone:
+                        l.phone = c
             
             db.session.commit()
         except Exception as e:
-            print("Auto-heal error:", e)
+            print("Startup data alignment error:", e)
             db.session.rollback()
 
         # Auto-seed sample users (Admin, Editor, Viewer, Manager) and leads if empty

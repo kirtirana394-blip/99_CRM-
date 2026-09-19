@@ -52,8 +52,6 @@
                     <span class="fw-bold {{ 'text-danger' if lead.priority == 'High' else ('text-warning' if lead.priority == 'Medium' else 'text-success') }}">{{ lead.priority }}</span>
                 </td></tr>
                 <tr><td class="text-muted">Assigned To</td><td><strong>{{ lead.assigned_to or 'Unassigned' }}</strong></td></tr>
-                <tr><td class="text-muted">Listing ID</td><td><span class="font-monospace text-primary fw-bold">{{ lead.listing_id or '-' }}</span></td></tr>
-                <tr><td class="text-muted">Response From</td><td><span class="badge bg-light text-dark border">{{ lead.response_from or '-' }}</span></td></tr>
                 <tr><td class="text-muted">Sunil Remarks</td><td><span class="text-dark fw-semibold">{{ lead.sunil_remarks or '-' }}</span></td></tr>
                 <tr><td class="text-muted">Telecaller Remarks</td><td><span class="text-dark fw-semibold">{{ lead.telecaller_remarks or '-' }}</span></td></tr>
                 <tr><td class="text-muted">Created Date</td><td><small class="text-muted">{{ lead.created_at.strftime('%Y-%m-%d %H:%M') if lead.created_at else '-' }}</small></td></tr>

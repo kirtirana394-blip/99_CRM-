@@ -7,3 +7,6 @@ venv/
 ngrok.zip
 ngrok.exe
 docker-compose.yml
+
+*.db
+instance/

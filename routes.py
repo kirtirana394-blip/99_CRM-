@@ -10,6 +10,7 @@ import io
 import urllib.request
 import urllib.parse
 import re
+from phone_utils import clean_phone_number
 
 # ── API Blueprint ──────────────────────────────────────────────
 api_bp = Blueprint('api', __name__)
@@ -180,15 +181,7 @@ def sync_google_sheet_web():
     updated_count = 0
     errors = []
 
-    # Purge old records completely so no corrupted legacy entries remain
-    try:
-        Note.query.delete(synchronize_session=False)
-        FollowUp.query.delete(synchronize_session=False)
-        Lead.query.delete(synchronize_session=False)
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
-
+    # Safe sync: NEVER purge notes, follow-ups, or leads so user schedules and tasks persist forever!
     for item in sheet_gids:
         tab_name = item['name']
         gid = item['gid']
@@ -216,7 +209,8 @@ def sync_google_sheet_web():
                     name = r[1].strip() if len(r) > 1 else ''
                     if not name or name.lower() in ('-', '', 'name', 'sr.no'):
                         continue
-                    phone = r[2].strip() if len(r) > 2 else ''
+                    raw_phone = r[2].strip() if len(r) > 2 else ''
+                    phone = clean_phone_number(raw_phone)
                     company = r[3].strip() if len(r) > 3 else ''
                     designation = r[4].strip() if len(r) > 4 else ''
                     active_col = r[6].strip() if len(r) > 6 else ''
@@ -249,9 +243,9 @@ def sync_google_sheet_web():
                     location = area if area else (company if company != 'BROKER' else 'Gurgaon')
 
                     existing = None
-                    clean_phone = re.sub(r'\D', '', phone)[-10:] if len(re.sub(r'\D', '', phone or '')) >= 10 else ''
+                    clean_phone = phone if phone != '-' else ''
                     if clean_phone:
-                        existing = Lead.query.filter(Lead.phone.like(f'%{clean_phone}')).first()
+                        existing = Lead.query.filter((Lead.phone == clean_phone) | (Lead.phone.like(f'%{clean_phone}'))).first()
                     if not existing and name:
                         existing = Lead.query.filter(Lead.name.ilike(name.strip())).first()
 
@@ -260,6 +254,7 @@ def sync_google_sheet_web():
 
                     if existing:
                         existing.name = name
+                        if phone and phone != '-': existing.phone = phone
                         if location: existing.location = location
                         if requirement: existing.property_type = requirement
                         if sunil_remarks: existing.sunil_remarks = sunil_remarks
@@ -294,7 +289,8 @@ def sync_google_sheet_web():
                     if not r or len(r) < 3:
                         continue
                     raw_name = r[1].strip() if len(r) > 1 else ''
-                    phone = r[2].strip() if len(r) > 2 else ''
+                    raw_phone = r[2].strip() if len(r) > 2 else ''
+                    phone = clean_phone_number(raw_phone)
                     if not raw_name and not phone:
                         continue
 
@@ -304,7 +300,7 @@ def sync_google_sheet_web():
                     # Preserve real name if present (e.g. kumi, Sahil Mehta, Chaitanya Gaba)
                     clean_name_num = re.sub(r'[^\d]', '', raw_name)
                     if not raw_name or (len(clean_name_num) >= 10 and raw_name.isdigit()):
-                        name = f"Client {phone[-10:]}" if phone else "Client"
+                        name = f"Client {phone[-10:]}" if phone and phone != '-' else "Client"
                     else:
                         name = raw_name
 
@@ -337,8 +333,9 @@ def sync_google_sheet_web():
                     priority = 'High' if ('hot' in rem_lower or 'hot' in req_lower or 'urgent' in rem_lower or is_active_pipeline) else 'Medium'
 
                     existing = None
-                    if phone and phone != '-':
-                        existing = Lead.query.filter(Lead.phone == phone).first()
+                    clean_phone = phone if phone != '-' else ''
+                    if clean_phone:
+                        existing = Lead.query.filter((Lead.phone == clean_phone) | (Lead.phone.like(f'%{clean_phone}'))).first()
                     if not existing and name:
                         existing = Lead.query.filter(Lead.name == name).first()
 
@@ -348,6 +345,7 @@ def sync_google_sheet_web():
                     if existing:
                         existing.name = name
                         existing.listing_id = ''
+                        if phone and phone != '-': existing.phone = phone
                         if location: existing.location = location
                         if budget: existing.budget = budget
                         if requirement: existing.property_type = requirement
@@ -360,7 +358,9 @@ def sync_google_sheet_web():
                         if requirement: note_parts.append(f"Requirement: {requirement}")
                         if remarks: note_parts.append(f"Remarks: {remarks}")
                         if note_parts:
-                            db.session.add(Note(lead_id=existing.id, content=" | ".join(note_parts)))
+                            content_str = " | ".join(note_parts)
+                            if not Note.query.filter_by(lead_id=existing.id, content=content_str).first():
+                                db.session.add(Note(lead_id=existing.id, content=content_str))
                     else:
                         lead = Lead(
                             name=name, email=email, phone=phone, source=source_val,
@@ -376,7 +376,9 @@ def sync_google_sheet_web():
                         if requirement: note_parts.append(f"Requirement: {requirement}")
                         if remarks: note_parts.append(f"Remarks: {remarks}")
                         if note_parts:
-                            db.session.add(Note(lead_id=lead.id, content=" | ".join(note_parts)))
+                            content_str = " | ".join(note_parts)
+                            if not Note.query.filter_by(lead_id=lead.id, content=content_str).first():
+                                db.session.add(Note(lead_id=lead.id, content=content_str))
                         added_count += 1
                 continue
 
@@ -401,7 +403,7 @@ def sync_google_sheet_web():
                     # July-Aug structure: S No (0) | Date (1) | Name (2) | Active Pipeline (3) | Phone No (4) | Listing ID (5) | Property Type (6) | Price (7) | Locality (8) | Project (9) | Response From (10) | Sunil Remarks (11) | Telecaller (12)
                     name = col2
                     active_col = r[3].strip() if len(r) > 3 else ''
-                    phone = r[4].strip() if len(r) > 4 else ''
+                    raw_phone = r[4].strip() if len(r) > 4 else ''
                     listing_id = r[5].strip() if len(r) > 5 else ''
                     property_type = r[6].strip() if len(r) > 6 else ''
                     raw_budget = r[7].strip() if len(r) > 7 else ''
@@ -414,7 +416,7 @@ def sync_google_sheet_web():
                     # Sep structure: S No (0) | Date (1) | Name (2) | Phone No (3) | Listing ID (4) | Property Type (5) | Price (6) | Locality (7) | Project (8) | Response From (9) | Sunil Remarks (10) | Simmy remarks (11)
                     name = col2
                     active_col = ''
-                    phone = r[3].strip() if len(r) > 3 else ''
+                    raw_phone = r[3].strip() if len(r) > 3 else ''
                     listing_id = r[4].strip() if len(r) > 4 else ''
                     property_type = r[5].strip() if len(r) > 5 else ''
                     raw_budget = r[6].strip() if len(r) > 6 else ''
@@ -424,6 +426,7 @@ def sync_google_sheet_web():
                     sunil_remarks = r[10].strip() if len(r) > 10 else ''
                     telecaller_col = r[11].strip() if len(r) > 11 else ''
 
+                phone = clean_phone_number(raw_phone)
                 is_active_pipeline = (active_col.lower() == 'active')
 
                 if project and project != '-':
@@ -474,8 +477,9 @@ def sync_google_sheet_web():
                 email = f"{clean_name}@lead99.com"
 
                 existing = None
-                if phone and phone != '-':
-                    existing = Lead.query.filter(Lead.phone == phone).first()
+                clean_phone = phone if phone != '-' else ''
+                if clean_phone:
+                    existing = Lead.query.filter((Lead.phone == clean_phone) | (Lead.phone.like(f'%{clean_phone}'))).first()
                 if not existing:
                     existing = Lead.query.filter(Lead.name == name).first()
 
@@ -518,12 +522,12 @@ def sync_google_sheet_web():
                     db.session.flush()
 
                     note_parts = []
-                    if listing_id: note_parts.append(f"Listing ID: {listing_id}")
-                    if response_from: note_parts.append(f"Response From: {response_from}")
                     if sunil_remarks and sunil_remarks != 'NA': note_parts.append(f"Sunil: {sunil_remarks}")
                     if telecaller_col and telecaller_col != 'NA': note_parts.append(f"Telecaller: {telecaller_col}")
                     if note_parts:
-                        db.session.add(Note(lead_id=lead.id, content=" | ".join(note_parts)))
+                        content_str = " | ".join(note_parts)
+                        if not Note.query.filter_by(lead_id=lead.id, content=content_str).first():
+                            db.session.add(Note(lead_id=lead.id, content=content_str))
 
                     added_count += 1
         except Exception as e:
@@ -548,6 +552,13 @@ def sync_google_sheet_web():
     rohit = Lead.query.filter((Lead.name.ilike('%ROHIT JOSHI%')) | (Lead.phone.like('%7080173012%'))).first()
     if rohit:
         rohit.source = 'Sunil Data'
+
+    # Global phone number cleaner: normalize all phone numbers in the database
+    for l in Lead.query.all():
+        if l.phone:
+            cp = clean_phone_number(l.phone)
+            if cp != l.phone:
+                l.phone = cp
 
     db.session.commit()
     if errors:
@@ -717,7 +728,7 @@ def add_lead():
 
         lead = Lead(
             name=request.form['name'], email=request.form['email'],
-            phone=request.form.get('phone', ''),
+            phone=clean_phone_number(request.form.get('phone', '')),
             source=request.form.get('source', '99acres'),
             property_type=request.form.get('property_type', ''),
             budget=request.form.get('budget', ''),
@@ -756,7 +767,7 @@ def edit_lead(lid):
     if request.method == 'POST':
         lead.name = request.form['name']
         lead.email = request.form['email']
-        lead.phone = request.form.get('phone', '')
+        lead.phone = clean_phone_number(request.form.get('phone', ''))
         lead.source = request.form.get('source', '99acres')
         lead.property_type = request.form.get('property_type', '')
         lead.budget = request.form.get('budget', '')
@@ -789,6 +800,8 @@ def quick_edit_lead(lid):
         return redirect(request.referrer or url_for('web.leads_list'))
 
     lead = Lead.query.get_or_404(lid)
+    if 'phone' in request.form:
+        lead.phone = clean_phone_number(request.form.get('phone', ''))
     if 'sunil_remarks' in request.form:
         lead.sunil_remarks = request.form.get('sunil_remarks', '').strip()
     if 'telecaller_remarks' in request.form:
@@ -1007,11 +1020,47 @@ def delete_user(uid):
 # ── Tasks & Follow-ups Tab ──────────────────────────────────────
 @web_bp.route('/tasks')
 def tasks_list():
-    tasks = Task.query.order_by(Task.created_at.desc()).all()
-    followups = FollowUp.query.order_by(FollowUp.scheduled_at.asc()).all()
-    leads = Lead.query.all()
-    users = User.query.filter_by(status='Active').all()
-    return render_template('tasks.html', tasks=tasks, followups=followups, leads=leads, users=users)
+    assigned_filter = request.args.get('assigned_to', '').strip()
+
+    task_query = Task.query
+    fu_query = FollowUp.query
+
+    if assigned_filter:
+        task_query = task_query.filter(Task.assigned_to == assigned_filter)
+        fu_query = fu_query.join(Lead).filter(Lead.assigned_to == assigned_filter)
+
+    tasks = task_query.order_by(Task.completed.asc(), Task.due_date.asc(), Task.created_at.desc()).all()
+    followups = fu_query.order_by(FollowUp.completed.asc(), FollowUp.scheduled_at.asc()).all()
+
+    # Activity and metrics
+    pending_followups_count = FollowUp.query.filter_by(completed=False).count()
+    completed_followups_count = FollowUp.query.filter_by(completed=True).count()
+    pending_tasks_count = Task.query.filter_by(completed=False).count()
+    completed_tasks_count = Task.query.filter_by(completed=True).count()
+
+    # Team activity history for Admin and Managers
+    recent_completed_followups = FollowUp.query.filter_by(completed=True).order_by(FollowUp.created_at.desc()).limit(15).all()
+    recent_completed_tasks = Task.query.filter_by(completed=True).order_by(Task.created_at.desc()).limit(15).all()
+    recent_notes = Note.query.order_by(Note.created_at.desc()).limit(20).all()
+
+    leads = Lead.query.filter((Lead.is_deleted == False) | (Lead.is_deleted == None)).order_by(Lead.name.asc()).all()
+    users = User.query.filter_by(status='Active').order_by(User.name.asc()).all()
+
+    return render_template(
+        'tasks.html',
+        tasks=tasks,
+        followups=followups,
+        leads=leads,
+        users=users,
+        assigned_filter=assigned_filter,
+        pending_followups_count=pending_followups_count,
+        completed_followups_count=completed_followups_count,
+        pending_tasks_count=pending_tasks_count,
+        completed_tasks_count=completed_tasks_count,
+        recent_completed_followups=recent_completed_followups,
+        recent_completed_tasks=recent_completed_tasks,
+        recent_notes=recent_notes
+    )
 
 @web_bp.route('/tasks/add', methods=['POST'])
 def add_task():
@@ -1034,6 +1083,43 @@ def add_task():
         db.session.commit()
         flash('Task added successfully!', 'success')
     return redirect(url_for('web.tasks_list'))
+
+@web_bp.route('/tasks/followup/add', methods=['POST'])
+def add_task_followup():
+    if session.get('user_role') == 'Viewer':
+        flash('Permission denied: Viewer role has read-only access.', 'danger')
+        return redirect(url_for('web.tasks_list'))
+
+    lead_id = request.form.get('lead_id')
+    desc = request.form.get('description', '').strip()
+    sched = request.form.get('scheduled_at', '')
+    if not lead_id:
+        flash('Please select a lead for the follow-up.', 'danger')
+        return redirect(url_for('web.tasks_list'))
+
+    lead = Lead.query.get_or_404(lead_id)
+    if sched:
+        try:
+            fu = FollowUp(lead_id=lead.id, description=desc,
+                          scheduled_at=datetime.strptime(sched, '%Y-%m-%dT%H:%M'))
+            db.session.add(fu)
+            db.session.commit()
+            flash(f'Follow-up scheduled successfully for {lead.name}!', 'success')
+        except ValueError:
+            flash('Invalid date/time format.', 'danger')
+    return redirect(url_for('web.tasks_list'))
+
+@web_bp.route('/followups/<int:fid>/delete', methods=['POST'])
+def delete_followup(fid):
+    if session.get('user_role') in ('Viewer', 'Sales Executive'):
+        flash('Permission denied.', 'danger')
+        return redirect(request.referrer or url_for('web.tasks_list'))
+
+    fu = FollowUp.query.get_or_404(fid)
+    db.session.delete(fu)
+    db.session.commit()
+    flash('Follow-up deleted.', 'info')
+    return redirect(request.referrer or url_for('web.tasks_list'))
 
 @web_bp.route('/tasks/<int:tid>/complete', methods=['POST'])
 def complete_task(tid):
@@ -1135,7 +1221,7 @@ def import_csv():
             lead = Lead(
                 name=name.strip(),
                 email=email.strip(),
-                phone=(row.get('Phone') or row.get('phone') or '').strip(),
+                phone=clean_phone_number((row.get('Phone') or row.get('phone') or '').strip()),
                 source=(row.get('Source') or row.get('source') or '99acres').strip(),
                 property_type=(row.get('Property Type') or row.get('property_type') or '').strip(),
                 budget=(row.get('Budget') or row.get('budget') or '').strip(),
@@ -1198,16 +1284,16 @@ def export_csv():
     writer = csv.writer(output)
     
     writer.writerow([
-        'ID', 'Date', 'Name', 'Phone', 'Listing ID', 'Property Type',
-        'Price / Budget', 'Location / Locality', 'Response From',
+        'ID', 'Date', 'Name', 'Phone', 'Property Type',
+        'Price / Budget', 'Location / Locality',
         'Sunil Remarks', 'Telecaller Remarks', 'Source', 'Status', 'Priority'
     ])
     for l in leads:
         created_str = l.created_at.strftime('%d/%m/%Y') if l.created_at else '-'
         writer.writerow([
-            l.id, created_str, l.name, l.phone or '-', l.listing_id or '-',
+            l.id, created_str, l.name, l.phone or '-',
             l.property_type or '-', l.budget or '-', l.location or '-',
-            l.response_from or '-', l.sunil_remarks or '-', l.telecaller_remarks or '-',
+            l.sunil_remarks or '-', l.telecaller_remarks or '-',
             l.source or '-', l.status or 'New', l.priority or 'Medium'
         ])
 

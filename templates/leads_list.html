@@ -114,11 +114,9 @@
                     <th>Date</th>
                     <th>Name</th>
                     <th>Phone No.</th>
-                    <th>Listing ID</th>
                     <th>Property Type</th>
                     <th>Price of Property</th>
                     <th>Locality</th>
-                    <th>Response From</th>
                     <th>Sunil Remarks</th>
                     <th>Telecaller</th>
                     <th>Actions</th>
@@ -139,11 +137,9 @@
                         {% endif %}
                     </td>
                     <td><small class="fw-bold" style="white-space:nowrap;">{{ lead.phone or '-' }}</small></td>
-                    <td><small class="font-monospace text-primary fw-bold">{{ lead.listing_id or '-' }}</small></td>
                     <td><small>{{ lead.property_type or '-' }}</small></td>
                     <td><small class="fw-semibold text-dark" style="white-space:nowrap;">{{ lead.budget or '-' }}</small></td>
                     <td><small>{{ lead.location or '-' }}</small></td>
-                    <td><small class="badge bg-light text-dark border">{{ lead.response_from or '-' }}</small></td>
                     <td>
                         <small class="text-dark d-block" style="max-width:140px; font-size:0.78rem; line-height:1.2;">
                             {{ lead.sunil_remarks if lead.sunil_remarks else '-' }}
@@ -181,7 +177,7 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="12" class="text-center text-muted py-4">No leads found. <a href="/leads/add">Add lead</a> or <a href="/import">Import CSV</a></td></tr>
+                <tr><td colspan="10" class="text-center text-muted py-4">No leads found. <a href="/leads/add">Add lead</a> or <a href="/import">Import CSV</a></td></tr>
                 {% endfor %}
             </tbody>
         </table>
