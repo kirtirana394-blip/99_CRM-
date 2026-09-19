@@ -52,7 +52,7 @@
 <!-- KPI Summary Cards (Clickable Metrics) -->
 <div class="row g-3 mb-3">
     <div class="col-sm-6 col-lg-3">
-        <a href="{{ ('/tasks?assigned_to=' ~ assigned_filter) if (filter_type == 'pending_followups' and assigned_filter) else ('/tasks' if filter_type == 'pending_followups' else ('/tasks?filter=pending_followups' ~ ('&assigned_to=' ~ assigned_filter if assigned_filter else ''))) }}" class="metric-box-link" title="Click to filter Pending Follow-ups">
+        <a href="{{ ('/tasks?assigned_to=' ~ assigned_filter) if (filter_type == 'pending_followups' and assigned_filter) else ('/tasks' if filter_type == 'pending_followups' else ('/tasks?filter=pending_followups' ~ ('&assigned_to=' ~ assigned_filter if assigned_filter else ''))) }}" class="metric-box-link" title="Pending Follow-ups">
             <div class="card card-custom p-3 border-start border-4 border-warning shadow-sm {{ 'metric-active-warning' if filter_type == 'pending_followups' else '' }}">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -67,7 +67,7 @@
         </a>
     </div>
     <div class="col-sm-6 col-lg-3">
-        <a href="{{ ('/tasks?assigned_to=' ~ assigned_filter) if (filter_type == 'completed_followups' and assigned_filter) else ('/tasks' if filter_type == 'completed_followups' else ('/tasks?filter=completed_followups' ~ ('&assigned_to=' ~ assigned_filter if assigned_filter else ''))) }}" class="metric-box-link" title="Click to filter Completed Follow-ups">
+        <a href="{{ ('/tasks?assigned_to=' ~ assigned_filter) if (filter_type == 'completed_followups' and assigned_filter) else ('/tasks' if filter_type == 'completed_followups' else ('/tasks?filter=completed_followups' ~ ('&assigned_to=' ~ assigned_filter if assigned_filter else ''))) }}" class="metric-box-link" title="Follow-ups Done">
             <div class="card card-custom p-3 border-start border-4 border-success shadow-sm {{ 'metric-active-success' if filter_type == 'completed_followups' else '' }}">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -82,7 +82,7 @@
         </a>
     </div>
     <div class="col-sm-6 col-lg-3">
-        <a href="{{ ('/tasks?assigned_to=' ~ assigned_filter) if (filter_type == 'pending_tasks' and assigned_filter) else ('/tasks' if filter_type == 'pending_tasks' else ('/tasks?filter=pending_tasks' ~ ('&assigned_to=' ~ assigned_filter if assigned_filter else ''))) }}" class="metric-box-link" title="Click to filter Pending Tasks">
+        <a href="{{ ('/tasks?assigned_to=' ~ assigned_filter) if (filter_type == 'pending_tasks' and assigned_filter) else ('/tasks' if filter_type == 'pending_tasks' else ('/tasks?filter=pending_tasks' ~ ('&assigned_to=' ~ assigned_filter if assigned_filter else ''))) }}" class="metric-box-link" title="Pending Tasks">
             <div class="card card-custom p-3 border-start border-4 border-primary shadow-sm {{ 'metric-active-primary' if filter_type == 'pending_tasks' else '' }}">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -97,7 +97,7 @@
         </a>
     </div>
     <div class="col-sm-6 col-lg-3">
-        <a href="{{ ('/tasks?assigned_to=' ~ assigned_filter) if (filter_type == 'completed_tasks' and assigned_filter) else ('/tasks' if filter_type == 'completed_tasks' else ('/tasks?filter=completed_tasks' ~ ('&assigned_to=' ~ assigned_filter if assigned_filter else ''))) }}" class="metric-box-link" title="Click to filter Completed Tasks">
+        <a href="{{ ('/tasks?assigned_to=' ~ assigned_filter) if (filter_type == 'completed_tasks' and assigned_filter) else ('/tasks' if filter_type == 'completed_tasks' else ('/tasks?filter=completed_tasks' ~ ('&assigned_to=' ~ assigned_filter if assigned_filter else ''))) }}" class="metric-box-link" title="Completed Tasks">
             <div class="card card-custom p-3 border-start border-4 border-info shadow-sm {{ 'metric-active-info' if filter_type == 'completed_tasks' else '' }}">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
