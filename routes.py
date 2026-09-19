@@ -1021,6 +1021,7 @@ def delete_user(uid):
 @web_bp.route('/tasks')
 def tasks_list():
     assigned_filter = request.args.get('assigned_to', '').strip()
+    filter_type = request.args.get('filter', '').strip()
 
     task_query = Task.query
     fu_query = FollowUp.query
@@ -1029,14 +1030,35 @@ def tasks_list():
         task_query = task_query.filter(Task.assigned_to == assigned_filter)
         fu_query = fu_query.join(Lead).filter(Lead.assigned_to == assigned_filter)
 
+    # Base counts for metrics (before filter_type is applied so cards always show accurate numbers!)
+    pending_fu_q = FollowUp.query.filter_by(completed=False)
+    completed_fu_q = FollowUp.query.filter_by(completed=True)
+    pending_task_q = Task.query.filter_by(completed=False)
+    completed_task_q = Task.query.filter_by(completed=True)
+
+    if assigned_filter:
+        pending_fu_q = pending_fu_q.join(Lead).filter(Lead.assigned_to == assigned_filter)
+        completed_fu_q = completed_fu_q.join(Lead).filter(Lead.assigned_to == assigned_filter)
+        pending_task_q = pending_task_q.filter(Task.assigned_to == assigned_filter)
+        completed_task_q = completed_task_q.filter(Task.assigned_to == assigned_filter)
+
+    pending_followups_count = pending_fu_q.count()
+    completed_followups_count = completed_fu_q.count()
+    pending_tasks_count = pending_task_q.count()
+    completed_tasks_count = completed_task_q.count()
+
+    # Apply filter_type when clicking on metric cards
+    if filter_type == 'pending_followups':
+        fu_query = fu_query.filter(FollowUp.completed == False)
+    elif filter_type == 'completed_followups':
+        fu_query = fu_query.filter(FollowUp.completed == True)
+    elif filter_type == 'pending_tasks':
+        task_query = task_query.filter(Task.completed == False)
+    elif filter_type == 'completed_tasks':
+        task_query = task_query.filter(Task.completed == True)
+
     tasks = task_query.order_by(Task.completed.asc(), Task.due_date.asc(), Task.created_at.desc()).all()
     followups = fu_query.order_by(FollowUp.completed.asc(), FollowUp.scheduled_at.asc()).all()
-
-    # Activity and metrics
-    pending_followups_count = FollowUp.query.filter_by(completed=False).count()
-    completed_followups_count = FollowUp.query.filter_by(completed=True).count()
-    pending_tasks_count = Task.query.filter_by(completed=False).count()
-    completed_tasks_count = Task.query.filter_by(completed=True).count()
 
     # Team activity history for Admin and Managers
     recent_completed_followups = FollowUp.query.filter_by(completed=True).order_by(FollowUp.created_at.desc()).limit(15).all()
@@ -1053,6 +1075,7 @@ def tasks_list():
         leads=leads,
         users=users,
         assigned_filter=assigned_filter,
+        filter_type=filter_type,
         pending_followups_count=pending_followups_count,
         completed_followups_count=completed_followups_count,
         pending_tasks_count=pending_tasks_count,

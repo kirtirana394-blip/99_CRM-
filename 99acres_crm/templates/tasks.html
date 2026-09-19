@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}Tasks & Follow-ups - Yayath 99Acres CRM{% endblock %}
 {% block content %}
 
@@ -20,61 +20,120 @@
     </div>
 </div>
 
-<!-- KPI Summary Cards -->
-<div class="row g-3 mb-4">
+<style>
+.metric-box-link {
+    text-decoration: none !important;
+    display: block;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.metric-box-link:hover .card {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 22px rgba(0,0,0,0.12) !important;
+}
+.metric-active-warning {
+    border: 2px solid #f59e0b !important;
+    background-color: #fffbeb !important;
+}
+.metric-active-success {
+    border: 2px solid #10b981 !important;
+    background-color: #f0fdf4 !important;
+}
+.metric-active-primary {
+    border: 2px solid #2563eb !important;
+    background-color: #eff6ff !important;
+}
+.metric-active-info {
+    border: 2px solid #06b6d4 !important;
+    background-color: #ecfeff !important;
+}
+</style>
+
+<!-- KPI Summary Cards (Clickable Metrics) -->
+<div class="row g-3 mb-3">
     <div class="col-sm-6 col-lg-3">
-        <div class="card card-custom p-3 border-start border-4 border-warning shadow-sm">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-bold text-uppercase">Pending Follow-ups</div>
-                    <div class="fs-4 fw-bold text-dark">{{ pending_followups_count }}</div>
-                </div>
-                <div class="bg-warning-subtle text-warning p-2.5 rounded-3">
-                    <i class="bi bi-clock-history fs-4"></i>
+        <a href="{{ ('/tasks?assigned_to=' ~ assigned_filter) if (filter_type == 'pending_followups' and assigned_filter) else ('/tasks' if filter_type == 'pending_followups' else ('/tasks?filter=pending_followups' ~ ('&assigned_to=' ~ assigned_filter if assigned_filter else ''))) }}" class="metric-box-link" title="Click to filter Pending Follow-ups">
+            <div class="card card-custom p-3 border-start border-4 border-warning shadow-sm {{ 'metric-active-warning' if filter_type == 'pending_followups' else '' }}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-bold text-uppercase">Pending Follow-ups</div>
+                        <div class="fs-4 fw-bold text-dark">{{ pending_followups_count }}</div>
+                        <small class="text-warning fw-semibold"><i class="bi bi-hand-index-thumb me-1"></i>Click to filter</small>
+                    </div>
+                    <div class="bg-warning-subtle text-warning p-2.5 rounded-3">
+                        <i class="bi bi-clock-history fs-4"></i>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-sm-6 col-lg-3">
-        <div class="card card-custom p-3 border-start border-4 border-success shadow-sm">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-bold text-uppercase">Follow-ups Done</div>
-                    <div class="fs-4 fw-bold text-dark">{{ completed_followups_count }}</div>
-                </div>
-                <div class="bg-success-subtle text-success p-2.5 rounded-3">
-                    <i class="bi bi-check-circle-fill fs-4"></i>
+        <a href="{{ ('/tasks?assigned_to=' ~ assigned_filter) if (filter_type == 'completed_followups' and assigned_filter) else ('/tasks' if filter_type == 'completed_followups' else ('/tasks?filter=completed_followups' ~ ('&assigned_to=' ~ assigned_filter if assigned_filter else ''))) }}" class="metric-box-link" title="Click to filter Completed Follow-ups">
+            <div class="card card-custom p-3 border-start border-4 border-success shadow-sm {{ 'metric-active-success' if filter_type == 'completed_followups' else '' }}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-bold text-uppercase">Follow-ups Done</div>
+                        <div class="fs-4 fw-bold text-dark">{{ completed_followups_count }}</div>
+                        <small class="text-success fw-semibold"><i class="bi bi-hand-index-thumb me-1"></i>Click to filter</small>
+                    </div>
+                    <div class="bg-success-subtle text-success p-2.5 rounded-3">
+                        <i class="bi bi-check-circle-fill fs-4"></i>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-sm-6 col-lg-3">
-        <div class="card card-custom p-3 border-start border-4 border-primary shadow-sm">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-bold text-uppercase">Pending Tasks</div>
-                    <div class="fs-4 fw-bold text-dark">{{ pending_tasks_count }}</div>
-                </div>
-                <div class="bg-primary-subtle text-primary p-2.5 rounded-3">
-                    <i class="bi bi-list-task fs-4"></i>
+        <a href="{{ ('/tasks?assigned_to=' ~ assigned_filter) if (filter_type == 'pending_tasks' and assigned_filter) else ('/tasks' if filter_type == 'pending_tasks' else ('/tasks?filter=pending_tasks' ~ ('&assigned_to=' ~ assigned_filter if assigned_filter else ''))) }}" class="metric-box-link" title="Click to filter Pending Tasks">
+            <div class="card card-custom p-3 border-start border-4 border-primary shadow-sm {{ 'metric-active-primary' if filter_type == 'pending_tasks' else '' }}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-bold text-uppercase">Pending Tasks</div>
+                        <div class="fs-4 fw-bold text-dark">{{ pending_tasks_count }}</div>
+                        <small class="text-primary fw-semibold"><i class="bi bi-hand-index-thumb me-1"></i>Click to filter</small>
+                    </div>
+                    <div class="bg-primary-subtle text-primary p-2.5 rounded-3">
+                        <i class="bi bi-list-task fs-4"></i>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-sm-6 col-lg-3">
-        <div class="card card-custom p-3 border-start border-4 border-info shadow-sm">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-bold text-uppercase">Completed Tasks</div>
-                    <div class="fs-4 fw-bold text-dark">{{ completed_tasks_count }}</div>
-                </div>
-                <div class="bg-info-subtle text-info p-2.5 rounded-3">
-                    <i class="bi bi-trophy-fill fs-4"></i>
+        <a href="{{ ('/tasks?assigned_to=' ~ assigned_filter) if (filter_type == 'completed_tasks' and assigned_filter) else ('/tasks' if filter_type == 'completed_tasks' else ('/tasks?filter=completed_tasks' ~ ('&assigned_to=' ~ assigned_filter if assigned_filter else ''))) }}" class="metric-box-link" title="Click to filter Completed Tasks">
+            <div class="card card-custom p-3 border-start border-4 border-info shadow-sm {{ 'metric-active-info' if filter_type == 'completed_tasks' else '' }}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-bold text-uppercase">Completed Tasks</div>
+                        <div class="fs-4 fw-bold text-dark">{{ completed_tasks_count }}</div>
+                        <small class="text-info fw-semibold"><i class="bi bi-hand-index-thumb me-1"></i>Click to filter</small>
+                    </div>
+                    <div class="bg-info-subtle text-info p-2.5 rounded-3">
+                        <i class="bi bi-trophy-fill fs-4"></i>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
+
+{% if filter_type %}
+<div class="alert alert-light border d-flex justify-content-between align-items-center mb-3 py-2 px-3 shadow-sm rounded-3">
+    <div>
+        <i class="bi bi-funnel-fill text-primary me-1"></i>
+        Active Filter: <strong class="text-dark">
+            {% if filter_type == 'pending_followups' %}Pending Follow-ups
+            {% elif filter_type == 'completed_followups' %}Follow-ups Done
+            {% elif filter_type == 'pending_tasks' %}Pending Tasks
+            {% elif filter_type == 'completed_tasks' %}Completed Tasks
+            {% endif %}
+        </strong>
+    </div>
+    <a href="/tasks{{ ('?assigned_to=' ~ assigned_filter) if assigned_filter else '' }}" class="btn btn-sm btn-outline-danger py-0 px-2 fw-semibold">
+        <i class="bi bi-x-circle me-1"></i>Reset Filter
+    </a>
+</div>
+{% endif %}
 
 <!-- Team Member Filter Bar -->
 <div class="card card-custom p-3 mb-4 shadow-sm">
