@@ -3,41 +3,59 @@
 {% block content %}
 
 <div class="mb-3">
-    <h3 class="fw-bold fs-5 mb-1"><i class="bi bi-person-gear text-primary me-2"></i>{{ action }} User & Change Password</h3>
-    <small class="text-muted">Configure User ID, account details, password, and assign roles (Admin, Editor, Viewer, etc.).</small>
+    <h3 class="fw-bold fs-5 mb-1"><i class="bi bi-person-gear text-primary me-2"></i>{{ action }} User & Password Management</h3>
+    <small class="text-muted">Configure User ID, account details, password, and assign roles (Admin, Manager, Sales Executive, etc.).</small>
 </div>
 
-<div class="card card-custom p-4 col-md-8">
+{% if is_permanent %}
+<div class="alert alert-info d-flex align-items-center mb-3 p-3 col-md-8 rounded-3 shadow-sm border-info" role="alert">
+    <i class="bi bi-shield-lock-fill fs-4 text-primary me-3"></i>
+    <div>
+        <strong>Permanent Protected Account:</strong>
+        <div class="small">यह कोर टीम अकाउंट (<span class="badge bg-primary">{{ user.role }}</span>) सिस्टम में परमानेंटली फिक्स किया गया है। इसका पासवर्ड <code class="fw-bold text-dark bg-white px-2 py-0.5 rounded border">{{ user.password }}</code> हमेशा सुरक्षित और लॉक रहेगा।</div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card card-custom p-4 col-md-8 shadow-sm">
     <form method="POST">
         <div class="mb-3">
             <label class="form-label fw-bold small">User ID / Username <span class="text-danger">*</span></label>
-            <input type="text" name="user_id_name" class="form-control form-control-sm" value="{{ user.user_id_name if user and user.user_id_name else '' }}" placeholder="e.g. kiriti, admin, ravi" required>
+            <input type="text" name="user_id_name" class="form-control form-control-sm" value="{{ user.user_id_name if user and user.user_id_name else '' }}" placeholder="e.g. kirti, admin, ravi, neha" required>
             <small class="text-muted" style="font-size:0.72rem;">User will use this simple User ID to sign in to CRM.</small>
         </div>
         <div class="mb-3">
             <label class="form-label fw-bold small">Full Name <span class="text-danger">*</span></label>
-            <input type="text" name="name" class="form-control form-control-sm" value="{{ user.name if user else '' }}" placeholder="e.g. Kiriti Rana" required>
+            <input type="text" name="name" class="form-control form-control-sm" value="{{ user.name if user else '' }}" placeholder="e.g. Kirti Rana" required>
         </div>
         <div class="mb-3">
             <label class="form-label fw-bold small">Email Address <span class="text-muted">(Optional)</span></label>
-            <input type="email" name="email" class="form-control form-control-sm" value="{{ user.email if user else '' }}" placeholder="kiriti@yayathspaces.com">
+            <input type="email" name="email" class="form-control form-control-sm" value="{{ user.email if user else '' }}" placeholder="kirti@yayathspaces.com">
         </div>
         <div class="mb-3">
-            <label class="form-label fw-bold small">User Password {{ '(Leave blank to keep current)' if user else '<span class="text-danger">*</span>' }}</label>
+            <label class="form-label fw-bold small">User Password {{ '(Permanent Fixed Password)' if is_permanent else ('(Leave blank to keep current)' if user else '<span class="text-danger">*</span>') }}</label>
+            {% if is_permanent %}
+            <div class="input-group input-group-sm">
+                <input type="text" class="form-control form-control-sm bg-light fw-bold font-monospace text-success" value="{{ user.password }}" readonly>
+                <span class="input-group-text bg-success-subtle text-success border"><i class="bi bi-lock-fill me-1"></i>Permanent & Saved</span>
+            </div>
+            <small class="text-muted" style="font-size:0.72rem;">Permanent accounts have locked passwords to prevent unexpected changes.</small>
+            {% else %}
             <input type="password" name="password" class="form-control form-control-sm" placeholder="Enter password (e.g. Password@123)" {{ 'required' if not user }}>
             <small class="text-muted" style="font-size:0.72rem;">Admin can change or reset password for any user at any time.</small>
+            {% endif %}
         </div>
         <div class="mb-3">
             <label class="form-label fw-bold small">User Role <span class="text-danger">*</span></label>
-            <select name="role" class="form-select form-select-sm">
+            <select name="role" class="form-select form-select-sm" {{ 'disabled' if is_permanent }}>
                 <option value="Admin" {{ 'selected' if user and user.role == 'Admin' }}>Admin (Full Access & User Management)</option>
-                <option value="Editor" {{ 'selected' if user and user.role == 'Editor' }}>Editor (Can Add & Edit Leads/Tasks)</option>
-                <option value="Viewer" {{ 'selected' if user and user.role == 'Viewer' }}>Viewer (Read-Only Access)</option>
                 <option value="Manager" {{ 'selected' if user and user.role == 'Manager' }}>Manager (Team Management & Reports)</option>
                 <option value="Sales Executive" {{ 'selected' if user and user.role == 'Sales Executive' }}>Sales Executive (Sales Leads)</option>
+                <option value="Editor" {{ 'selected' if user and user.role == 'Editor' }}>Editor (Can Add & Edit Leads/Tasks)</option>
+                <option value="Viewer" {{ 'selected' if user and user.role == 'Viewer' }}>Viewer (Read-Only Access)</option>
             </select>
         </div>
-        {% if user %}
+        {% if user and not is_permanent %}
         <div class="mb-3">
             <label class="form-label fw-bold small">Account Status</label>
             <select name="status" class="form-select form-select-sm">
@@ -47,7 +65,7 @@
         </div>
         {% endif %}
         <hr class="my-3">
-        <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold"><i class="bi bi-check-circle me-1"></i>{{ action }} User</button>
+        <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold"><i class="bi bi-check-circle me-1"></i>{{ 'Save Changes' if user else 'Create User' }}</button>
         <a href="/users" class="btn btn-outline-secondary btn-sm px-4 ms-2">Cancel</a>
     </form>
 </div>

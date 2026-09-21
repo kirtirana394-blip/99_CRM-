@@ -150,7 +150,8 @@ def login():
             uid_clean = (u.user_id_name or '').lower().replace(' ', '')
             email_clean = (u.email or '').lower().replace(' ', '')
             name_clean = (u.name or '').lower().replace(' ', '')
-            if clean_input in (uid_clean, email_clean, name_clean):
+            if clean_input in (uid_clean, email_clean, name_clean) or \
+               (clean_input in ('kirti', 'admin') and ('kirti' in uid_clean or 'kirti' in name_clean or 'kirti' in email_clean)):
                 user = u
                 break
 
@@ -978,6 +979,10 @@ def add_user():
         return redirect(url_for('web.users_list'))
     return render_template('user_form.html', user=None, action='Add')
 
+# Core permanent system accounts that must never be deleted or lose their fixed passwords
+PERMANENT_ACCOUNT_EMAILS = {'kirti@yayathspaces.com', 'ravi@yayathspaces.com', 'neha@yayathspaces.com', 'suresh@yayathspaces.com'}
+PERMANENT_ACCOUNT_IDS = {'kirtirana', 'kirti', 'ravi', 'neha', 'suresh'}
+
 @web_bp.route('/users/<int:uid>/edit', methods=['GET', 'POST'])
 def edit_user(uid):
     if session.get('user_role') not in ('Admin', 'Manager'):
@@ -985,6 +990,9 @@ def edit_user(uid):
         return redirect(url_for('web.dashboard'))
 
     user = User.query.get_or_404(uid)
+    is_permanent = (user.email and user.email.lower() in PERMANENT_ACCOUNT_EMAILS) or \
+                   ((user.user_id_name or '').lower().replace(' ', '') in PERMANENT_ACCOUNT_IDS)
+
     if request.method == 'POST':
         user.name = request.form['name'].strip()
         new_id = request.form.get('user_id_name', '').strip().lower().replace(' ', '')
@@ -996,14 +1004,25 @@ def edit_user(uid):
             user.email = email
             
         new_password = request.form.get('password', '').strip()
-        if new_password:
+        if is_permanent:
+            # Preserve permanent passwords
+            if (user.email and user.email.lower() == 'kirti@yayathspaces.com') or 'kirti' in (user.user_id_name or '').lower():
+                user.password = 'SuperPassword123'
+            else:
+                user.password = 'Password@123'
+        elif new_password:
             user.password = new_password
-        user.role = request.form.get('role', 'Editor')
-        user.status = request.form.get('status', 'Active')
+
+        if not is_permanent:
+            user.role = request.form.get('role', 'Editor')
+            user.status = request.form.get('status', 'Active')
+        else:
+            user.status = 'Active'
+
         db.session.commit()
         flash(f'User {user.name} (ID: {user.user_id_name}) updated successfully!', 'success')
         return redirect(url_for('web.users_list'))
-    return render_template('user_form.html', user=user, action='Edit')
+    return render_template('user_form.html', user=user, action='Edit', is_permanent=is_permanent)
 
 @web_bp.route('/users/<int:uid>/delete', methods=['POST'])
 def delete_user(uid):
@@ -1012,10 +1031,17 @@ def delete_user(uid):
         return redirect(url_for('web.users_list'))
 
     user = User.query.get_or_404(uid)
+    is_permanent = (user.email and user.email.lower() in PERMANENT_ACCOUNT_EMAILS) or \
+                   ((user.user_id_name or '').lower().replace(' ', '') in PERMANENT_ACCOUNT_IDS)
+    if is_permanent:
+        flash(f'Security Protection: "{user.name}" is a permanent system account (Admin/Manager/Sales) and cannot be deleted.', 'warning')
+        return redirect(url_for('web.users_list'))
+
     db.session.delete(user)
     db.session.commit()
     flash(f'User {user.name} deleted successfully.', 'info')
     return redirect(url_for('web.users_list'))
+
 
 # ── Tasks & Follow-ups Tab ──────────────────────────────────────
 @web_bp.route('/tasks')

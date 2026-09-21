@@ -121,17 +121,40 @@ def create_app():
             print("Startup data alignment error:", e)
             db.session.rollback()
 
-        # Auto-seed sample users (Admin, Editor, Viewer, Manager) and leads if empty
+        # Ensure permanent users and fixed passwords (Admin, Manager, Sales Executive, Viewer) are always saved and locked
         from models import Lead, Note, FollowUp, User, Task
-        if User.query.count() == 0:
-            users_data = [
-                User(name="Kirti Rana", email="kirti@yayathspaces.com", user_id_name="Kirti Rana", password="SuperPassword123", role="Admin"),
-                User(name="Ravi Kumar", email="ravi@yayathspaces.com", user_id_name="ravi", password="Password@123", role="Manager"),
-                User(name="Neha Sharma", email="neha@yayathspaces.com", user_id_name="neha", password="Password@123", role="Editor"),
-                User(name="Suresh Verma", email="suresh@yayathspaces.com", user_id_name="suresh", password="Password@123", role="Viewer"),
-            ]
-            db.session.add_all(users_data)
+        permanent_users = [
+            {"name": "Kirti Rana", "email": "kirti@yayathspaces.com", "user_id_name": "Kirti Rana", "password": "SuperPassword123", "role": "Admin"},
+            {"name": "Ravi Kumar", "email": "ravi@yayathspaces.com", "user_id_name": "ravi", "password": "Password@123", "role": "Manager"},
+            {"name": "Neha Sharma", "email": "neha@yayathspaces.com", "user_id_name": "neha", "password": "Password@123", "role": "Sales Executive"},
+            {"name": "Suresh Verma", "email": "suresh@yayathspaces.com", "user_id_name": "suresh", "password": "Password@123", "role": "Viewer"},
+        ]
+        try:
+            for pu in permanent_users:
+                u = User.query.filter(
+                    (User.email == pu['email']) | 
+                    (User.user_id_name.ilike(pu['user_id_name'])) |
+                    (User.name.ilike(pu['name']))
+                ).first()
+                if not u:
+                    u = User(
+                        name=pu['name'],
+                        email=pu['email'],
+                        user_id_name=pu['user_id_name'],
+                        password=pu['password'],
+                        role=pu['role'],
+                        status='Active'
+                    )
+                    db.session.add(u)
+                else:
+                    u.password = pu['password']
+                    u.user_id_name = pu['user_id_name']
+                    u.role = pu['role']
+                    u.status = 'Active'
             db.session.commit()
+        except Exception as e:
+            print("Permanent user sync error:", e)
+            db.session.rollback()
 
         # Auto-sync Google Sheet leads on startup if empty
         if Lead.query.count() == 0:
