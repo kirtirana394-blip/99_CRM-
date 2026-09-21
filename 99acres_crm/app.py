@@ -396,7 +396,15 @@ def create_app():
             db.session.add_all(tasks)
             db.session.commit()
 
+        # Always ensure follow-up details and team tasks are populated and synchronized
+        try:
+            from routes import sync_lead_followups_and_tasks
+            sync_lead_followups_and_tasks()
+        except Exception as e:
+            print("Startup follow-up sync error:", e)
+
     return app
+
 
 
 app = create_app()

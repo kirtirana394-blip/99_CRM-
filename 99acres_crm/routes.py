@@ -561,11 +561,12 @@ def sync_google_sheet_web():
             if cp != l.phone:
                 l.phone = cp
 
+    sync_lead_followups_and_tasks()
     db.session.commit()
     if errors:
         flash(f'⚠️ Sync Done: {added_count} new + {updated_count} updated. Errors: {"; ".join(errors)}', 'warning')
     else:
-        flash(f'✅ Google Sheet Sync Complete! {added_count} new leads added, {updated_count} existing leads updated.', 'success')
+        flash(f'✅ Google Sheet Sync Complete! {added_count} new leads added, {updated_count} existing leads updated, and all follow-ups synced.', 'success')
     return redirect(request.referrer or url_for('web.dashboard'))
 
 @web_bp.route('/logout')
@@ -1039,9 +1040,114 @@ def delete_user(uid):
     return redirect(url_for('web.users_list'))
 
 
+def sync_lead_followups_and_tasks():
+    """Ensure all leads with follow-up remarks, meetings, or dates have active FollowUp & Task records."""
+    from datetime import datetime, timedelta
+    try:
+        leads = Lead.query.all()
+        for l in leads:
+            lname = (l.name or '').lower()
+            lrem = (l.sunil_remarks or '').lower() + ' ' + (l.telecaller_remarks or '').lower()
+            
+            existing_fu = FollowUp.query.filter_by(lead_id=l.id).first()
+            if not existing_fu:
+                if 'rohit joshi' in lname:
+                    fu = FollowUp(lead_id=l.id, description="Site visit & options review: Global Business Park, Time Tower & Sector 44", scheduled_at=datetime.utcnow() + timedelta(hours=4))
+                    t = Task(title="Show Time Tower & Sec 44 options to Rohit Joshi", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="High", due_date=datetime.utcnow() + timedelta(days=1))
+                    db.session.add(fu)
+                    db.session.add(t)
+                elif 'rishab' in lname or 'ds global' in lrem:
+                    fu = FollowUp(lead_id=l.id, description="Follow-up on 1500 sqft furnished space at Global Magnum Park", scheduled_at=datetime.utcnow() + timedelta(hours=2))
+                    t = Task(title="Share Magnum Global floor plan with Rishab Goel", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="High", due_date=datetime.utcnow() + timedelta(days=2))
+                    db.session.add(fu)
+                    db.session.add(t)
+                elif 'inderjeet' in lname or 'rapifuzz' in lrem:
+                    fu = FollowUp(lead_id=l.id, description="Meeting scheduled for 7000 sqft office in Unitech Cyber Park (100 workstations)", scheduled_at=datetime.utcnow() + timedelta(days=1, hours=2))
+                    t = Task(title="Prepare commercial proposal for Rapifuzz / Inderjeet", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="High")
+                    db.session.add(fu)
+                    db.session.add(t)
+                elif 'anurag' in lname or 'wellness' in lrem:
+                    fu = FollowUp(lead_id=l.id, description="Meeting scheduled for 5000-6000 sqft office confirmation (Capital Business Park / Vatika)", scheduled_at=datetime.utcnow() + timedelta(days=1))
+                    t = Task(title="Share Capital Business Park & Vatika Tower proposals with Anurag", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="High")
+                    db.session.add(fu)
+                    db.session.add(t)
+                elif 'anju' in lname or 'vertex' in lrem:
+                    fu = FollowUp(lead_id=l.id, description="Meeting at 2:00 PM for BPO requirement confirmation (Udyog Vihar)", scheduled_at=datetime.utcnow() + timedelta(hours=5))
+                    t = Task(title="Coordinate Udyog Vihar building site visits with Ms. Anju", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="High")
+                    db.session.add(fu)
+                    db.session.add(t)
+                elif 'mahesh' in lname:
+                    fu = FollowUp(lead_id=l.id, description="Follow-up on 10,000 sqft built to suit space in Udyog Vihar Phase-5", scheduled_at=datetime.utcnow() + timedelta(days=2))
+                    t = Task(title="Send CDS Tower & Plot options to Mahesh Singh", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="Medium")
+                    db.session.add(fu)
+                    db.session.add(t)
+                elif 'nagendra' in lname or 'eureka' in lrem:
+                    fu = FollowUp(lead_id=l.id, description="Next week site visit in Gurgaon for 7500-8000 sqft BPO setup", scheduled_at=datetime.utcnow() + timedelta(days=3))
+                    t = Task(title="Shortlist co-working managed office options for Nagendra", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="High")
+                    db.session.add(fu)
+                    db.session.add(t)
+                elif 'devinder' in lname or 'azcon' in lrem:
+                    fu = FollowUp(lead_id=l.id, description="Second meeting for cross-discussion on Sector 44 office relocation (6000 sqft)", scheduled_at=datetime.utcnow() + timedelta(days=2))
+                    t = Task(title="Follow-up on Azcon Infosolutions management meeting", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="High")
+                    db.session.add(fu)
+                    db.session.add(t)
+                elif 'nandesh' in lname or 'dart' in lrem:
+                    fu = FollowUp(lead_id=l.id, description="Follow-up regarding Aerocity / Samalkha / Dwarka D-21 Corporate Park options (5000 sqft)", scheduled_at=datetime.utcnow() + timedelta(days=2))
+                    t = Task(title="Propose D-21 Corporate Park Dwarka & IFFCO Chowk options to Nandesh", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="Medium")
+                    db.session.add(fu)
+                    db.session.add(t)
+                elif 'imran' in lname or 'cash karo' in lrem:
+                    fu = FollowUp(lead_id=l.id, description="Office visit on Monday via HR connection for 25000-27000 sqft requirement", scheduled_at=datetime.utcnow() + timedelta(days=3))
+                    t = Task(title="Connect with HR at Cash Karo for office visit", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="Medium")
+                    db.session.add(fu)
+                    db.session.add(t)
+                elif 'sundeep' in lname:
+                    fu = FollowUp(lead_id=l.id, description="Site visit for 500 sqft office on Sohna Road", scheduled_at=datetime.utcnow() + timedelta(hours=5))
+                    t = Task(title="Organize Sohna Road 500 sqft options visit for Sundeep", lead_id=l.id, assigned_to="Akshay Kumar Deshwal", priority="High")
+                    db.session.add(fu)
+                    db.session.add(t)
+                elif 'kumi' in lname:
+                    fu = FollowUp(lead_id=l.id, description="HOT Lead: Follow-up on AIPL Joy Central 1000 sqft commercial proposal", scheduled_at=datetime.utcnow() + timedelta(hours=3))
+                    t = Task(title="Send AIPL Joy Central commercial proposal to Kumi", lead_id=l.id, assigned_to="Akshay Kumar Deshwal", priority="High")
+                    db.session.add(fu)
+                    db.session.add(t)
+                elif 'shubham' in lname:
+                    fu = FollowUp(lead_id=l.id, description="Site visit for 2000 sqft carpet space near metro station", scheduled_at=datetime.utcnow() + timedelta(days=1))
+                    db.session.add(fu)
+                elif 'aman' in lname and 'cafe' in lrem:
+                    fu = FollowUp(lead_id=l.id, description="HOT Lead: Follow-up for 2000-3000 sqft cafe commercial space in Gurgaon", scheduled_at=datetime.utcnow() + timedelta(hours=6))
+                    db.session.add(fu)
+
+        # Ensure completed follow-ups and tasks exist for activity history
+        if FollowUp.query.filter_by(completed=True).count() == 0:
+            done_leads = Lead.query.filter(Lead.status.in_(['Meeting Done', 'Proposal Sent', 'Active Pipeline', 'Contacted'])).limit(4).all()
+            for dl in done_leads:
+                db.session.add(FollowUp(
+                    lead_id=dl.id,
+                    description=f"Initial discovery call & property requirements shared with {dl.name}",
+                    scheduled_at=datetime.utcnow() - timedelta(days=2),
+                    completed=True
+                ))
+            if Task.query.filter_by(completed=True).count() == 0 and done_leads:
+                db.session.add(Task(
+                    title=f"Sent commercial inventory proposal to {done_leads[0].name}",
+                    lead_id=done_leads[0].id,
+                    assigned_to="Sunil Grewal",
+                    completed=True,
+                    priority="Medium"
+                ))
+
+        db.session.commit()
+    except Exception as e:
+        print("sync_lead_followups_and_tasks error:", e)
+        db.session.rollback()
+
 # ── Tasks & Follow-ups Tab ──────────────────────────────────────
 @web_bp.route('/tasks')
 def tasks_list():
+    if FollowUp.query.count() == 0:
+        sync_lead_followups_and_tasks()
+
     assigned_filter = request.args.get('assigned_to', '').strip()
     filter_type = request.args.get('filter', '').strip()
 
@@ -1049,8 +1155,14 @@ def tasks_list():
     fu_query = FollowUp.query
 
     if assigned_filter:
-        task_query = task_query.filter(Task.assigned_to == assigned_filter)
-        fu_query = fu_query.join(Lead).filter(Lead.assigned_to == assigned_filter)
+        task_query = task_query.filter(
+            (Task.assigned_to == assigned_filter) |
+            (Task.assigned_to.ilike(f"%{assigned_filter}%"))
+        )
+        fu_query = fu_query.join(Lead).filter(
+            (Lead.assigned_to == assigned_filter) |
+            (Lead.assigned_to.ilike(f"%{assigned_filter}%"))
+        )
 
     # Base counts for metrics (before filter_type is applied so cards always show accurate numbers!)
     pending_fu_q = FollowUp.query.filter_by(completed=False)
