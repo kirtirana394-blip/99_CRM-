@@ -33,7 +33,7 @@
             <input type="email" name="email" class="form-control form-control-sm" value="{{ user.email if user else '' }}" placeholder="kirti@yayathspaces.com">
         </div>
         <div class="mb-3">
-            <label class="form-label fw-bold small">User Password {{ '(Permanent Fixed Password)' if is_permanent else ('(Leave blank to keep current)' if user else '<span class="text-danger">*</span>') }}</label>
+            <label class="form-label fw-bold small">User Password {{ '(Permanent Fixed Password)' if is_permanent else ('(Saved in Database)' if user else '<span class="text-danger">*</span>') }}</label>
             {% if is_permanent %}
             <div class="input-group input-group-sm">
                 <input type="text" class="form-control form-control-sm bg-light fw-bold font-monospace text-success" value="{{ user.password }}" readonly>
@@ -41,8 +41,13 @@
             </div>
             <small class="text-muted" style="font-size:0.72rem;">Permanent accounts have locked passwords to prevent unexpected changes.</small>
             {% else %}
-            <input type="password" name="password" class="form-control form-control-sm" placeholder="Enter password (e.g. Password@123)" {{ 'required' if not user }}>
-            <small class="text-muted" style="font-size:0.72rem;">Admin can change or reset password for any user at any time.</small>
+            <div class="input-group input-group-sm">
+                <input type="password" id="userPassInput" name="password" class="form-control form-control-sm font-monospace" value="{{ user.password if user and user.password else '' }}" placeholder="Enter password (e.g. Password@123)" {{ 'required' if not user }}>
+                <button type="button" class="btn btn-outline-secondary" onclick="const p = document.getElementById('userPassInput'); p.type = (p.type === 'password' ? 'text' : 'password'); this.firstElementChild.classList.toggle('bi-eye'); this.firstElementChild.classList.toggle('bi-eye-slash');" title="Show/Hide password">
+                    <i class="bi bi-eye"></i>
+                </button>
+            </div>
+            <small class="text-muted" style="font-size:0.72rem;">CRM बंद करने के बाद भी पासवर्ड डेटाबेस में हमेशा सेव रहता है। पासवर्ड देखने के लिए आंख (Eye) आइकन दबाएं।</small>
             {% endif %}
         </div>
         <div class="mb-3">

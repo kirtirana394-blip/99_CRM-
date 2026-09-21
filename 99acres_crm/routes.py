@@ -980,8 +980,8 @@ def add_user():
     return render_template('user_form.html', user=None, action='Add')
 
 # Core permanent system accounts that must never be deleted or lose their fixed passwords
-PERMANENT_ACCOUNT_EMAILS = {'kirti@yayathspaces.com', 'ravi@yayathspaces.com', 'neha@yayathspaces.com', 'suresh@yayathspaces.com'}
-PERMANENT_ACCOUNT_IDS = {'kirtirana', 'kirti', 'ravi', 'neha', 'suresh'}
+PERMANENT_ACCOUNT_EMAILS = {'akshay8in@yahoo.com', 'sunil@yayath.com', 'kirti@yayathspaces.com', 'ravi@yayathspaces.com', 'neha@yayathspaces.com', 'suresh@yayathspaces.com'}
+PERMANENT_ACCOUNT_IDS = {'akshay8in@yahoo.com', 'akshay', 'sunil', 'kirtirana', 'kirti', 'ravi', 'neha', 'suresh'}
 
 @web_bp.route('/users/<int:uid>/edit', methods=['GET', 'POST'])
 def edit_user(uid):
@@ -1004,14 +1004,10 @@ def edit_user(uid):
             user.email = email
             
         new_password = request.form.get('password', '').strip()
-        if is_permanent:
-            # Preserve permanent passwords
-            if (user.email and user.email.lower() == 'kirti@yayathspaces.com') or 'kirti' in (user.user_id_name or '').lower():
-                user.password = 'SuperPassword123'
-            else:
-                user.password = 'Password@123'
-        elif new_password:
+        if new_password:
             user.password = new_password
+        elif not user.password:
+            user.password = 'SuperPassword123' if (user.email and user.email.lower() == 'kirti@yayathspaces.com') else 'Password@123'
 
         if not is_permanent:
             user.role = request.form.get('role', 'Editor')

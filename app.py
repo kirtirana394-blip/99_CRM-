@@ -124,6 +124,8 @@ def create_app():
         # Ensure permanent users and fixed passwords (Admin, Manager, Sales Executive, Viewer) are always saved and locked
         from models import Lead, Note, FollowUp, User, Task
         permanent_users = [
+            {"name": "Akshay Kumar Deshwal", "email": "akshay8in@yahoo.com", "user_id_name": "akshay8in@yahoo.com", "password": "Password@123", "role": "Admin"},
+            {"name": "Sunil Grewal", "email": "sunil@yayath.com", "user_id_name": "sunil", "password": "Password@123", "role": "Manager"},
             {"name": "Kirti Rana", "email": "kirti@yayathspaces.com", "user_id_name": "Kirti Rana", "password": "SuperPassword123", "role": "Admin"},
             {"name": "Ravi Kumar", "email": "ravi@yayathspaces.com", "user_id_name": "ravi", "password": "Password@123", "role": "Manager"},
             {"name": "Neha Sharma", "email": "neha@yayathspaces.com", "user_id_name": "neha", "password": "Password@123", "role": "Sales Executive"},
@@ -151,6 +153,12 @@ def create_app():
                     u.user_id_name = pu['user_id_name']
                     u.role = pu['role']
                     u.status = 'Active'
+
+            # Ensure all users in database have a valid saved password
+            for u in User.query.all():
+                if not u.password or u.password.strip() == '':
+                    u.password = 'SuperPassword123' if u.role == 'Admin' else 'Password@123'
+
             db.session.commit()
         except Exception as e:
             print("Permanent user sync error:", e)
