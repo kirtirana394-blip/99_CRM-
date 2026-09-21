@@ -1044,79 +1044,292 @@ def sync_lead_followups_and_tasks():
     """Ensure all leads with follow-up remarks, meetings, or dates have active FollowUp & Task records."""
     from datetime import datetime, timedelta
     try:
-        leads = Lead.query.all()
-        for l in leads:
-            lname = (l.name or '').lower()
-            lrem = (l.sunil_remarks or '').lower() + ' ' + (l.telecaller_remarks or '').lower()
-            
-            existing_fu = FollowUp.query.filter_by(lead_id=l.id).first()
-            if not existing_fu:
-                if 'rohit joshi' in lname:
-                    fu = FollowUp(lead_id=l.id, description="Site visit & options review: Global Business Park, Time Tower & Sector 44", scheduled_at=datetime.utcnow() + timedelta(hours=4))
-                    t = Task(title="Show Time Tower & Sec 44 options to Rohit Joshi", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="High", due_date=datetime.utcnow() + timedelta(days=1))
-                    db.session.add(fu)
-                    db.session.add(t)
-                elif 'rishab' in lname or 'ds global' in lrem:
-                    fu = FollowUp(lead_id=l.id, description="Follow-up on 1500 sqft furnished space at Global Magnum Park", scheduled_at=datetime.utcnow() + timedelta(hours=2))
-                    t = Task(title="Share Magnum Global floor plan with Rishab Goel", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="High", due_date=datetime.utcnow() + timedelta(days=2))
-                    db.session.add(fu)
-                    db.session.add(t)
-                elif 'inderjeet' in lname or 'rapifuzz' in lrem:
-                    fu = FollowUp(lead_id=l.id, description="Meeting scheduled for 7000 sqft office in Unitech Cyber Park (100 workstations)", scheduled_at=datetime.utcnow() + timedelta(days=1, hours=2))
-                    t = Task(title="Prepare commercial proposal for Rapifuzz / Inderjeet", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="High")
-                    db.session.add(fu)
-                    db.session.add(t)
-                elif 'anurag' in lname or 'wellness' in lrem:
-                    fu = FollowUp(lead_id=l.id, description="Meeting scheduled for 5000-6000 sqft office confirmation (Capital Business Park / Vatika)", scheduled_at=datetime.utcnow() + timedelta(days=1))
-                    t = Task(title="Share Capital Business Park & Vatika Tower proposals with Anurag", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="High")
-                    db.session.add(fu)
-                    db.session.add(t)
-                elif 'anju' in lname or 'vertex' in lrem:
-                    fu = FollowUp(lead_id=l.id, description="Meeting at 2:00 PM for BPO requirement confirmation (Udyog Vihar)", scheduled_at=datetime.utcnow() + timedelta(hours=5))
-                    t = Task(title="Coordinate Udyog Vihar building site visits with Ms. Anju", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="High")
-                    db.session.add(fu)
-                    db.session.add(t)
-                elif 'mahesh' in lname:
-                    fu = FollowUp(lead_id=l.id, description="Follow-up on 10,000 sqft built to suit space in Udyog Vihar Phase-5", scheduled_at=datetime.utcnow() + timedelta(days=2))
-                    t = Task(title="Send CDS Tower & Plot options to Mahesh Singh", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="Medium")
-                    db.session.add(fu)
-                    db.session.add(t)
-                elif 'nagendra' in lname or 'eureka' in lrem:
-                    fu = FollowUp(lead_id=l.id, description="Next week site visit in Gurgaon for 7500-8000 sqft BPO setup", scheduled_at=datetime.utcnow() + timedelta(days=3))
-                    t = Task(title="Shortlist co-working managed office options for Nagendra", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="High")
-                    db.session.add(fu)
-                    db.session.add(t)
-                elif 'devinder' in lname or 'azcon' in lrem:
-                    fu = FollowUp(lead_id=l.id, description="Second meeting for cross-discussion on Sector 44 office relocation (6000 sqft)", scheduled_at=datetime.utcnow() + timedelta(days=2))
-                    t = Task(title="Follow-up on Azcon Infosolutions management meeting", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="High")
-                    db.session.add(fu)
-                    db.session.add(t)
-                elif 'nandesh' in lname or 'dart' in lrem:
-                    fu = FollowUp(lead_id=l.id, description="Follow-up regarding Aerocity / Samalkha / Dwarka D-21 Corporate Park options (5000 sqft)", scheduled_at=datetime.utcnow() + timedelta(days=2))
-                    t = Task(title="Propose D-21 Corporate Park Dwarka & IFFCO Chowk options to Nandesh", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="Medium")
-                    db.session.add(fu)
-                    db.session.add(t)
-                elif 'imran' in lname or 'cash karo' in lrem:
-                    fu = FollowUp(lead_id=l.id, description="Office visit on Monday via HR connection for 25000-27000 sqft requirement", scheduled_at=datetime.utcnow() + timedelta(days=3))
-                    t = Task(title="Connect with HR at Cash Karo for office visit", lead_id=l.id, assigned_to=l.assigned_to or "Sunil Grewal", priority="Medium")
-                    db.session.add(fu)
-                    db.session.add(t)
-                elif 'sundeep' in lname:
-                    fu = FollowUp(lead_id=l.id, description="Site visit for 500 sqft office on Sohna Road", scheduled_at=datetime.utcnow() + timedelta(hours=5))
-                    t = Task(title="Organize Sohna Road 500 sqft options visit for Sundeep", lead_id=l.id, assigned_to="Akshay Kumar Deshwal", priority="High")
-                    db.session.add(fu)
-                    db.session.add(t)
-                elif 'kumi' in lname:
-                    fu = FollowUp(lead_id=l.id, description="HOT Lead: Follow-up on AIPL Joy Central 1000 sqft commercial proposal", scheduled_at=datetime.utcnow() + timedelta(hours=3))
-                    t = Task(title="Send AIPL Joy Central commercial proposal to Kumi", lead_id=l.id, assigned_to="Akshay Kumar Deshwal", priority="High")
-                    db.session.add(fu)
-                    db.session.add(t)
-                elif 'shubham' in lname:
-                    fu = FollowUp(lead_id=l.id, description="Site visit for 2000 sqft carpet space near metro station", scheduled_at=datetime.utcnow() + timedelta(days=1))
-                    db.session.add(fu)
-                elif 'aman' in lname and 'cafe' in lrem:
-                    fu = FollowUp(lead_id=l.id, description="HOT Lead: Follow-up for 2000-3000 sqft cafe commercial space in Gurgaon", scheduled_at=datetime.utcnow() + timedelta(hours=6))
-                    db.session.add(fu)
+        target_followup_data = [
+            {
+                'name': 'Rohit Joshi',
+                'phone': '7080173012',
+                'source': 'Sunil Data',
+                'company': 'Greenwall Financial Services',
+                'assigned_to': 'Sunil Grewal',
+                'property_type': 'Office Space (1500-2000 Sq.ft)',
+                'location': 'Gurgaon (Global Business Park, Time Tower)',
+                'status': 'Active Pipeline',
+                'priority': 'High',
+                'fu_desc': 'Site visit & options review: Time Tower, Global Business Park & Sec 44 (1500-2000 sq.ft)',
+                'fu_hours': 3,
+                'task_title': 'Show Time Tower & Sec 44 options to Rohit Joshi',
+                'task_due_days': 1
+            },
+            {
+                'name': 'Rishab Goel',
+                'phone': '8439497404',
+                'source': 'Sunil Data',
+                'company': 'Ds Global Wealth',
+                'assigned_to': 'Sunil Grewal',
+                'property_type': 'Furnished Office (1500 Sqft)',
+                'location': 'Global Magnum Park, Gurgaon',
+                'status': 'Active Pipeline',
+                'priority': 'High',
+                'fu_desc': 'Follow-up on 1500 sqft furnished space at Global Magnum Park',
+                'fu_hours': 2,
+                'task_title': 'Share Magnum Global floor plan with Rishab Goel',
+                'task_due_days': 2
+            },
+            {
+                'name': 'Inderjeet',
+                'phone': '9871955311',
+                'source': 'Sunil Data',
+                'company': 'Rapifuzz Pvt.Ltd.',
+                'assigned_to': 'Sunil Grewal',
+                'property_type': 'Furnished Office (7000 sqft)',
+                'location': 'Unitech Cyber Park, Gurgaon',
+                'status': 'Meeting Done',
+                'priority': 'High',
+                'fu_desc': 'Meeting scheduled for 7000 sqft office in Unitech Cyber Park (100 workstations)',
+                'fu_hours': 26,
+                'task_title': 'Prepare commercial proposal for Rapifuzz / Inderjeet',
+                'task_due_days': 2
+            },
+            {
+                'name': 'Mr. Anurag Chaudhary',
+                'phone': '9821988092',
+                'source': 'Sunil Data',
+                'company': "What's Up Wellness",
+                'assigned_to': 'Sunil Grewal',
+                'property_type': 'Furnished Office (5000-6000 sqft)',
+                'location': 'Capital Business Park / Vatika Tower, Sohna Road',
+                'status': 'Proposal Sent',
+                'priority': 'High',
+                'fu_desc': 'Meeting scheduled tomorrow for 5000-6000 sqft furnished office confirmation',
+                'fu_hours': 24,
+                'task_title': 'Share Capital Business Park & Vatika Tower proposals with Anurag',
+                'task_due_days': 1
+            },
+            {
+                'name': 'Ms. Anju Dahinwal',
+                'phone': '9999697224',
+                'source': 'Sunil Data',
+                'company': 'Vertex Global Inc',
+                'assigned_to': 'Sunil Grewal',
+                'property_type': 'BPO Office Space',
+                'location': 'Udyog Vihar Phase 2 & 3 (Building 25, 34)',
+                'status': 'Active Pipeline',
+                'priority': 'High',
+                'fu_desc': 'Meeting scheduled at 2:00 PM for BPO requirement confirmation',
+                'fu_hours': 5,
+                'task_title': 'Coordinate Udyog Vihar building site visits with Ms. Anju',
+                'task_due_days': 1
+            },
+            {
+                'name': 'Nagendra',
+                'phone': '9818834197',
+                'source': 'Sunil Data',
+                'company': 'Eureka Solutions Pvt Ltd',
+                'assigned_to': 'Sunil Grewal',
+                'property_type': 'Co-working Managed Office (7500-8000 sqft)',
+                'location': 'Gurgaon',
+                'status': 'Active Pipeline',
+                'priority': 'High',
+                'fu_desc': 'Next week site visit in Gurgaon for 7500-8000 sqft BPO setup',
+                'fu_hours': 48,
+                'task_title': 'Shortlist co-working managed office options for Nagendra',
+                'task_due_days': 3
+            },
+            {
+                'name': 'Mahesh Singh',
+                'phone': '9289073529',
+                'source': 'Sunil Data',
+                'company': 'Broker / Corporate',
+                'assigned_to': 'Sunil Grewal',
+                'property_type': 'Built to Suit (10,000 Sq.ft)',
+                'location': 'Udyog Vihar Phase-5 (Plot 34, CDS Tower)',
+                'status': 'Active Pipeline',
+                'priority': 'Medium',
+                'fu_desc': 'Follow-up on 10,000 sqft built to suit space in Udyog Vihar Phase-5',
+                'fu_hours': 36,
+                'task_title': 'Send CDS Tower & Plot options to Mahesh Singh',
+                'task_due_days': 2
+            },
+            {
+                'name': 'Devinder Dalal',
+                'phone': '9811511254',
+                'source': 'Sunil Data',
+                'company': 'Azcon Infosolutions',
+                'assigned_to': 'Sunil Grewal',
+                'property_type': 'Furnished Office (6000 sqft)',
+                'location': 'Sector 44, Gurgaon',
+                'status': 'Active Pipeline',
+                'priority': 'High',
+                'fu_desc': 'Second cross-discussion meeting for Sector 44 office relocation',
+                'fu_hours': 52,
+                'task_title': 'Follow-up on Azcon Infosolutions management meeting',
+                'task_due_days': 2
+            },
+            {
+                'name': 'Nandesh Mishra',
+                'phone': '9811227699',
+                'source': 'Sunil Data',
+                'company': 'Dart Global Inc',
+                'assigned_to': 'Sunil Grewal',
+                'property_type': 'Built to Suit (5000 sqft)',
+                'location': 'Aerocity / Samalkha / Dwarka D-21 Corporate Park',
+                'status': 'Active Pipeline',
+                'priority': 'Medium',
+                'fu_desc': 'Discussion for Samalkha / Dwarka D-21 Corporate Park options',
+                'fu_hours': 40,
+                'task_title': 'Propose D-21 Corporate Park Dwarka options to Nandesh',
+                'task_due_days': 2
+            },
+            {
+                'name': 'Imran Khan',
+                'phone': '9015719363',
+                'source': 'Sunil Data',
+                'company': 'Cash Karo',
+                'assigned_to': 'Sunil Grewal',
+                'property_type': 'Built to Suit (25,000-27,000 sqft)',
+                'location': 'Gurgaon',
+                'status': 'Contacted',
+                'priority': 'Medium',
+                'fu_desc': 'Office visit on Monday via HR connection for 25000-27000 sqft',
+                'fu_hours': 72,
+                'task_title': 'Connect with HR at Cash Karo for office visit',
+                'task_due_days': 3
+            },
+            {
+                'name': 'Sundeep Verma',
+                'phone': '9650546551',
+                'source': 'Himmat Data',
+                'company': 'Individual Buyer',
+                'assigned_to': 'Akshay Kumar Deshwal',
+                'property_type': 'Office Space (500 Sq.ft Buy)',
+                'location': 'Sohna Road, Gurgaon',
+                'status': 'Meeting Done',
+                'priority': 'High',
+                'fu_desc': 'Site visit for 500 sqft office on Sohna Road (Budget 50 Lac)',
+                'fu_hours': 6,
+                'task_title': 'Coordinate Sohna Road 500 sqft options visit for Sundeep',
+                'task_due_days': 1
+            },
+            {
+                'name': 'Kumi',
+                'phone': '9810914954',
+                'source': 'Himmat Data',
+                'company': 'Commercial Client',
+                'assigned_to': 'Akshay Kumar Deshwal',
+                'property_type': 'Commercial Office (1000 Sq.ft HOT)',
+                'location': 'AIPL Joy Central, Gurgaon',
+                'status': 'Proposal Sent',
+                'priority': 'High',
+                'fu_desc': 'HOT Lead: Follow-up on AIPL Joy Central 1000 sqft commercial proposal',
+                'fu_hours': 4,
+                'task_title': 'Send AIPL Joy Central commercial proposal to Kumi',
+                'task_due_days': 1
+            },
+            {
+                'name': 'Shubham Singh',
+                'phone': '9711160603',
+                'source': 'Himmat Data',
+                'company': 'Commercial Client',
+                'assigned_to': 'Sunil Grewal',
+                'property_type': 'Commercial (2000 carpet)',
+                'location': 'Near Metro Station, Gurgaon',
+                'status': 'Meeting Done',
+                'priority': 'Medium',
+                'fu_desc': 'Site visit for 2000 sqft carpet space near metro station',
+                'fu_hours': 20,
+                'task_title': 'Show metro-connected commercial options to Shubham Singh',
+                'task_due_days': 2
+            },
+            {
+                'name': 'Aman',
+                'phone': '9631014104',
+                'source': 'Himmat Data',
+                'company': 'Cafe Commercial',
+                'assigned_to': 'Akshay Kumar Deshwal',
+                'property_type': 'Commercial Cafe (2000-3000 sq.ft HOT)',
+                'location': 'All Gurgaon',
+                'status': 'Active Pipeline',
+                'priority': 'High',
+                'fu_desc': 'HOT Lead: Follow-up for 2000-3000 sqft cafe commercial space in Gurgaon',
+                'fu_hours': 7,
+                'task_title': 'Shortlist high footfall cafe spaces for Aman',
+                'task_due_days': 1
+            },
+            {
+                'name': 'Nasaruddin',
+                'phone': '7980238644',
+                'source': 'Himmat Data',
+                'company': 'Retail Carpet Shop',
+                'assigned_to': 'Sunil Grewal',
+                'property_type': 'Retail Shop (600 sq.ft)',
+                'location': 'Galleria Market, Sector 28',
+                'status': 'Active Pipeline',
+                'priority': 'Medium',
+                'fu_desc': 'Commercial requirement follow-up for 600 sqft shop in Galleria Market',
+                'fu_hours': 30,
+                'task_title': 'Share Galleria Market retail options with Nasaruddin',
+                'task_due_days': 2
+            }
+        ]
+
+        for item in target_followup_data:
+            # Find lead by phone or name
+            lead = Lead.query.filter(
+                (Lead.phone == item['phone']) | 
+                (Lead.phone.like(f"%{item['phone']}%")) |
+                (Lead.name.ilike(item['name']))
+            ).first()
+
+            if not lead:
+                clean_name = item['name'].lower().replace(' ', '.').replace('/', '')
+                email = f"{clean_name}@lead99.com"
+                lead = Lead(
+                    name=item['name'],
+                    email=email,
+                    phone=item['phone'],
+                    source=item['source'],
+                    property_type=item['property_type'],
+                    budget='',
+                    location=item['location'],
+                    status=item['status'],
+                    priority=item['priority'],
+                    assigned_to=item['assigned_to'],
+                    sunil_remarks=item['fu_desc'],
+                    is_imported=True,
+                    created_at=datetime.utcnow()
+                )
+                db.session.add(lead)
+                db.session.flush()
+            else:
+                lead.name = item['name']
+                lead.assigned_to = item['assigned_to']
+                if not lead.source: lead.source = item['source']
+                if not lead.location: lead.location = item['location']
+                if not lead.sunil_remarks: lead.sunil_remarks = item['fu_desc']
+
+            # Ensure pending FollowUp exists
+            fu_exists = FollowUp.query.filter_by(lead_id=lead.id, completed=False).first()
+            if not fu_exists:
+                fu = FollowUp(
+                    lead_id=lead.id,
+                    description=item['fu_desc'],
+                    scheduled_at=datetime.utcnow() + timedelta(hours=item['fu_hours']),
+                    completed=False
+                )
+                db.session.add(fu)
+
+            # Ensure Task exists
+            t_exists = Task.query.filter_by(lead_id=lead.id, completed=False).first()
+            if not t_exists:
+                t = Task(
+                    title=item['task_title'],
+                    lead_id=lead.id,
+                    assigned_to=item['assigned_to'],
+                    due_date=datetime.utcnow() + timedelta(days=item['task_due_days']),
+                    priority=item['priority'],
+                    completed=False
+                )
+                db.session.add(t)
 
         # Ensure completed follow-ups and tasks exist for activity history
         if FollowUp.query.filter_by(completed=True).count() == 0:
@@ -1145,7 +1358,7 @@ def sync_lead_followups_and_tasks():
 # ── Tasks & Follow-ups Tab ──────────────────────────────────────
 @web_bp.route('/tasks')
 def tasks_list():
-    if FollowUp.query.count() == 0:
+    if FollowUp.query.filter_by(completed=False).count() < 5:
         sync_lead_followups_and_tasks()
 
     assigned_filter = request.args.get('assigned_to', '').strip()
