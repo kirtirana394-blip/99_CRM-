@@ -507,6 +507,9 @@
                 </button>
             </div>
 
+            <button type="button" class="btn btn-sm btn-outline-primary fw-bold rounded-3 px-2 py-1.5 shadow-sm ms-1" onclick="playAudioNotificationChime()" style="font-size:0.78rem;" title="Play Sound Notification Chime">
+                <i class="bi bi-volume-up-fill me-1 text-warning"></i>Sound Alert
+            </button>
             {% if session.get('user_role') != 'Viewer' %}
             <a href="/sync-google-sheet-now" class="btn btn-sm btn-success fw-bold rounded-3 px-3 py-1.5 shadow-sm" style="font-size:0.78rem;" title="Sync latest leads from Google Sheet">
                 <i class="bi bi-file-earmark-spreadsheet-fill me-1"></i>Sync Google Sheet
@@ -542,6 +545,38 @@ function toggleMobileSidebar() {
     var backdrop = document.querySelector('.sidebar-backdrop');
     if (sidebar) sidebar.classList.toggle('mobile-open');
     if (backdrop) backdrop.classList.toggle('show');
+}
+
+function playAudioNotificationChime() {
+    try {
+        var AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        var ctx = new AudioContext();
+        
+        var osc1 = ctx.createOscillator();
+        var gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
+        gain1.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(ctx.currentTime);
+        osc1.stop(ctx.currentTime + 0.35);
+
+        var osc2 = ctx.createOscillator();
+        var gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(659.25, ctx.currentTime + 0.18);
+        gain2.gain.setValueAtTime(0.25, ctx.currentTime + 0.18);
+        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(ctx.currentTime + 0.18);
+        osc2.stop(ctx.currentTime + 0.6);
+    } catch(e) {
+        console.log("Audio notification chime error:", e);
+    }
 }
 </script>
 </body>

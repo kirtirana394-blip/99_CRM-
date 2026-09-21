@@ -56,6 +56,7 @@ class Lead(db.Model):
     notes = db.relationship('Note', backref='lead', lazy=True, cascade='all, delete-orphan')
     followups = db.relationship('FollowUp', backref='lead', lazy=True, cascade='all, delete-orphan')
     tasks = db.relationship('Task', backref='lead', lazy=True, cascade='all, delete-orphan')
+    activities = db.relationship('ActivityLog', backref='lead', lazy=True, cascade='all, delete-orphan')
 
     @property
     def latest_note(self):
@@ -120,3 +121,15 @@ class Task(db.Model):
     priority = db.Column(db.String(20), default='Medium')
     completed = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class ActivityLog(db.Model):
+    __tablename__ = 'activity_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    lead_id = db.Column(db.Integer, db.ForeignKey('leads.id'), nullable=True)
+    user_name = db.Column(db.String(255), nullable=True)
+    action = db.Column(db.String(255), nullable=False)
+    details = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+

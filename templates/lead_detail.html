@@ -142,6 +142,35 @@
                 </div>
                 {% endfor %}
             </div>
+
+            <!-- Activity Log & Audit History Timeline -->
+            <div class="mt-4 pt-3 border-top">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0 fs-6 text-dark"><i class="bi bi-clock-history text-secondary me-2"></i>Activity History & Audit Log</h6>
+                    <span class="badge bg-light text-muted border">{{ lead.activities|length }} Records</span>
+                </div>
+                <div class="activity-timeline">
+                    {% for act in lead.activities|sort(attribute='created_at', reverse=True) %}
+                    <div class="d-flex align-items-start mb-2.5 pb-2 border-bottom">
+                        <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center me-2 mt-0.5" style="width:24px; height:24px; font-size:0.75rem; flex-shrink:0;">
+                            <i class="bi bi-activity"></i>
+                        </div>
+                        <div class="w-100">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="text-dark small">{{ act.action }}</strong>
+                                <small class="text-muted" style="font-size:0.7rem;"><i class="bi bi-clock me-1"></i>{{ act.created_at.strftime('%d %b %Y, %H:%M') if act.created_at else '' }}</small>
+                            </div>
+                            <div class="small text-muted mt-0.5" style="font-size:0.78rem;">
+                                <span class="badge bg-light text-dark border me-1"><i class="bi bi-person me-1"></i>{{ act.user_name or 'System' }}</span>
+                                {{ act.details or '' }}
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-muted small py-3 text-center border rounded bg-light">No historical activity logged yet for this lead.</div>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
     </div>
 </div>

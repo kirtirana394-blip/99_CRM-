@@ -2,7 +2,7 @@
 """All routes: Auth (Login/Logout), Dashboard, Lead CRUD, User Management (Admin/Editor/Viewer roles), Tasks, Reports, Settings, CSV Import/Export, and REST API."""
 
 from flask import Blueprint, request, jsonify, abort, render_template, redirect, url_for, flash, Response, session, g
-from models import Lead, Note, FollowUp, User, Task
+from models import Lead, Note, FollowUp, User, Task, ActivityLog
 from extensions import db
 from datetime import datetime, timedelta
 import csv
@@ -11,6 +11,27 @@ import urllib.request
 import urllib.parse
 import re
 from phone_utils import clean_phone_number
+
+def log_lead_activity(lead_id, action, details='', user_name=None):
+    try:
+        if not user_name:
+            user_name = session.get('user_name', 'System')
+        activity = ActivityLog(lead_id=lead_id, user_name=user_name, action=action, details=details)
+        db.session.add(activity)
+    except Exception as e:
+        print("Activity log error:", e)
+
+def get_next_round_robin_assignee():
+    active_users = User.query.filter_by(status='Active').order_by(User.id.asc()).all()
+    if not active_users:
+        return 'Admin Kiriti'
+    sales_users = [u for u in active_users if u.role in ('Sales Executive', 'Manager', 'Admin')]
+    if not sales_users:
+        return active_users[0].name
+    
+    total_assigned = Lead.query.filter((Lead.is_deleted == False) | (Lead.is_deleted == None)).count()
+    idx = total_assigned % len(sales_users)
+    return sales_users[idx].name
 
 # ── API Blueprint ──────────────────────────────────────────────
 api_bp = Blueprint('api', __name__)
@@ -728,6 +749,10 @@ def add_lead():
         created_at_str = request.form.get('created_date', '')
         created_at = datetime.strptime(created_at_str, '%Y-%m-%d') if created_at_str else datetime.utcnow()
 
+        assigned_user = request.form.get('assigned_to', '').strip()
+        if not assigned_user:
+            assigned_user = get_next_round_robin_assignee()
+
         lead = Lead(
             name=request.form['name'], email=request.form['email'],
             phone=clean_phone_number(request.form.get('phone', '')),
@@ -737,7 +762,7 @@ def add_lead():
             location=request.form.get('location', ''),
             status=request.form.get('status', 'New'),
             priority=request.form.get('priority', 'Medium'),
-            assigned_to=request.form.get('assigned_to', ''),
+            assigned_to=assigned_user,
             sunil_remarks=request.form.get('sunil_remarks', ''),
             telecaller_remarks=request.form.get('telecaller_remarks', ''),
             listing_id=request.form.get('listing_id', ''),
@@ -745,6 +770,8 @@ def add_lead():
             created_at=created_at
         )
         db.session.add(lead)
+        db.session.flush()
+        log_lead_activity(lead.id, 'Lead Created', f'Assigned to {assigned_user} via Round-Robin')
         db.session.commit()
         flash('Lead added successfully!', 'success')
         return redirect(url_for('web.leads_list'))
@@ -767,6 +794,9 @@ def edit_lead(lid):
     lead = Lead.query.get_or_404(lid)
     users = User.query.filter_by(status='Active').all()
     if request.method == 'POST':
+        old_status = lead.status
+        old_assigned = lead.assigned_to
+
         lead.name = request.form['name']
         lead.email = request.form['email']
         lead.phone = clean_phone_number(request.form.get('phone', ''))
@@ -788,7 +818,13 @@ def edit_lead(lid):
                 lead.created_at = datetime.strptime(created_at_str, '%Y-%m-%d')
             except ValueError:
                 pass
-                
+
+        if old_status != lead.status:
+            log_lead_activity(lead.id, 'Status Updated', f'Status changed from "{old_status}" to "{lead.status}"')
+        if old_assigned != lead.assigned_to:
+            log_lead_activity(lead.id, 'Assigned User Changed', f'Lead transferred from "{old_assigned or "Unassigned"}" to "{lead.assigned_to}"')
+        
+        log_lead_activity(lead.id, 'Lead Information Updated', 'Updated lead details')
         db.session.commit()
         flash('Lead updated successfully!', 'success')
         return redirect(url_for('web.lead_detail', lid=lead.id))
@@ -802,21 +838,31 @@ def quick_edit_lead(lid):
         return redirect(request.referrer or url_for('web.leads_list'))
 
     lead = Lead.query.get_or_404(lid)
+    changes = []
     if 'phone' in request.form:
         lead.phone = clean_phone_number(request.form.get('phone', ''))
+        changes.append('Phone')
     if 'sunil_remarks' in request.form:
         lead.sunil_remarks = request.form.get('sunil_remarks', '').strip()
+        changes.append('Sunil Remarks')
     if 'telecaller_remarks' in request.form:
         lead.telecaller_remarks = request.form.get('telecaller_remarks', '').strip()
+        changes.append('Telecaller Remarks')
     if 'response_from' in request.form:
         lead.response_from = request.form.get('response_from', '').strip()
+        changes.append('Response From')
     if 'listing_id' in request.form:
         lead.listing_id = request.form.get('listing_id', '').strip()
+        changes.append('Listing ID')
     if 'status' in request.form:
+        old_st = lead.status
         lead.status = request.form.get('status', '').strip()
+        changes.append(f'Status ({old_st} -> {lead.status})')
     if 'source' in request.form:
         lead.source = request.form.get('source', '').strip()
+        changes.append('Source')
 
+    log_lead_activity(lead.id, 'Quick Edit Updated', f'Updated: {", ".join(changes)}')
     db.session.commit()
     flash(f'Remarks updated for "{lead.name}"!', 'success')
     return redirect(request.referrer or url_for('web.leads_list'))
@@ -831,6 +877,7 @@ def delete_lead(lid):
     lead = Lead.query.get_or_404(lid)
     lead.is_deleted = True
     lead.deleted_at = datetime.utcnow()
+    log_lead_activity(lead.id, 'Moved to Trash', 'Lead soft deleted')
     db.session.commit()
     flash(f'Lead "{lead.name}" moved to Recycle Bin / Trash.', 'warning')
     return redirect(request.referrer or url_for('web.leads_list'))
@@ -855,6 +902,7 @@ def restore_lead(lid):
     lead = Lead.query.get_or_404(lid)
     lead.is_deleted = False
     lead.deleted_at = None
+    log_lead_activity(lead.id, 'Restored from Trash', 'Lead restored to active database')
     db.session.commit()
     flash(f'Lead "{lead.name}" restored successfully!', 'success')
     return redirect(url_for('web.trash_list'))
@@ -899,6 +947,7 @@ def add_note(lid):
     if content:
         note = Note(lead_id=lead.id, content=content)
         db.session.add(note)
+        log_lead_activity(lead.id, 'Note Added', content)
         db.session.commit()
         flash('Note added.', 'success')
     return redirect(url_for('web.lead_detail', lid=lid))
@@ -915,9 +964,10 @@ def add_followup(lid):
     sched = request.form.get('scheduled_at', '')
     if sched:
         try:
-            fu = FollowUp(lead_id=lead.id, description=desc,
-                          scheduled_at=datetime.strptime(sched, '%Y-%m-%dT%H:%M'))
+            scheduled_dt = datetime.strptime(sched, '%Y-%m-%dT%H:%M')
+            fu = FollowUp(lead_id=lead.id, description=desc, scheduled_at=scheduled_dt)
             db.session.add(fu)
+            log_lead_activity(lead.id, 'Follow-up Scheduled', f'Scheduled for {scheduled_dt.strftime("%d %b %Y %H:%M")}: {desc}')
             db.session.commit()
             flash('Follow-up scheduled.', 'success')
         except ValueError:
@@ -933,6 +983,8 @@ def complete_followup(fid):
 
     fu = FollowUp.query.get_or_404(fid)
     fu.completed = True
+    if fu.lead:
+        log_lead_activity(fu.lead.id, 'Follow-up Completed', f'Completed follow-up: {fu.description or "No description"}')
     db.session.commit()
     flash('Follow-up marked complete.', 'success')
     return redirect(request.referrer or url_for('web.dashboard'))
