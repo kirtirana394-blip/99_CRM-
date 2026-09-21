@@ -991,12 +991,10 @@ def edit_user(uid):
         return redirect(url_for('web.dashboard'))
 
     user = User.query.get_or_404(uid)
-    is_permanent = (user.email and user.email.lower() in PERMANENT_ACCOUNT_EMAILS) or \
-                   ((user.user_id_name or '').lower().replace(' ', '') in PERMANENT_ACCOUNT_IDS)
 
     if request.method == 'POST':
         user.name = request.form['name'].strip()
-        new_id = request.form.get('user_id_name', '').strip().lower().replace(' ', '')
+        new_id = request.form.get('user_id_name', '').strip()
         if new_id:
             user.user_id_name = new_id
 
@@ -1007,19 +1005,16 @@ def edit_user(uid):
         new_password = request.form.get('password', '').strip()
         if new_password:
             user.password = new_password
-        elif not user.password:
-            user.password = 'SuperPassword123' if (user.email and user.email.lower() == 'kirti@yayathspaces.com') else 'Password@123'
 
-        if not is_permanent:
-            user.role = request.form.get('role', 'Editor')
-            user.status = request.form.get('status', 'Active')
-        else:
-            user.status = 'Active'
+        if 'role' in request.form and request.form.get('role'):
+            user.role = request.form.get('role')
+        if 'status' in request.form and request.form.get('status'):
+            user.status = request.form.get('status')
 
         db.session.commit()
         flash(f'User {user.name} (ID: {user.user_id_name}) updated successfully!', 'success')
         return redirect(url_for('web.users_list'))
-    return render_template('user_form.html', user=user, action='Edit', is_permanent=is_permanent)
+    return render_template('user_form.html', user=user, action='Edit')
 
 @web_bp.route('/users/<int:uid>/delete', methods=['POST'])
 def delete_user(uid):
@@ -1028,10 +1023,8 @@ def delete_user(uid):
         return redirect(url_for('web.users_list'))
 
     user = User.query.get_or_404(uid)
-    is_permanent = (user.email and user.email.lower() in PERMANENT_ACCOUNT_EMAILS) or \
-                   ((user.user_id_name or '').lower().replace(' ', '') in PERMANENT_ACCOUNT_IDS)
-    if is_permanent:
-        flash(f'Security Protection: "{user.name}" is a permanent system account (Admin/Manager/Sales) and cannot be deleted.', 'warning')
+    if session.get('user_id') == user.id:
+        flash('Security Protection: You cannot delete your own active logged-in Admin account.', 'warning')
         return redirect(url_for('web.users_list'))
 
     db.session.delete(user)

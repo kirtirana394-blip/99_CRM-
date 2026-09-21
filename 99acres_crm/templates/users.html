@@ -87,14 +87,10 @@
             </thead>
             <tbody>
                 {% for u in users %}
-                {% set is_core = (u.email in ['akshay8in@yahoo.com', 'sunil@yayath.com', 'kirti@yayathspaces.com', 'ravi@yayathspaces.com', 'neha@yayathspaces.com', 'suresh@yayathspaces.com']) or ((u.user_id_name or '')|lower in ['akshay8in@yahoo.com', 'akshay', 'sunil', 'kirtirana', 'kirti rana', 'kirti', 'ravi', 'neha', 'suresh']) %}
                 <tr>
                     <td><code class="fw-bold text-primary">{{ u.user_id_name or ('USR-00' ~ u.id) }}</code></td>
                     <td>
                         <strong class="text-dark">{{ u.name }}</strong>
-                        {% if is_core %}
-                        <span class="badge bg-primary-subtle text-primary border ms-1" style="font-size:0.65rem;">Core Team</span>
-                        {% endif %}
                     </td>
                     <td>{{ u.email }}</td>
                     <td>
@@ -103,9 +99,6 @@
                             <button class="btn btn-sm btn-light border-0 py-0 px-1 text-muted" onclick="navigator.clipboard.writeText('{{ u.password or 'Password@123' }}'); this.innerHTML='<i class=\'bi bi-check text-success\'></i>'; setTimeout(() => this.innerHTML='<i class=\'bi bi-clipboard\'></i>', 1200);" title="Copy Password">
                                 <i class="bi bi-clipboard"></i>
                             </button>
-                            {% if is_core %}
-                            <span class="badge bg-success-subtle text-success border border-success ms-1" title="Locked & Saved" style="font-size: 0.65rem;"><i class="bi bi-shield-lock-fill"></i> Fixed</span>
-                            {% endif %}
                         </div>
                     </td>
                     <td>
@@ -126,8 +119,8 @@
                     </td>
                     <td>
                         <a href="/users/{{ u.id }}/edit" class="btn btn-sm btn-light border me-1 fw-semibold"><i class="bi bi-pencil-square text-primary me-1"></i> Edit</a>
-                        {% if is_core %}
-                            <span class="badge bg-light text-muted border px-2 py-1 fw-normal" title="Core permanent account cannot be deleted"><i class="bi bi-lock-fill text-secondary me-1"></i>Protected</span>
+                        {% if session.get('user_id') == u.id %}
+                            <span class="badge bg-light text-muted border px-2 py-1 fw-normal" title="You cannot delete your current logged-in account"><i class="bi bi-person-check me-1"></i>You (Active)</span>
                         {% else %}
                             <form method="POST" action="/users/{{ u.id }}/delete" class="d-inline" onsubmit="return confirm('Are you sure you want to delete user {{ u.name }}?')">
                                 <button class="btn btn-sm btn-outline-danger fw-semibold"><i class="bi bi-trash"></i> Delete</button>
