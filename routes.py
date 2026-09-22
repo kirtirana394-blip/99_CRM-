@@ -1661,22 +1661,33 @@ def export_csv():
             (Lead.property_type.ilike(f'%{search}%'))
         )
 
-    leads = query.order_by(Lead.created_at.desc()).all()
+    # Order date-wise NEWEST to OLDEST (created_at desc, id desc)
+    leads = query.order_by(Lead.created_at.desc(), Lead.id.desc()).all()
     output = io.StringIO()
     writer = csv.writer(output)
     
     writer.writerow([
-        'ID', 'Date', 'Name', 'Phone', 'Property Type',
+        'S.No', 'Lead ID', 'Created Date', 'Name', 'Phone', 'Property Type',
         'Price / Budget', 'Location / Locality',
-        'Sunil Remarks', 'Telecaller Remarks', 'Source', 'Status', 'Priority'
+        'Sunil Remarks', 'Telecaller Remarks', 'Source', 'Status', 'Priority', 'Assigned To'
     ])
-    for l in leads:
-        created_str = l.created_at.strftime('%d/%m/%Y') if l.created_at else '-'
+    for idx, l in enumerate(leads, start=1):
+        created_str = l.created_at.strftime('%Y-%m-%d') if l.created_at else '-'
         writer.writerow([
-            l.id, created_str, l.name, l.phone or '-',
-            l.property_type or '-', l.budget or '-', l.location or '-',
-            l.sunil_remarks or '-', l.telecaller_remarks or '-',
-            l.source or '-', l.status or 'New', l.priority or 'Medium'
+            idx,
+            l.id,
+            created_str,
+            l.name,
+            l.phone or '-',
+            l.property_type or '-',
+            l.budget or '-',
+            l.location or '-',
+            l.sunil_remarks or '-',
+            l.telecaller_remarks or '-',
+            l.source or '-',
+            l.status or 'New',
+            l.priority or 'Medium',
+            l.assigned_to or '-'
         ])
 
     output.seek(0)
@@ -1684,7 +1695,7 @@ def export_csv():
     filename_parts = []
     if source_filter: filename_parts.append(source_filter.replace(' ', '_'))
     if status_filter: filename_parts.append(status_filter.replace(' ', '_'))
-    if not filename_parts: filename_parts.append('Filtered_Leads')
+    if not filename_parts: filename_parts.append('Exported_Leads')
     filename = "_".join(filename_parts) + ".csv"
 
     return Response(
