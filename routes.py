@@ -279,14 +279,12 @@ def sync_google_sheet_web():
                     if existing:
                         existing.name = name
                         if phone and phone != '-': existing.phone = phone
-                        if location: existing.location = location
-                        if requirement: existing.property_type = requirement
-                        if sunil_remarks: existing.sunil_remarks = sunil_remarks
-                        existing.source = item_source
-                        if is_active_pipeline or existing.status == 'Active Pipeline':
+                        if location and not existing.location: existing.location = location
+                        if requirement and not existing.property_type: existing.property_type = requirement
+                        if sunil_remarks and not existing.sunil_remarks: existing.sunil_remarks = sunil_remarks
+                        if not existing.source: existing.source = item_source
+                        if is_active_pipeline and existing.status in ('New', 'Contacted'):
                             existing.status = 'Active Pipeline'
-                        elif status in ('Proposal Sent', 'Meeting Done', 'Qualified') and existing.status in ('New', 'Contacted'):
-                            existing.status = status
                         updated_count += 1
                     else:
                         lead = Lead(
@@ -500,18 +498,16 @@ def sync_google_sheet_web():
                 if existing:
                     existing.name = name
                     if phone and phone != '-': existing.phone = phone
-                    if location: existing.location = location
-                    if property_type: existing.property_type = property_type
-                    if budget: existing.budget = budget
-                    if sunil_remarks: existing.sunil_remarks = sunil_remarks
-                    if telecaller_col: existing.telecaller_remarks = telecaller_col
-                    if listing_id: existing.listing_id = listing_id
-                    if response_from: existing.response_from = response_from
-                    existing.source = source_val
-                    if is_active_pipeline or existing.status == 'Active Pipeline':
+                    if location and not existing.location: existing.location = location
+                    if property_type and not existing.property_type: existing.property_type = property_type
+                    if budget and not existing.budget: existing.budget = budget
+                    if sunil_remarks and not existing.sunil_remarks: existing.sunil_remarks = sunil_remarks
+                    if telecaller_col and not existing.telecaller_remarks: existing.telecaller_remarks = telecaller_col
+                    if listing_id and not existing.listing_id: existing.listing_id = listing_id
+                    if response_from and not existing.response_from: existing.response_from = response_from
+                    if not existing.source: existing.source = source_val
+                    if is_active_pipeline and existing.status in ('New', 'Contacted'):
                         existing.status = 'Active Pipeline'
-                    elif status in ('Proposal Sent', 'Meeting Done', 'Qualified') and existing.status in ('New', 'Contacted'):
-                        existing.status = status
                     updated_count += 1
                 else:
                     lead = Lead(
