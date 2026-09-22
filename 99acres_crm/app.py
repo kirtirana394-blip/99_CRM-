@@ -84,38 +84,29 @@ def create_app():
         except Exception:
             db.session.rollback()
 
-        # Ensure Rohit Joshi and Tarun Tiwari are assigned to Sunil Data, and clean all phone numbers
+        # Align Sunil Data sources so only the official 12 Sunil Data leads have source = 'Sunil Data'
         try:
             from models import Lead
             from phone_utils import clean_phone_number
 
-            # Ensure ROHIT JOSHI is assigned to Sunil Data
-            rohit = Lead.query.filter((Lead.name.ilike('%ROHIT JOSHI%')) | (Lead.phone.like('%7080173012%'))).first()
-            if rohit:
-                rohit.source = 'Sunil Data'
+            sunil_phones = {'9818834197', '9811227699', '9015719363', '9811511254', '9871955311', '9810471320', '9999697224', '9821988092', '8439497404', '7080173012', '9289073529'}
+            sunil_names = {'chandan gupta'}
 
-            # Ensure Tarun Tiwari exists under Sunil Data
-            tarun = Lead.query.filter(Lead.name.ilike('%Tarun Tiwari%')).first()
-            if not tarun:
-                tarun = Lead(
-                    name='Tarun Tiwari', email='tarun.tiwari@lead99.com', phone='-',
-                    source='Sunil Data', property_type='Office Space', budget='',
-                    location='Gurgaon', status='New', priority='Medium',
-                    assigned_to='Admin Kiriti', is_imported=True,
-                    created_at=datetime(2026, 9, 11)
-                )
-                db.session.add(tarun)
-            else:
-                tarun.source = 'Sunil Data'
-
-            # Clean all existing phone numbers (remove 91 prefix)
             all_leads = Lead.query.all()
             for l in all_leads:
                 if l.phone:
                     c = clean_phone_number(l.phone)
                     if c != l.phone:
                         l.phone = c
-            
+                
+                p_clean = (l.phone or '').replace('-', '').replace(' ', '').replace('+91', '')[-10:]
+                n_clean = (l.name or '').strip().lower()
+
+                if p_clean in sunil_phones or n_clean in sunil_names:
+                    l.source = 'Sunil Data'
+                elif l.source == 'Sunil Data':
+                    l.source = '99acres'
+
             db.session.commit()
         except Exception as e:
             print("Startup data alignment error:", e)

@@ -244,6 +244,8 @@ def sync_google_sheet_web():
                     add_remarks = r[12].strip() if len(r) > 12 else ''
 
                     is_active_pipeline = (active_col.lower() in ('active', 'active pipeline'))
+                    row_source = r[5].strip() if len(r) > 5 else ''
+                    item_source = '99acres' if ('99acres' in row_source.lower()) else 'Sunil Data'
 
                     rem_parts = []
                     if company and company != 'BROKER': rem_parts.append(f"Company: {company}")
@@ -280,7 +282,7 @@ def sync_google_sheet_web():
                         if location: existing.location = location
                         if requirement: existing.property_type = requirement
                         if sunil_remarks: existing.sunil_remarks = sunil_remarks
-                        existing.source = 'Sunil Data'
+                        existing.source = item_source
                         if is_active_pipeline or existing.status == 'Active Pipeline':
                             existing.status = 'Active Pipeline'
                         elif status in ('Proposal Sent', 'Meeting Done', 'Qualified') and existing.status in ('New', 'Contacted'):
@@ -288,7 +290,7 @@ def sync_google_sheet_web():
                         updated_count += 1
                     else:
                         lead = Lead(
-                            name=name, email=email, phone=phone, source='Sunil Data',
+                            name=name, email=email, phone=phone, source=item_source,
                             listing_id='', property_type=requirement or 'Office Space',
                             budget='', location=location, status=status, priority=priority,
                             assigned_to='Admin Kiriti', is_imported=True,
@@ -334,7 +336,11 @@ def sync_google_sheet_web():
                     rem_lower = remarks.lower()
                     req_lower = requirement.lower()
 
-                    if 'sunil' in rem_lower or 'sunil' in req_lower:
+                    sunil_phones = {'9818834197', '9811227699', '9015719363', '9811511254', '9871955311', '9810471320', '9999697224', '9821988092', '8439497404', '7080173012', '9289073529'}
+                    clean_p = phone.replace('-', '').replace(' ', '').replace('+91', '')[-10:] if phone else ''
+                    clean_n = name.strip().lower() if name else ''
+
+                    if clean_p in sunil_phones or clean_n == 'chandan gupta':
                         source_val = 'Sunil Data'
                     elif 'himmat' in rem_lower or 'himmat' in req_lower or 'himmat data' in rem_lower:
                         source_val = 'Himmat Data'
@@ -458,12 +464,14 @@ def sync_google_sheet_web():
 
                 budget = '' if ('Himmat' in raw_budget or 'Sunil' in raw_budget) else raw_budget
 
+                sunil_phones = {'9818834197', '9811227699', '9015719363', '9811511254', '9871955311', '9810471320', '9999697224', '9821988092', '8439497404', '7080173012', '9289073529'}
+                clean_p = phone.replace('-', '').replace(' ', '').replace('+91', '')[-10:] if phone else ''
+                clean_n = name.strip().lower() if name else ''
                 r_text = ' '.join(r).lower()
-                if 'rohit joshi' in name.lower() or '7080173012' in phone or 'tarun tiwari' in name.lower():
+
+                if clean_p in sunil_phones or clean_n == 'chandan gupta':
                     source_val = 'Sunil Data'
-                elif 'sunil' in telecaller_col.lower() or 'sunil' in raw_budget.lower() or 'sunil data' in r_text:
-                    source_val = 'Sunil Data'
-                elif 'himmat' in raw_budget or 'himmat' in r_text:
+                elif 'himmat' in raw_budget.lower() or 'himmat' in r_text:
                     source_val = 'Himmat Data'
                 else:
                     source_val = '99acres'
@@ -474,45 +482,29 @@ def sync_google_sheet_web():
                     status = 'Proposal Sent'
                 elif 'visit' in sunil_remarks.lower() or 'visit' in telecaller_col.lower() or 'meeting' in sunil_remarks.lower() or 'meeting' in telecaller_col.lower():
                     status = 'Meeting Done'
-                elif 'hot' in sunil_remarks.lower() or 'hot' in telecaller_col.lower():
-                    status = 'Qualified'
                 else:
-                    status = 'New'
+                    status = 'Contacted'
 
-                # Parse date
-                created_at = None
-                if date_str:
-                    for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%m/%d/%Y']:
-                        try:
-                            created_at = datetime.strptime(date_str, fmt)
-                            break
-                        except ValueError:
-                            pass
-
-                if not created_at:
-                    if 'Sep' in tab_name:
-                        created_at = datetime(2026, 9, 1)
-                    else:
-                        created_at = datetime(2026, 7, 20)
-
-                clean_name = name.lower().replace(' ', '.').replace('/', '')
-                email = f"{clean_name}@lead99.com"
+                priority = 'High' if (is_active_pipeline or status in ('Proposal Sent', 'Meeting Done')) else 'Medium'
 
                 existing = None
                 clean_phone = phone if phone != '-' else ''
                 if clean_phone:
                     existing = Lead.query.filter((Lead.phone == clean_phone) | (Lead.phone.like(f'%{clean_phone}'))).first()
-                if not existing:
-                    existing = Lead.query.filter(Lead.name == name).first()
+                if not existing and name:
+                    existing = Lead.query.filter(Lead.name.ilike(name.strip())).first()
+
+                clean_name = name.lower().replace(' ', '.').replace('/', '')
+                email = f"{clean_name}@lead99.com"
 
                 if existing:
-                    if created_at: existing.created_at = created_at
-                    if location: existing.location = location
-                    if budget: existing.budget = budget
-                    if property_type: existing.property_type = property_type
+                    existing.name = name
                     if phone and phone != '-': existing.phone = phone
-                    if sunil_remarks and sunil_remarks != 'NA': existing.sunil_remarks = sunil_remarks
-                    if telecaller_col and telecaller_col != 'NA': existing.telecaller_remarks = telecaller_col
+                    if location: existing.location = location
+                    if property_type: existing.property_type = property_type
+                    if budget: existing.budget = budget
+                    if sunil_remarks: existing.sunil_remarks = sunil_remarks
+                    if telecaller_col: existing.telecaller_remarks = telecaller_col
                     if listing_id: existing.listing_id = listing_id
                     if response_from: existing.response_from = response_from
                     existing.source = source_val
@@ -523,60 +515,39 @@ def sync_google_sheet_web():
                     updated_count += 1
                 else:
                     lead = Lead(
-                        name=name,
-                        email=email,
-                        phone=phone,
-                        source=source_val,
-                        property_type=property_type or 'Office Space',
-                        budget=budget,
-                        location=location,
-                        status=status,
-                        priority='High' if is_active_pipeline else 'Medium',
-                        assigned_to='Admin Kiriti',
-                        is_imported=True,
+                        name=name, email=email, phone=phone, source=source_val,
+                        property_type=property_type or 'Office Space', budget=budget,
+                        location=location, status=status, priority=priority,
+                        assigned_to='Admin Kiriti', is_imported=True,
                         sunil_remarks=sunil_remarks if sunil_remarks and sunil_remarks != 'NA' else '',
                         telecaller_remarks=telecaller_col if telecaller_col and telecaller_col != 'NA' else '',
-                        listing_id=listing_id,
-                        response_from=response_from,
+                        listing_id=listing_id, response_from=response_from,
                         created_at=created_at
                     )
                     db.session.add(lead)
                     db.session.flush()
 
-                    note_parts = []
-                    if sunil_remarks and sunil_remarks != 'NA': note_parts.append(f"Sunil: {sunil_remarks}")
-                    if telecaller_col and telecaller_col != 'NA': note_parts.append(f"Telecaller: {telecaller_col}")
-                    if note_parts:
-                        content_str = " | ".join(note_parts)
-                        if not Note.query.filter_by(lead_id=lead.id, content=content_str).first():
-                            db.session.add(Note(lead_id=lead.id, content=content_str))
-
                     added_count += 1
         except Exception as e:
             errors.append(f"{tab_name}: {str(e)}")
 
-    # Ensure Tarun Tiwari lead exists under Sunil Data
-    tarun = Lead.query.filter(Lead.name.ilike('%Tarun Tiwari%')).first()
-    if not tarun:
-        tarun = Lead(
-            name='Tarun Tiwari', email='tarun.tiwari@lead99.com', phone='-',
-            source='Sunil Data', property_type='Office Space', budget='',
-            location='Gurgaon', status='New', priority='Medium',
-            assigned_to='Admin Kiriti', is_imported=True,
-            created_at=datetime(2026, 9, 11)
-        )
-        db.session.add(tarun)
-        added_count += 1
-    else:
-        tarun.source = 'Sunil Data'
+    # Align Sunil Data sources so only the official 12 Sunil Data leads have source = 'Sunil Data'
+    sunil_phones = {'9818834197', '9811227699', '9015719363', '9811511254', '9871955311', '9810471320', '9999697224', '9821988092', '8439497404', '7080173012', '9289073529'}
+    sunil_names = {'chandan gupta'}
 
-    # Ensure ROHIT JOSHI is assigned to Sunil Data
-    rohit = Lead.query.filter((Lead.name.ilike('%ROHIT JOSHI%')) | (Lead.phone.like('%7080173012%'))).first()
-    if rohit:
-        rohit.source = 'Sunil Data'
-
-    # Global phone number cleaner: normalize all phone numbers in the database
     for l in Lead.query.all():
+        if l.phone:
+            cp = clean_phone_number(l.phone)
+            if cp != l.phone:
+                l.phone = cp
+        
+        p_clean = (l.phone or '').replace('-', '').replace(' ', '').replace('+91', '')[-10:]
+        n_clean = (l.name or '').strip().lower()
+
+        if p_clean in sunil_phones or n_clean in sunil_names:
+            l.source = 'Sunil Data'
+        elif l.source == 'Sunil Data':
+            l.source = '99acres'
         if l.phone:
             cp = clean_phone_number(l.phone)
             if cp != l.phone:
