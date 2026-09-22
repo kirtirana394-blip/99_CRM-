@@ -84,13 +84,10 @@ def create_app():
         except Exception:
             db.session.rollback()
 
-        # Align Sunil Data sources so only the official 12 Sunil Data leads have source = 'Sunil Data'
+        # Safe phone number normalization on startup
         try:
             from models import Lead
             from phone_utils import clean_phone_number
-
-            sunil_phones = {'9818834197', '9811227699', '9015719363', '9811511254', '9871955311', '9810471320', '9999697224', '9821988092', '8439497404', '7080173012', '9289073529'}
-            sunil_names = {'chandan gupta'}
 
             all_leads = Lead.query.all()
             for l in all_leads:
@@ -98,37 +95,10 @@ def create_app():
                     c = clean_phone_number(l.phone)
                     if c != l.phone:
                         l.phone = c
-                
-                p_clean = (l.phone or '').replace('-', '').replace(' ', '').replace('+91', '')[-10:]
-                n_clean = (l.name or '').strip().lower()
-
-                if p_clean in sunil_phones or n_clean in sunil_names:
-                    l.source = 'Sunil Data'
-                elif l.source == 'Sunil Data':
-                    l.source = '99acres'
-
-            # Ensure 5 Proposal Sent leads are locked and present
-            ps_names = ['Aman', 'Kumi', 'Vijay Verma', 'Vaibhav Sharma', 'Rishabh Tyagi']
-            for name in ps_names:
-                l = Lead.query.filter(Lead.name.ilike(f"%{name}%")).first()
-                if l:
-                    l.status = 'Proposal Sent'
-                    l.is_deleted = False
-
-            # Ensure 5 Meeting Done leads are locked and present
-            md_names = ['Shyam', 'Inderjeet', 'Shubham Singh', 'Sundeep Verma', 'Nimit Chaudhry']
-            for name in md_names:
-                l = Lead.query.filter(Lead.name.ilike(f"%{name}%")).first()
-                if not l and name == 'Nimit Chaudhry':
-                    l = Lead(name='Nimit Chaudhry', email='nimitchaudhry@lead99.com', phone='9810001122', source='Himmat Data', location='Golf Course Road, Gurgaon', property_type='Commercial Office Space', status='Meeting Done', priority='High', is_imported=True)
-                    db.session.add(l)
-                elif l:
-                    l.status = 'Meeting Done'
-                    l.is_deleted = False
 
             db.session.commit()
         except Exception as e:
-            print("Startup data alignment error:", e)
+            print("Startup phone cleanup error:", e)
             db.session.rollback()
 
         # Ensure permanent users and fixed passwords (Admin, Manager, Sales Executive, Viewer) are always saved and locked
