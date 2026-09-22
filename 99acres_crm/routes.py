@@ -376,9 +376,10 @@ def sync_google_sheet_web():
                         if budget: existing.budget = budget
                         if requirement: existing.property_type = requirement
                         if remarks: existing.sunil_remarks = remarks
-                        existing.status = status
+                        if existing.status in ('New', 'Contacted') or not existing.status:
+                            existing.status = status
                         if priority == 'High': existing.priority = priority
-                        existing.source = source_val
+                        if not existing.source: existing.source = source_val
                         updated_count += 1
                         note_parts = []
                         if requirement: note_parts.append(f"Requirement: {requirement}")
