@@ -59,8 +59,11 @@
                 <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold">
                     <i class="bi bi-funnel-fill me-1"></i>Apply Filter
                 </button>
-                <a href="/export?status={{ status_filter }}&source={{ source_filter }}&search={{ search }}&time_filter={{ time_filter }}&start_date={{ start_date }}&end_date={{ end_date }}" class="btn btn-sm btn-success px-3 fw-semibold text-nowrap" title="Download matching filtered leads as CSV">
-                    <i class="bi bi-download me-1"></i>Download CSV
+                <a href="/export-active-pipeline" class="btn btn-sm btn-success px-3 fw-bold text-nowrap" title="Download single CSV sheet for Meeting Done, Proposal Sent, and Active Pipeline leads (Newest to Oldest)">
+                    <i class="bi bi-file-earmark-spreadsheet-fill me-1"></i>Download Active Pipeline CSV
+                </a>
+                <a href="/export?status={{ status_filter }}&source={{ source_filter }}&search={{ search }}&time_filter={{ time_filter }}&start_date={{ start_date }}&end_date={{ end_date }}" class="btn btn-sm btn-outline-success px-3 fw-semibold text-nowrap" title="Download matching filtered leads as CSV">
+                    <i class="bi bi-download me-1"></i>Export Filtered CSV
                 </a>
                 {% if status_filter or source_filter or search %}
                 <a href="/leads" class="btn btn-sm btn-outline-secondary px-3 text-nowrap" title="Clear Filters"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset</a>

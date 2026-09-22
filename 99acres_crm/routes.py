@@ -1636,6 +1636,7 @@ def clear_imported_leads():
     return redirect(url_for('web.import_csv'))
 
 
+@web_bp.route('/export-active-pipeline')
 @web_bp.route('/export')
 def export_csv():
     status_filter = request.args.get('status', '')
@@ -1643,11 +1644,20 @@ def export_csv():
     source_filter = request.args.get('source', '')
     search = request.args.get('search', '')
 
-    query = Lead.query
+    query = Lead.query.filter((Lead.is_deleted == False) | (Lead.is_deleted == None))
     query, time_filter, start_date_str, end_date_str = apply_date_filter(query)
 
-    if status_filter:
+    # Single CSV sheet export for Meeting Done, Proposal Sent, and Active Pipeline / Active leads
+    if request.path == '/export-active-pipeline' or status_filter == 'active_pipeline':
+        active_statuses = ['Meeting Done', 'Proposal Sent', 'Active Pipeline', 'Active', 'Qualified']
+        query = query.filter(Lead.status.in_(active_statuses))
+        default_filename = "Active_Pipeline_Leads_Meeting_Proposal_Active.csv"
+    elif status_filter:
         query = query.filter_by(status=status_filter)
+        default_filename = f"{status_filter.replace(' ', '_')}_Leads.csv"
+    else:
+        default_filename = "Exported_Leads.csv"
+
     if priority_filter:
         query = query.filter_by(priority=priority_filter)
     if source_filter:
@@ -1691,12 +1701,12 @@ def export_csv():
         ])
 
     output.seek(0)
-    
+
     filename_parts = []
     if source_filter: filename_parts.append(source_filter.replace(' ', '_'))
-    if status_filter: filename_parts.append(status_filter.replace(' ', '_'))
-    if not filename_parts: filename_parts.append('Exported_Leads')
-    filename = "_".join(filename_parts) + ".csv"
+    if status_filter and status_filter != 'active_pipeline': filename_parts.append(status_filter.replace(' ', '_'))
+    if not filename_parts: filename = default_filename
+    else: filename = "_".join(filename_parts) + ".csv"
 
     return Response(
         output.getvalue(),
