@@ -425,6 +425,17 @@ def sync_google_sheet_web():
 
                 date_str = r[1].strip() if len(r) > 1 else ''
 
+                created_at = None
+                if date_str:
+                    for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%m/%d/%Y']:
+                        try:
+                            created_at = datetime.strptime(date_str, fmt)
+                            break
+                        except ValueError:
+                            pass
+                if not created_at:
+                    created_at = datetime(2026, 7, 20)
+
                 if 'July' in tab_name or gid == '0':
                     # July-Aug structure: S No (0) | Date (1) | Name (2) | Active Pipeline (3) | Phone No (4) | Listing ID (5) | Property Type (6) | Price (7) | Locality (8) | Project (9) | Response From (10) | Sunil Remarks (11) | Telecaller (12)
                     name = col2
