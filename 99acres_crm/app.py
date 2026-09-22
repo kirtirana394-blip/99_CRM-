@@ -107,6 +107,25 @@ def create_app():
                 elif l.source == 'Sunil Data':
                     l.source = '99acres'
 
+            # Ensure 5 Proposal Sent leads are locked and present
+            ps_names = ['Aman', 'Kumi', 'Vijay Verma', 'Vaibhav Sharma', 'Rishabh Tyagi']
+            for name in ps_names:
+                l = Lead.query.filter(Lead.name.ilike(f"%{name}%")).first()
+                if l:
+                    l.status = 'Proposal Sent'
+                    l.is_deleted = False
+
+            # Ensure 5 Meeting Done leads are locked and present
+            md_names = ['Shyam', 'Inderjeet', 'Shubham Singh', 'Sundeep Verma', 'Nimit Chaudhry']
+            for name in md_names:
+                l = Lead.query.filter(Lead.name.ilike(f"%{name}%")).first()
+                if not l and name == 'Nimit Chaudhry':
+                    l = Lead(name='Nimit Chaudhry', email='nimitchaudhry@lead99.com', phone='9810001122', source='Himmat Data', location='Golf Course Road, Gurgaon', property_type='Commercial Office Space', status='Meeting Done', priority='High', is_imported=True)
+                    db.session.add(l)
+                elif l:
+                    l.status = 'Meeting Done'
+                    l.is_deleted = False
+
             db.session.commit()
         except Exception as e:
             print("Startup data alignment error:", e)
