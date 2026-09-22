@@ -330,6 +330,7 @@ def sync_google_sheet_web():
                     budget = r[5].strip() if len(r) > 5 else ''        # Price of Property / Budget
                     requirement = r[6].strip() if len(r) > 6 else ''   # Property Type / Specs
                     remarks = r[7].strip() if len(r) > 7 else ''       # Sunil Remarks
+                    telecaller_col = r[8].strip() if len(r) > 8 else '' # Telecaller Remarks
 
                     rem_lower = remarks.lower()
                     req_lower = requirement.lower()
@@ -375,7 +376,8 @@ def sync_google_sheet_web():
                         if location: existing.location = location
                         if budget: existing.budget = budget
                         if requirement: existing.property_type = requirement
-                        if remarks: existing.sunil_remarks = remarks
+                        if remarks and remarks != 'NA' and remarks != '-': existing.sunil_remarks = remarks
+                        if telecaller_col and telecaller_col != 'NA' and telecaller_col != '-': existing.telecaller_remarks = telecaller_col
                         if existing.status in ('New', 'Contacted') or not existing.status:
                             existing.status = status
                         if priority == 'High': existing.priority = priority
@@ -395,7 +397,9 @@ def sync_google_sheet_web():
                             property_type=requirement or 'Office Space', budget=budget,
                             location=location, status=status, priority=priority,
                             assigned_to='Admin Kiriti', is_imported=True,
-                            sunil_remarks=remarks, created_at=datetime.utcnow()
+                            sunil_remarks=remarks if remarks and remarks != 'NA' else '',
+                            telecaller_remarks=telecaller_col if telecaller_col and telecaller_col != 'NA' else '',
+                            created_at=datetime.utcnow()
                         )
                         db.session.add(lead)
                         db.session.flush()
@@ -416,15 +420,31 @@ def sync_google_sheet_web():
                     start_idx = idx
                     break
 
+            header = [c.strip().lower() for c in rows[start_idx]]
+            col_map = {}
+            for i, h in enumerate(header):
+                if 'sunil' in h and 'remark' in h: col_map['sunil_remarks'] = i
+                elif 'tele' in h or 'simmy' in h: col_map['telecaller'] = i
+                elif 'price' in h or 'budget' in h: col_map['budget'] = i
+                elif 'property' in h or 'type' in h: col_map['property_type'] = i
+                elif 'locality' in h: col_map['locality'] = i
+                elif 'project' in h: col_map['project'] = i
+                elif 'active' in h: col_map['active'] = i
+                elif 'phone' in h or 'contact' in h or 'number' in h: col_map['phone'] = i
+                elif 'name' in h: col_map['name'] = i
+                elif 'date' in h: col_map['date'] = i
+
             for r in rows[start_idx + 1:]:
                 if not r or len(r) < 3:
                     continue
 
-                col2 = r[2].strip() if len(r) > 2 else ''
+                name_idx = col_map.get('name', 2)
+                col2 = r[name_idx].strip() if len(r) > name_idx else ''
                 if not col2 or col2 in ('-', '', 'Name'):
                     continue
 
-                date_str = r[1].strip() if len(r) > 1 else ''
+                date_idx = col_map.get('date', 1)
+                date_str = r[date_idx].strip() if len(r) > date_idx else ''
 
                 created_at = None
                 if date_str:
@@ -437,32 +457,25 @@ def sync_google_sheet_web():
                 if not created_at:
                     created_at = datetime(2026, 7, 20)
 
-                if 'July' in tab_name or gid == '0':
-                    # July-Aug structure: S No (0) | Date (1) | Name (2) | Active Pipeline (3) | Phone No (4) | Listing ID (5) | Property Type (6) | Price (7) | Locality (8) | Project (9) | Response From (10) | Sunil Remarks (11) | Telecaller (12)
-                    name = col2
-                    active_col = r[3].strip() if len(r) > 3 else ''
-                    raw_phone = r[4].strip() if len(r) > 4 else ''
-                    listing_id = r[5].strip() if len(r) > 5 else ''
-                    property_type = r[6].strip() if len(r) > 6 else ''
-                    raw_budget = r[7].strip() if len(r) > 7 else ''
-                    locality = r[8].strip() if len(r) > 8 else ''
-                    project = r[9].strip() if len(r) > 9 else ''
-                    response_from = r[10].strip() if len(r) > 10 else ''
-                    sunil_remarks = r[11].strip() if len(r) > 11 else ''
-                    telecaller_col = r[12].strip() if len(r) > 12 else ''
-                else:
-                    # Sep structure: S No (0) | Date (1) | Name (2) | Phone No (3) | Listing ID (4) | Property Type (5) | Price (6) | Locality (7) | Project (8) | Response From (9) | Sunil Remarks (10) | Simmy remarks (11)
-                    name = col2
-                    active_col = ''
-                    raw_phone = r[3].strip() if len(r) > 3 else ''
-                    listing_id = r[4].strip() if len(r) > 4 else ''
-                    property_type = r[5].strip() if len(r) > 5 else ''
-                    raw_budget = r[6].strip() if len(r) > 6 else ''
-                    locality = r[7].strip() if len(r) > 7 else ''
-                    project = r[8].strip() if len(r) > 8 else ''
-                    response_from = r[9].strip() if len(r) > 9 else ''
-                    sunil_remarks = r[10].strip() if len(r) > 10 else ''
-                    telecaller_col = r[11].strip() if len(r) > 11 else ''
+                name = col2
+                act_idx = col_map.get('active', 3)
+                active_col = r[act_idx].strip() if len(r) > act_idx else ''
+                ph_idx = col_map.get('phone', 4)
+                raw_phone = r[ph_idx].strip() if len(r) > ph_idx else ''
+                pt_idx = col_map.get('property_type', 5)
+                property_type = r[pt_idx].strip() if len(r) > pt_idx else ''
+                bg_idx = col_map.get('budget', 6)
+                raw_budget = r[bg_idx].strip() if len(r) > bg_idx else ''
+                loc_idx = col_map.get('locality', 7)
+                locality = r[loc_idx].strip() if len(r) > loc_idx else ''
+                prj_idx = col_map.get('project', 8)
+                project = r[prj_idx].strip() if len(r) > prj_idx else ''
+                sr_idx = col_map.get('sunil_remarks', 9)
+                sunil_remarks = r[sr_idx].strip() if len(r) > sr_idx else ''
+                tc_idx = col_map.get('telecaller', 10)
+                telecaller_col = r[tc_idx].strip() if len(r) > tc_idx else ''
+                listing_id = ''
+                response_from = ''
 
                 phone = clean_phone_number(raw_phone)
                 is_active_pipeline = (active_col.lower() == 'active')
@@ -513,8 +526,10 @@ def sync_google_sheet_web():
                     if location and not existing.location: existing.location = location
                     if property_type and not existing.property_type: existing.property_type = property_type
                     if budget and not existing.budget: existing.budget = budget
-                    if sunil_remarks and not existing.sunil_remarks: existing.sunil_remarks = sunil_remarks
-                    if telecaller_col and not existing.telecaller_remarks: existing.telecaller_remarks = telecaller_col
+                    if sunil_remarks and sunil_remarks != 'NA' and sunil_remarks != '-':
+                        existing.sunil_remarks = sunil_remarks
+                    if telecaller_col and telecaller_col != 'NA' and telecaller_col != '-':
+                        existing.telecaller_remarks = telecaller_col
                     if listing_id and not existing.listing_id: existing.listing_id = listing_id
                     if response_from and not existing.response_from: existing.response_from = response_from[:100]
                     if not existing.source: existing.source = source_val
