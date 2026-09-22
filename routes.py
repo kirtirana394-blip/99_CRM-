@@ -516,7 +516,7 @@ def sync_google_sheet_web():
                     if sunil_remarks and not existing.sunil_remarks: existing.sunil_remarks = sunil_remarks
                     if telecaller_col and not existing.telecaller_remarks: existing.telecaller_remarks = telecaller_col
                     if listing_id and not existing.listing_id: existing.listing_id = listing_id
-                    if response_from and not existing.response_from: existing.response_from = response_from
+                    if response_from and not existing.response_from: existing.response_from = response_from[:100]
                     if not existing.source: existing.source = source_val
                     if is_active_pipeline and existing.status in ('New', 'Contacted'):
                         existing.status = 'Active Pipeline'
@@ -529,7 +529,7 @@ def sync_google_sheet_web():
                         assigned_to='Admin Kiriti', is_imported=True,
                         sunil_remarks=sunil_remarks if sunil_remarks and sunil_remarks != 'NA' else '',
                         telecaller_remarks=telecaller_col if telecaller_col and telecaller_col != 'NA' else '',
-                        listing_id=listing_id, response_from=response_from,
+                        listing_id=listing_id, response_from=response_from[:100] if response_from else '',
                         created_at=created_at
                     )
                     db.session.add(lead)
@@ -539,9 +539,15 @@ def sync_google_sheet_web():
         except Exception as e:
             errors.append(f"{tab_name}: {str(e)}")
 
-    # Align Sunil Data sources so only the official 12 Sunil Data leads have source = 'Sunil Data'
+    # Align Sources and Protected Statuses permanently so sync never overrides them
     sunil_phones = {'9818834197', '9811227699', '9015719363', '9811511254', '9871955311', '9810471320', '9999697224', '9821988092', '8439497404', '7080173012', '9289073529'}
     sunil_names = {'chandan gupta'}
+
+    himmat_phones = {'9631014104', '9810914954', '9370402356', '7980238644', '9711286112', '8690428752', '9811764759', '8570814550', '9034077792', '9952573933'}
+    himmat_names = {'aman', 'kumi', 'abhimanyu choudhary', 'nasaruddin', 'rohit yadav', 'sahil sinha', 'rishi kumar', 'sahil mehta', 'chaitanya gaba', 'ajay (broker)'}
+
+    proposal_sent_names = {'aman', 'kumi', 'vijay verma', 'vaibhav sharma', 'rishabh tyagi'}
+    meeting_done_names = {'shyam', 'inderjeet', 'shubham singh', 'sundeep verma', 'nimit chaudhry'}
 
     for l in Lead.query.all():
         if l.phone:
@@ -552,14 +558,21 @@ def sync_google_sheet_web():
         p_clean = (l.phone or '').replace('-', '').replace(' ', '').replace('+91', '')[-10:]
         n_clean = (l.name or '').strip().lower()
 
+        # 1. Align Sources
         if p_clean in sunil_phones or n_clean in sunil_names:
             l.source = 'Sunil Data'
-        elif l.source == 'Sunil Data':
+        elif p_clean in himmat_phones or n_clean in himmat_names:
+            l.source = 'Himmat Data'
+        else:
             l.source = '99acres'
-        if l.phone:
-            cp = clean_phone_number(l.phone)
-            if cp != l.phone:
-                l.phone = cp
+
+        # 2. Protect Specific Lead Statuses
+        if n_clean in proposal_sent_names:
+            l.status = 'Proposal Sent'
+            l.priority = 'High'
+        elif n_clean in meeting_done_names:
+            l.status = 'Meeting Done'
+            l.priority = 'High'
 
     sync_lead_followups_and_tasks()
     db.session.commit()
