@@ -151,10 +151,18 @@ web_bp = Blueprint('web', __name__)
 @web_bp.before_app_request
 def check_authentication():
     """Ensure user is logged in for web pages."""
+    # Never redirect if already on login, logout, static files, favicon, or API
+    if (request.path in ('/login', '/logout', '/favicon.ico') or
+        request.path.startswith('/login') or
+        request.path.startswith('/logout') or
+        request.path.startswith('/static') or
+        request.path.startswith('/api')):
+        return
+
     allowed_routes = ['web.login', 'web.logout', 'static']
     if request.endpoint and request.endpoint in allowed_routes:
         return
-    if 'user_id' not in session and not request.path.startswith('/api'):
+    if 'user_id' not in session:
         return redirect(url_for('web.login'))
 
 @web_bp.route('/login', methods=['GET', 'POST'])
