@@ -568,9 +568,11 @@ def sync_google_sheet_web():
 
     himmat_phones = {'9631014104', '9810914954', '9370402356', '7980238644', '9711286112', '8690428752', '9811764759', '8570814550', '9034077792', '9952573933'}
     himmat_names = {'aman', 'kumi', 'abhimanyu choudhary', 'nasaruddin', 'rohit yadav', 'sahil sinha', 'rishi kumar', 'sahil mehta', 'chaitanya gaba', 'ajay (broker)'}
+    proposal_sent_phones = {'7011643245', '9007359999', '7879836515', '9952573933', '9810914954', '9034077792', '9631014104', '9811799344'}
+    proposal_sent_names = {'rishabh tyagi', 'vaibhav sharma', 'vijay verma', 'ajay (broker)', 'kumi', 'chaitanya gaba', 'aman', 'sandeep singh'}
 
-    proposal_sent_names = {'aman', 'kumi', 'vijay verma', 'vaibhav sharma', 'rishabh tyagi'}
-    meeting_done_names = {'shyam', 'inderjeet', 'shubham singh', 'sundeep verma', 'nimit chaudhry'}
+    meeting_done_phones = {'7310000310', '9878287151', '9650546551', '9650200622', '9711160603', '9015719363', '9871955311', '9810471320', '8750740270'}
+    meeting_done_names = {'amit', 'raj sharma', 'sundeep verma', 'mahendra', 'shubham singh', 'imran khan', 'inderjeet', 'shyam', 'nimit chaudhry'}
 
     for l in Lead.query.all():
         if l.phone:
@@ -590,10 +592,10 @@ def sync_google_sheet_web():
             l.source = '99acres'
 
         # 2. Protect Specific Lead Statuses
-        if n_clean in proposal_sent_names:
+        if p_clean in proposal_sent_phones or n_clean in proposal_sent_names:
             l.status = 'Proposal Sent'
             l.priority = 'High'
-        elif n_clean in meeting_done_names:
+        elif p_clean in meeting_done_phones or n_clean in meeting_done_names:
             l.status = 'Meeting Done'
             l.priority = 'High'
 

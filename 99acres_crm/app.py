@@ -381,6 +381,40 @@ def create_app():
             db.session.add_all(tasks)
             db.session.commit()
 
+        # Always ensure protected statuses (Meeting Done, Proposal Sent) and sources are preserved
+        try:
+            proposal_sent_phones = {'7011643245', '9007359999', '7879836515', '9952573933', '9810914954', '9034077792', '9631014104', '9811799344'}
+            proposal_sent_names = {'rishabh tyagi', 'vaibhav sharma', 'vijay verma', 'ajay (broker)', 'kumi', 'chaitanya gaba', 'aman', 'sandeep singh'}
+
+            meeting_done_phones = {'7310000310', '9878287151', '9650546551', '9650200622', '9711160603', '9015719363', '9871955311', '9810471320', '8750740270'}
+            meeting_done_names = {'amit', 'raj sharma', 'sundeep verma', 'mahendra', 'shubham singh', 'imran khan', 'inderjeet', 'shyam', 'nimit chaudhry'}
+
+            sunil_phones = {'9818834197', '9811227699', '9015719363', '9811511254', '9871955311', '9810471320', '9999697224', '9821988092', '8439497404', '7080173012', '9289073529'}
+            sunil_names = {'chandan gupta'}
+
+            himmat_phones = {'9631014104', '9810914954', '9370402356', '7980238644', '9711286112', '8690428752', '9811764759', '8570814550', '9034077792', '9952573933'}
+            himmat_names = {'aman', 'kumi', 'abhimanyu choudhary', 'nasaruddin', 'rohit yadav', 'sahil sinha', 'rishi kumar', 'sahil mehta', 'chaitanya gaba', 'ajay (broker)'}
+
+            for l in Lead.query.all():
+                p_clean = (l.phone or '').replace('-', '').replace(' ', '').replace('+91', '')[-10:]
+                n_clean = (l.name or '').strip().lower()
+
+                if p_clean in sunil_phones or n_clean in sunil_names:
+                    l.source = 'Sunil Data'
+                elif p_clean in himmat_phones or n_clean in himmat_names:
+                    l.source = 'Himmat Data'
+
+                if p_clean in proposal_sent_phones or n_clean in proposal_sent_names:
+                    l.status = 'Proposal Sent'
+                    l.priority = 'High'
+                elif p_clean in meeting_done_phones or n_clean in meeting_done_names:
+                    l.status = 'Meeting Done'
+                    l.priority = 'High'
+            db.session.commit()
+        except Exception as e:
+            print("Startup lead status protection error:", e)
+            db.session.rollback()
+
         # Always ensure follow-up details and team tasks are populated and synchronized
         try:
             from routes import sync_lead_followups_and_tasks
