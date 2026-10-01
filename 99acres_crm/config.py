@@ -4,7 +4,7 @@
 import os
 
 class Config:
-    DATABASE_URL = os.getenv('DATABASE_URL', '')
+    DATABASE_URL = os.getenv('DATABASE_URL', '').strip().strip('"').strip("'")
     IS_RENDER = os.getenv('RENDER', False)
 
     if DATABASE_URL:
