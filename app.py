@@ -396,6 +396,9 @@ def create_app():
             himmat_names = {'aman', 'kumi', 'abhimanyu choudhary', 'nasaruddin', 'rohit yadav', 'sahil sinha', 'rishi kumar', 'sahil mehta', 'chaitanya gaba', 'ajay (broker)'}
 
             for l in Lead.query.all():
+                if not l.is_imported:
+                    continue
+
                 p_clean = (l.phone or '').replace('-', '').replace(' ', '').replace('+91', '')[-10:]
                 n_clean = (l.name or '').strip().lower()
 

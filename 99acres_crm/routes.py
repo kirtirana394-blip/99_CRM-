@@ -285,6 +285,8 @@ def sync_google_sheet_web():
                     email = f"{clean_name}@lead99.com"
 
                     if existing:
+                        if not existing.is_imported:
+                            continue
                         existing.name = name
                         if phone and phone != '-': existing.phone = phone
                         if location and not existing.location: existing.location = location
@@ -378,6 +380,8 @@ def sync_google_sheet_web():
                     email = f"{clean_name}@lead99.com"
 
                     if existing:
+                        if not existing.is_imported:
+                            continue
                         existing.name = name
                         existing.listing_id = ''
                         if phone and phone != '-': existing.phone = phone
@@ -529,6 +533,8 @@ def sync_google_sheet_web():
                 email = f"{clean_name}@lead99.com"
 
                 if existing:
+                    if not existing.is_imported:
+                        continue
                     existing.name = name
                     if phone and phone != '-': existing.phone = phone
                     if location and not existing.location: existing.location = location
@@ -575,6 +581,10 @@ def sync_google_sheet_web():
     meeting_done_names = {'amit', 'raj sharma', 'sundeep verma', 'mahendra', 'shubham singh', 'imran khan', 'inderjeet', 'shyam', 'nimit chaudhry'}
 
     for l in Lead.query.all():
+        if not l.is_imported:
+            # User manually added or edited this lead! Preserve everything!
+            continue
+
         if l.phone:
             cp = clean_phone_number(l.phone)
             if cp != l.phone:
@@ -588,7 +598,7 @@ def sync_google_sheet_web():
             l.source = 'Sunil Data'
         elif p_clean in himmat_phones or n_clean in himmat_names:
             l.source = 'Himmat Data'
-        else:
+        elif not l.source:
             l.source = '99acres'
 
         # 2. Protect Specific Lead Statuses
@@ -780,6 +790,7 @@ def add_lead():
             status=request.form.get('status', 'New'),
             priority=request.form.get('priority', 'Medium'),
             assigned_to=assigned_user,
+            is_imported=False,
             sunil_remarks=request.form.get('sunil_remarks', ''),
             telecaller_remarks=request.form.get('telecaller_remarks', ''),
             listing_id=request.form.get('listing_id', ''),
@@ -842,6 +853,7 @@ def edit_lead(lid):
             log_lead_activity(lead.id, 'Assigned User Changed', f'Lead transferred from "{old_assigned or "Unassigned"}" to "{lead.assigned_to}"')
         
         log_lead_activity(lead.id, 'Lead Information Updated', 'Updated lead details')
+        lead.is_imported = False
         db.session.commit()
         flash('Lead updated successfully!', 'success')
         return redirect(url_for('web.lead_detail', lid=lead.id))
@@ -880,6 +892,7 @@ def quick_edit_lead(lid):
         changes.append('Source')
 
     log_lead_activity(lead.id, 'Quick Edit Updated', f'Updated: {", ".join(changes)}')
+    lead.is_imported = False
     db.session.commit()
     flash(f'Remarks updated for "{lead.name}"!', 'success')
     return redirect(request.referrer or url_for('web.leads_list'))
