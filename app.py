@@ -149,7 +149,52 @@ def create_app():
             print("Permanent user sync error:", e)
             db.session.rollback()
 
-        # Auto-sync Google Sheet leads on startup if empty
+        # Auto-sync leads on startup if empty
+        if Lead.query.count() == 0:
+            try:
+                import sqlite3, os
+                base_dir = os.path.abspath(os.path.dirname(__file__))
+                sqlite_file = os.path.join(base_dir, 'crm.sqlite')
+                if os.path.exists(sqlite_file):
+                    s_conn = sqlite3.connect(sqlite_file)
+                    s_conn.row_factory = sqlite3.Row
+                    cur = s_conn.cursor()
+                    cur.execute("SELECT * FROM leads")
+                    s_leads = cur.fetchall()
+                    for sl in s_leads:
+                        col_keys = sl.keys()
+                        c_at = sl['created_at']
+                        if isinstance(c_at, str):
+                            try:
+                                c_at = datetime.fromisoformat(c_at)
+                            except:
+                                c_at = datetime.utcnow()
+                        lead = Lead(
+                            name=sl['name'],
+                            email=sl['email'],
+                            phone=sl['phone'],
+                            source=sl['source'] if 'source' in col_keys else '99acres',
+                            property_type=sl['property_type'] if 'property_type' in col_keys else 'Office Space',
+                            budget=sl['budget'] if 'budget' in col_keys else '',
+                            location=sl['location'] if 'location' in col_keys else '',
+                            status=sl['status'] if 'status' in col_keys else 'New',
+                            priority=sl['priority'] if 'priority' in col_keys else 'Medium',
+                            assigned_to=sl['assigned_to'] if 'assigned_to' in col_keys else 'Admin Kiriti',
+                            is_imported=bool(sl['is_imported']) if 'is_imported' in col_keys else True,
+                            sunil_remarks=sl['sunil_remarks'] if 'sunil_remarks' in col_keys else '',
+                            telecaller_remarks=sl['telecaller_remarks'] if 'telecaller_remarks' in col_keys else '',
+                            listing_id=sl['listing_id'] if 'listing_id' in col_keys else '',
+                            response_from=sl['response_from'] if 'response_from' in col_keys else '',
+                            created_at=c_at or datetime.utcnow()
+                        )
+                        db.session.add(lead)
+                    db.session.commit()
+                    s_conn.close()
+                    print(f"Successfully seeded {len(s_leads)} leads from crm.sqlite into database.")
+            except Exception as e:
+                print("Error loading crm.sqlite snapshot:", e)
+                db.session.rollback()
+
         if Lead.query.count() == 0:
             try:
                 import urllib.request, urllib.parse, csv, io, re
