@@ -450,8 +450,11 @@ def create_app():
             sunil_phones = {'9818834197', '9811227699', '9015719363', '9811511254', '9871955311', '9810471320', '9999697224', '9821988092', '8439497404', '7080173012', '9289073529'}
             sunil_names = {'chandan gupta'}
 
-            himmat_phones = {'9631014104', '9810914954', '9370402356', '7980238644', '9711286112', '8690428752', '9811764759', '8570814550', '9034077792', '9952573933'}
-            himmat_names = {'aman', 'kumi', 'abhimanyu choudhary', 'nasaruddin', 'rohit yadav', 'sahil sinha', 'rishi kumar', 'sahil mehta', 'chaitanya gaba', 'ajay (broker)'}
+            himmat_phones = {'9631014104', '9810914954', '9370402356', '7980238644', '9711286112', '8690428752', '9811764759', '8570814550', '9034077792', '9952573933', '8860883117', '8956697306'}
+            himmat_names = {'aman', 'kumi', 'abhimanyu choudhary', 'nasaruddin', 'rohit yadav', 'sahil sinha', 'rishi kumar', 'sahil mehta', 'chaitanya gaba', 'ajay (broker)', 'sandeep', 'parmeet singh'}
+
+            active_pipeline_phones = {'8587800867', '7980238644', '9818834197', '9811227699', '9811511254', '9999697224', '9821988092', '9289073529', '9911422811', '9650017787', '9384708707', '9457059090', '7060904546', '9810178003', '8860883117', '8956697306'}
+            active_pipeline_names = {'nitin g.r', 'nasaruddin', 'nagendra', 'nandesh mishra', 'devinder dalal', 'ms.anju dahinwal', 'mr.anurag chaudhary', 'mahesh singh', 'suresh', 'sumit', 'abdul basith', 'pranav chauhan', 'ajay vishwath n c', 'alok kumar', 'sandeep', 'parmeet singh'}
 
             for l in Lead.query.all():
                 if not l.is_imported:
@@ -470,6 +473,9 @@ def create_app():
                     l.priority = 'High'
                 elif p_clean in meeting_done_phones or n_clean in meeting_done_names:
                     l.status = 'Meeting Done'
+                    l.priority = 'High'
+                elif p_clean in active_pipeline_phones or n_clean in active_pipeline_names:
+                    l.status = 'Active Pipeline'
                     l.priority = 'High'
             db.session.commit()
         except Exception as e:

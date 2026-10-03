@@ -251,7 +251,7 @@ def sync_google_sheet_web():
                     remarks = r[11].strip() if len(r) > 11 else ''
                     add_remarks = r[12].strip() if len(r) > 12 else ''
 
-                    is_active_pipeline = (active_col.lower() in ('active', 'active pipeline'))
+                    is_active_pipeline = ('active' in active_col.lower())
                     row_source = r[5].strip() if len(r) > 5 else ''
                     item_source = '99acres' if ('99acres' in row_source.lower()) else 'Sunil Data'
 
@@ -295,6 +295,9 @@ def sync_google_sheet_web():
                         if not existing.source: existing.source = item_source
                         if is_active_pipeline and existing.status in ('New', 'Contacted'):
                             existing.status = 'Active Pipeline'
+                            existing.priority = 'High'
+                        elif not is_active_pipeline and existing.status == 'Active Pipeline':
+                            existing.status = 'Contacted'
                         updated_count += 1
                     else:
                         lead = Lead(
@@ -327,7 +330,7 @@ def sync_google_sheet_web():
                         continue
 
                     active_col = r[3].strip() if len(r) > 3 else ''
-                    is_active_pipeline = (active_col.lower() == 'active')
+                    is_active_pipeline = ('active' in active_col.lower())
 
                     # Preserve real name if present (e.g. kumi, Sahil Mehta, Chaitanya Gaba)
                     clean_name_num = re.sub(r'[^\d]', '', raw_name)
@@ -390,7 +393,12 @@ def sync_google_sheet_web():
                         if requirement: existing.property_type = requirement
                         if remarks and remarks != 'NA' and remarks != '-': existing.sunil_remarks = remarks
                         if telecaller_col and telecaller_col != 'NA' and telecaller_col != '-': existing.telecaller_remarks = telecaller_col
-                        if existing.status in ('New', 'Contacted') or not existing.status:
+                        if is_active_pipeline and existing.status in ('New', 'Contacted'):
+                            existing.status = 'Active Pipeline'
+                            existing.priority = 'High'
+                        elif not is_active_pipeline and existing.status == 'Active Pipeline':
+                            existing.status = 'Contacted'
+                        elif existing.status in ('New', 'Contacted') or not existing.status:
                             existing.status = status
                         if priority == 'High': existing.priority = priority
                         if not existing.source: existing.source = source_val
@@ -490,7 +498,7 @@ def sync_google_sheet_web():
                 response_from = ''
 
                 phone = clean_phone_number(raw_phone)
-                is_active_pipeline = (active_col.lower() == 'active')
+                is_active_pipeline = ('active' in active_col.lower())
 
                 if project and project != '-':
                     location = f"{locality} ({project})" if locality else project
@@ -549,6 +557,9 @@ def sync_google_sheet_web():
                     if not existing.source: existing.source = source_val
                     if is_active_pipeline and existing.status in ('New', 'Contacted'):
                         existing.status = 'Active Pipeline'
+                        existing.priority = 'High'
+                    elif not is_active_pipeline and existing.status == 'Active Pipeline':
+                        existing.status = 'Contacted'
                     updated_count += 1
                 else:
                     lead = Lead(
@@ -572,13 +583,16 @@ def sync_google_sheet_web():
     sunil_phones = {'9818834197', '9811227699', '9015719363', '9811511254', '9871955311', '9810471320', '9999697224', '9821988092', '8439497404', '7080173012', '9289073529'}
     sunil_names = {'chandan gupta'}
 
-    himmat_phones = {'9631014104', '9810914954', '9370402356', '7980238644', '9711286112', '8690428752', '9811764759', '8570814550', '9034077792', '9952573933'}
-    himmat_names = {'aman', 'kumi', 'abhimanyu choudhary', 'nasaruddin', 'rohit yadav', 'sahil sinha', 'rishi kumar', 'sahil mehta', 'chaitanya gaba', 'ajay (broker)'}
+    himmat_phones = {'9631014104', '9810914954', '9370402356', '7980238644', '9711286112', '8690428752', '9811764759', '8570814550', '9034077792', '9952573933', '8860883117', '8956697306'}
+    himmat_names = {'aman', 'kumi', 'abhimanyu choudhary', 'nasaruddin', 'rohit yadav', 'sahil sinha', 'rishi kumar', 'sahil mehta', 'chaitanya gaba', 'ajay (broker)', 'sandeep', 'parmeet singh'}
     proposal_sent_phones = {'7011643245', '9007359999', '7879836515', '9952573933', '9810914954', '9034077792', '9631014104', '9811799344'}
     proposal_sent_names = {'rishabh tyagi', 'vaibhav sharma', 'vijay verma', 'ajay (broker)', 'kumi', 'chaitanya gaba', 'aman', 'sandeep singh'}
 
     meeting_done_phones = {'7310000310', '9878287151', '9650546551', '9650200622', '9711160603', '9015719363', '9871955311', '9810471320', '8750740270'}
     meeting_done_names = {'amit', 'raj sharma', 'sundeep verma', 'mahendra', 'shubham singh', 'imran khan', 'inderjeet', 'shyam', 'nimit chaudhry'}
+
+    active_pipeline_phones = {'8587800867', '7980238644', '9818834197', '9811227699', '9811511254', '9999697224', '9821988092', '9289073529', '9911422811', '9650017787', '9384708707', '9457059090', '7060904546', '9810178003', '8860883117', '8956697306'}
+    active_pipeline_names = {'nitin g.r', 'nasaruddin', 'nagendra', 'nandesh mishra', 'devinder dalal', 'ms.anju dahinwal', 'mr.anurag chaudhary', 'mahesh singh', 'suresh', 'sumit', 'abdul basith', 'pranav chauhan', 'ajay vishwath n c', 'alok kumar', 'sandeep', 'parmeet singh'}
 
     for l in Lead.query.all():
         if not l.is_imported:
@@ -607,6 +621,9 @@ def sync_google_sheet_web():
             l.priority = 'High'
         elif p_clean in meeting_done_phones or n_clean in meeting_done_names:
             l.status = 'Meeting Done'
+            l.priority = 'High'
+        elif p_clean in active_pipeline_phones or n_clean in active_pipeline_names:
+            l.status = 'Active Pipeline'
             l.priority = 'High'
 
     sync_lead_followups_and_tasks()
