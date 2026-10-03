@@ -4,12 +4,20 @@
 import os
 
 class Config:
-    DATABASE_URL = os.getenv('DATABASE_URL', '').strip().strip('"').strip("'")
+    RAW_DB_URL = os.getenv('DATABASE_URL', '').strip().strip('"').strip("'")
     IS_RENDER = os.getenv('RENDER', False)
 
+    DATABASE_URL = RAW_DB_URL
     if DATABASE_URL:
-        if DATABASE_URL.startswith('postgres://'):
+        # Auto-fix if user pasted partial or full Render database URL
+        if 'dpg-dav41b7pn0mc73a0ust0-a' in DATABASE_URL:
+            DATABASE_URL = 'postgresql://crm_user:OIme76tVS9oMNmOldmdtSM7WO0CpxYSE@dpg-dav41b7pn0mc73a0ust0-a/crm_5874'
+        elif DATABASE_URL.startswith('postgres://'):
             DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+        elif not (DATABASE_URL.startswith('postgresql://') or DATABASE_URL.startswith('mysql://') or DATABASE_URL.startswith('sqlite://')):
+            if '@' in DATABASE_URL:
+                DATABASE_URL = f"postgresql://{DATABASE_URL}"
+
         SQLALCHEMY_DATABASE_URI = DATABASE_URL
     elif IS_RENDER:
         # On Render cloud, use zero-config SQLite file if no DATABASE_URL is set

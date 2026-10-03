@@ -16,14 +16,27 @@ def create_app():
     from werkzeug.middleware.proxy_fix import ProxyFix
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-    db.init_app(app)
+    try:
+        db.init_app(app)
+        with app.app_context():
+            db.create_all()
+    except Exception as e:
+        print(f"Primary database connection error: {e}. Falling back to SQLite.")
+        if 'sqlalchemy' in app.extensions:
+            del app.extensions['sqlalchemy']
+        import os
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        sqlite_path = os.path.join(base_dir, 'crm.sqlite')
+        app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{sqlite_path}"
+        db.init_app(app)
+        with app.app_context():
+            db.create_all()
 
     from routes import api_bp, web_bp
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(web_bp)
 
     with app.app_context():
-        db.create_all()
 
         # Safe schema alter for new columns (user_id_name, password, is_imported)
         try:
